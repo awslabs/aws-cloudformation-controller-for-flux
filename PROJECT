@@ -1,0 +1,16 @@
+domain: contrib.fluxcd.io
+layout:
+- go.kubebuilder.io/v3
+projectName: aws-cloudformation-controller-for-flux
+repo: github.com/awslabs/aws-cloudformation-controller-for-flux
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: cloudformation.contrib.fluxcd.io
+  group: infra
+  kind: CloudFormationStack
+  path: github.com/awslabs/aws-cloudformation-controller-for-flux/api/v1alpha1
+  version: v1alpha1
+version: "3"
