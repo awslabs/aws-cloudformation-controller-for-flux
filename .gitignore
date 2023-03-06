@@ -27,6 +27,7 @@ config/rbac
 *.swo
 *~
 .vscode
+*.drawio.bkp
 
 # OS files
 **/.DS_Store
