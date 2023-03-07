@@ -198,7 +198,6 @@ spec:
     kind: GitRepository
     name: cfn-sample-template-repo
   interval: 1h
-  pollInterval: 1m
   retryInterval: 5m
 ```
 

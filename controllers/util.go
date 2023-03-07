@@ -255,9 +255,9 @@ func (r *CloudFormationStackReconciler) loadCloudFormationTemplate(cfnStack cfnv
 	}
 
 	// load the template file
-	templateFilePath, err := securejoin.SecureJoin(tmpDir, cfnStack.GetTemplatePath())
+	templateFilePath, err := securejoin.SecureJoin(tmpDir, cfnStack.Spec.TemplatePath)
 	if err != nil {
-		return nil, fmt.Errorf("unable to join securely tmpDir %s, path %s, error: %w", tmpDir, cfnStack.GetTemplatePath(), err)
+		return nil, fmt.Errorf("unable to join securely tmpDir %s, path %s, error: %w", tmpDir, cfnStack.Spec.TemplatePath, err)
 	}
 
 	templateBytes, err := os.ReadFile(templateFilePath)

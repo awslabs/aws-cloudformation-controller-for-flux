@@ -239,7 +239,7 @@ func (r *CloudFormationStackReconciler) reconcile(ctx context.Context, cfnStack 
 	// Load stack template file from artifact
 	templateContents, err := r.loadCloudFormationTemplate(cfnStack, sourceObj.GetArtifact())
 	if err != nil {
-		msg := fmt.Sprintf("Failed to load template '%s' from source '%s'", cfnStack.GetTemplatePath(), cfnStack.Spec.SourceRef.String())
+		msg := fmt.Sprintf("Failed to load template '%s' from source '%s'", cfnStack.Spec.TemplatePath, cfnStack.Spec.SourceRef.String())
 		log.Error(err, msg)
 		cfnStack = cfnv1.CloudFormationStackNotReady(cfnStack, "", cfnv1.ArtifactFailedReason, msg)
 		return cfnStack, ctrl.Result{RequeueAfter: cfnStack.GetRetryInterval()}, nil

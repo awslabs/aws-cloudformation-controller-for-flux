@@ -54,7 +54,7 @@ test: tidy generate fmt vet manifests envtest
 	KUBEBUILDER_ASSETS=$(KUBEBUILDER_ASSETS) go test ./... -coverprofile cover.out
 	cd api; go test ./... -coverprofile cover.out
 
-build: generate fmt vet
+build: generate fmt vet manifests
 	go build -o bin/manager \
  		-ldflags "-X main.BuildSHA=$(BUILD_SHA) -X main.BuildVersion=$(BUILD_VERSION)" \
  		main.go

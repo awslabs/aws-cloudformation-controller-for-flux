@@ -18,7 +18,6 @@ const (
 	GitRepositoryIndexKey        = ".metadata.gitRepository"
 	BucketIndexKey               = ".metadata.bucket"
 	OCIRepositoryIndexKey        = ".metadata.ociRepository"
-	DefaultTemplatePath          = "template.yaml"
 )
 
 // CloudFormationStackSpec defines the desired state of a CloudFormation stack
@@ -34,8 +33,9 @@ type CloudFormationStackSpec struct {
 	Region string `json:"region,omitempty"`
 
 	// Path to the CloudFormation template file.
-	// Defaults to 'None', which translates to the root path of the SourceRef and filename 'template.yaml'.
+	// Defaults to the root path of the SourceRef and filename 'template.yaml'.
 	// +optional
+	// +kubebuilder:default="template.yaml"
 	TemplatePath string `json:"templatePath,omitempty"`
 
 	// SourceRef is the reference of the source where the CloudFormation template is stored.
@@ -48,10 +48,10 @@ type CloudFormationStackSpec struct {
 
 	// The interval at which to poll CloudFormation for the stack's status while a stack
 	// action like Create or Update is in progress.
-	// When not specified, the controller uses the CloudFormationStackSpec.Interval
-	// value to poll the stack.
+	// Defaults to five seconds.
 	// +optional
-	PollInterval *metav1.Duration `json:"pollInterval,omitempty"`
+	// +kubebuilder:default="5s"
+	PollInterval metav1.Duration `json:"pollInterval,omitempty"`
 
 	// The interval at which to retry a previously failed reconciliation.
 	// When not specified, the controller uses the CloudFormationStackSpec.Interval
@@ -62,12 +62,13 @@ type CloudFormationStackSpec struct {
 	// Suspend tells the controller to suspend reconciliation for this CloudFormation stack,
 	// it does not apply to already started reconciliations. Defaults to false.
 	// +optional
+	// +kubebuilder:default:=false
 	Suspend bool `json:"suspend,omitempty"`
 
 	// Delete the CloudFormation stack and its underlying resources
 	// upon deletion of this object. Defaults to false.
-	// +kubebuilder:default:=false
 	// +optional
+	// +kubebuilder:default:=false
 	DestroyStackOnDeletion bool `json:"destroyStackOnDeletion,omitempty"`
 
 	// DependsOn may contain a meta.NamespacedObjectReference slice with
@@ -226,22 +227,6 @@ func CloudFormationStackReady(cfnStack CloudFormationStack) CloudFormationStack 
 // GetDependsOn returns the list of dependencies, namespace scoped.
 func (in CloudFormationStack) GetDependsOn() []meta.NamespacedObjectReference {
 	return in.Spec.DependsOn
-}
-
-// GetTemplatePath returns the path to the CloudFormation stack template
-func (in CloudFormationStack) GetTemplatePath() string {
-	if in.Spec.TemplatePath != "" {
-		return in.Spec.TemplatePath
-	}
-	return DefaultTemplatePath
-}
-
-// GetPollInterval returns the poll interval
-func (in CloudFormationStack) GetPollInterval() time.Duration {
-	if in.Spec.PollInterval != nil {
-		return in.Spec.PollInterval.Duration
-	}
-	return in.Spec.Interval.Duration
 }
 
 // GetRetryInterval returns the retry interval

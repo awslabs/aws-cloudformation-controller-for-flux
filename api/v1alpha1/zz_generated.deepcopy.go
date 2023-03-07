@@ -78,11 +78,7 @@ func (in *CloudFormationStackSpec) DeepCopyInto(out *CloudFormationStackSpec) {
 	*out = *in
 	out.SourceRef = in.SourceRef
 	out.Interval = in.Interval
-	if in.PollInterval != nil {
-		in, out := &in.PollInterval, &out.PollInterval
-		*out = new(v1.Duration)
-		**out = **in
-	}
+	out.PollInterval = in.PollInterval
 	if in.RetryInterval != nil {
 		in, out := &in.RetryInterval, &out.RetryInterval
 		*out = new(v1.Duration)
