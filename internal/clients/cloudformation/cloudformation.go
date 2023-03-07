@@ -73,23 +73,30 @@ func (c *CloudFormation) DescribeStack(stack *Stack) (*StackDescription, error) 
 // DescribeChangeSet gathers and returns all changes for the stack's current change set.
 // If the stack or changeset does not exist, returns ErrChangeSetNotFound.
 func (c *CloudFormation) DescribeChangeSet(stack *Stack) (*ChangeSetDescription, error) {
-	cs := &changeSet{name: stack.ChangeSetArn, stackName: stack.Name, region: stack.Region, client: c.client}
+	var changeSetName string
+	if stack.ChangeSetArn != "" {
+		changeSetName = stack.ChangeSetArn
+	} else {
+		changeSetName = getChangeSetId(stack.Generation)
+	}
+	cs := &changeSet{name: changeSetName, stackName: stack.Name, region: stack.Region, client: c.client}
+
 	out, err := cs.describe()
 	if err != nil {
 		if stackDoesNotExist(err) {
-			return nil, &ErrChangeSetNotFound{name: stack.ChangeSetArn, stackName: stack.Name}
+			return nil, &ErrChangeSetNotFound{name: changeSetName, stackName: stack.Name}
 		}
 		return nil, err
 	}
 
 	if out.IsDeleted() {
-		return nil, &ErrChangeSetNotFound{name: stack.ChangeSetArn, stackName: stack.Name}
+		return nil, &ErrChangeSetNotFound{name: changeSetName, stackName: stack.Name}
 	}
 
 	// The change set was empty. The status reason will be like
 	// "The submitted information didn't contain changes. Submit different information to create a change set."
 	if out.IsEmpty() {
-		return nil, &ErrChangeSetEmpty{name: stack.ChangeSetArn, stackName: stack.Name}
+		return nil, &ErrChangeSetEmpty{name: changeSetName, stackName: stack.Name}
 	}
 
 	return out, nil
