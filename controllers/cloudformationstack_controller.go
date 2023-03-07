@@ -29,7 +29,7 @@ import (
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 
 	cfnv1 "github.com/awslabs/aws-cloudformation-controller-for-flux/api/v1alpha1"
-	"github.com/awslabs/aws-cloudformation-controller-for-flux/clients/cloudformation"
+	"github.com/awslabs/aws-cloudformation-controller-for-flux/internal/clients/cloudformation"
 )
 
 //+kubebuilder:rbac:groups=cloudformation.contrib.fluxcd.io,resources=cloudformationstacks,verbs=get;list;watch;create;update;patch;delete

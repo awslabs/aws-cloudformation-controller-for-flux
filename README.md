@@ -8,6 +8,7 @@ TODO:
 * Support for declaring dependency on other CFN stacks
 * Support for disabling rollback
 * Support for managing stacks cross-account (see https://aws-controllers-k8s.github.io/community/docs/user-docs/cross-account-resource-management/)
+* Move region info to an annotation? Like ACK does it
 
 ## Set up a local development environment
 
