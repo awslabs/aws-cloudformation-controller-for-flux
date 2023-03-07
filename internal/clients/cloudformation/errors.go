@@ -13,32 +13,20 @@ import (
 
 // ErrChangeSetEmpty occurs when the change set does not contain any new or updated resources.
 type ErrChangeSetEmpty struct {
-	cs *changeSet
+	name      string
+	stackName string
 }
 
 func (e *ErrChangeSetEmpty) Error() string {
-	return fmt.Sprintf("change set with name %s for stack %s has no changes", e.cs.name, e.cs.stackName)
+	return fmt.Sprintf("change set with name %s for stack %s has no changes", e.name, e.stackName)
 }
 
 // NewMockErrChangeSetEmpty creates a mock ErrChangeSetEmpty.
 func NewMockErrChangeSetEmpty() *ErrChangeSetEmpty {
 	return &ErrChangeSetEmpty{
-		cs: &changeSet{
-			name:      "mockChangeSet",
-			stackName: "mockStack",
-			region:    "mock-region",
-		},
+		name:      "mockChangeSet",
+		stackName: "mockStack",
 	}
-}
-
-// ErrStackAlreadyExists occurs when a CloudFormation stack already exists with a given name.
-type ErrStackAlreadyExists struct {
-	Name  string
-	Stack *StackDescription
-}
-
-func (e *ErrStackAlreadyExists) Error() string {
-	return fmt.Sprintf("stack %s already exists", e.Name)
 }
 
 // ErrStackNotFound occurs when a CloudFormation stack does not exist.
@@ -50,23 +38,14 @@ func (e *ErrStackNotFound) Error() string {
 	return fmt.Sprintf("stack named %s cannot be found", e.name)
 }
 
-// ErrChangeSetNotExecutable occurs when the change set cannot be executed.
-type ErrChangeSetNotExecutable struct {
-	cs    *changeSet
-	descr *ChangeSetDescription
+// ErrChangeSetNotFound occurs when a CloudFormation changeset does not exist.
+type ErrChangeSetNotFound struct {
+	name      string
+	stackName string
 }
 
-func (e *ErrChangeSetNotExecutable) Error() string {
-	return fmt.Sprintf("execute change set %s for stack %s because status is %s with reason %s", e.cs.name, e.cs.stackName, e.descr.ExecutionStatus, e.descr.StatusReason)
-}
-
-// ErrStackUpdateInProgress occurs when we try to update a stack that's already being updated.
-type ErrStackUpdateInProgress struct {
-	Name string
-}
-
-func (e *ErrStackUpdateInProgress) Error() string {
-	return fmt.Sprintf("stack %s is currently being updated and cannot be deployed to", e.Name)
+func (e *ErrChangeSetNotFound) Error() string {
+	return fmt.Sprintf("change set with name %s for stack %s cannot be found", e.name, e.stackName)
 }
 
 // stackDoesNotExist returns true if the underlying error is a stack doesn't exist.

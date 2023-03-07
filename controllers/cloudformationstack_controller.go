@@ -282,7 +282,7 @@ func (r *CloudFormationStackReconciler) reconcile(ctx context.Context, cfnStack 
 
 func (r *CloudFormationStackReconciler) reconcileStack(ctx context.Context, cfnStack cfnv1.CloudFormationStack, templateContents *bytes.Buffer) (cfnv1.CloudFormationStack, error) {
 
-	log := ctrl.LoggerFrom(ctx)
+	/*log := ctrl.LoggerFrom(ctx)
 
 	clientStack := toClientStack(cfnStack)
 	clientStack.TemplateBody = templateContents.String()
@@ -293,7 +293,7 @@ func (r *CloudFormationStackReconciler) reconcileStack(ctx context.Context, cfnS
 	}
 
 	log.Info(fmt.Sprintf("CLARE Does the stack '%s' exist in region %s: %t", cfnStack.Spec.StackName, cfnStack.Spec.Region, stackExists))
-
+	*/
 	// Do nothing
 	return cfnv1.CloudFormationStackReady(cfnStack), nil
 }

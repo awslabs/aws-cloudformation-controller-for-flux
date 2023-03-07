@@ -6,13 +6,13 @@ package cloudformation
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/cloudformation"
+	"github.com/aws/aws-sdk-go-v2/service/cloudformation/types"
 	"github.com/aws/smithy-go/middleware"
 )
 
@@ -40,86 +40,9 @@ func New(ctx context.Context) (*CloudFormation, error) {
 	}, nil
 }
 
-// Create deploys a new CloudFormation stack using Change Sets.
-// If the stack already exists in a failed state, deletes the stack and re-creates it.
-func (c *CloudFormation) Create(stack *Stack) (changeSetID string, err error) {
-	descr, err := c.Describe(stack)
-	if err != nil {
-		var stackNotFound *ErrStackNotFound
-		if !errors.As(err, &stackNotFound) {
-			return "", err
-		}
-		// If the stack does not exist, create it.
-		return c.create(stack)
-	}
-	status := StackStatus(string(descr.StackStatus))
-	// TODO CLARE: handle cleaning up a stack that exists but previously failed to create
-	/*
-		if status.requiresCleanup() {
-			// If the stack exists, but failed to create, we'll clean it up and then re-create it.
-			if err := c.DeleteAndWait(stack.Name); err != nil {
-				return "", fmt.Errorf("clean up previously failed stack %s: %w", stack.Name, err)
-			}
-			return c.create(stack)
-		}
-	*/
-	if status.InProgress() {
-		return "", &ErrStackUpdateInProgress{
-			Name: stack.Name,
-		}
-	}
-	return "", &ErrStackAlreadyExists{
-		Name:  stack.Name,
-		Stack: descr,
-	}
-}
-
-// DescribeChangeSet gathers and returns all changes for a change set.
-func (c *CloudFormation) DescribeChangeSet(changeSetID string, stack *Stack) (*ChangeSetDescription, error) {
-	cs := &changeSet{name: changeSetID, stackName: stack.Name, region: stack.Region, client: c.client}
-	out, err := cs.describe()
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// Update updates an existing CloudFormation with the new configuration.
-// If there are no changes for the stack, deletes the empty change set and returns ErrChangeSetEmpty.
-func (c *CloudFormation) Update(stack *Stack) (changeSetID string, err error) {
-	descr, err := c.Describe(stack)
-	if err != nil {
-		return "", err
-	}
-	status := StackStatus(string(descr.StackStatus))
-	if status.InProgress() {
-		return "", &ErrStackUpdateInProgress{
-			Name: stack.Name,
-		}
-	}
-	return c.update(stack)
-}
-
-// Delete removes an existing CloudFormation stack.
-// If the stack doesn't exist then do nothing.
-func (c *CloudFormation) Delete(stack *Stack) error {
-	_, err := c.client.DeleteStack(c.ctx, &cloudformation.DeleteStackInput{
-		StackName: aws.String(stack.Name),
-	}, func(opts *cloudformation.Options) {
-		opts.Region = stack.Region
-	})
-	if err != nil {
-		if !stackDoesNotExist(err) {
-			return fmt.Errorf("delete stack %s: %w", stack.Name, err)
-		}
-		// Move on if stack is already deleted.
-	}
-	return nil
-}
-
 // Describe returns a description of an existing stack.
 // If the stack does not exist, returns ErrStackNotFound.
-func (c *CloudFormation) Describe(stack *Stack) (*StackDescription, error) {
+func (c *CloudFormation) DescribeStack(stack *Stack) (*StackDescription, error) {
 	out, err := c.client.DescribeStacks(c.ctx, &cloudformation.DescribeStacksInput{
 		StackName: aws.String(stack.Name),
 	}, func(opts *cloudformation.Options) {
@@ -134,54 +57,114 @@ func (c *CloudFormation) Describe(stack *Stack) (*StackDescription, error) {
 	if len(out.Stacks) == 0 {
 		return nil, &ErrStackNotFound{name: stack.Name}
 	}
+	if out.Stacks[0].StackStatus == types.StackStatusReviewInProgress {
+		// there is a creation change set for the stack, but it has not been executed,
+		// so the stack has not been created yet
+		return nil, &ErrStackNotFound{name: stack.Name}
+	}
+	if out.Stacks[0].StackStatus == types.StackStatusDeleteComplete {
+		// the stack was previously successfully deleted
+		return nil, &ErrStackNotFound{name: stack.Name}
+	}
 	descr := StackDescription(out.Stacks[0])
 	return &descr, nil
 }
 
-// Exists returns true if the CloudFormation stack exists, false otherwise.
-// If an error occurs for another reason than ErrStackNotFound, then returns the error.
-func (c *CloudFormation) Exists(stack *Stack) (bool, error) {
-	if _, err := c.Describe(stack); err != nil {
-		var notFound *ErrStackNotFound
-		if errors.As(err, &notFound) {
-			return false, nil
-		}
-		return false, err
-	}
-	return true, nil
-}
-
-// Outputs returns the outputs of a stack description.
-func (c *CloudFormation) Outputs(stack *Stack) (map[string]string, error) {
-	stackDescription, err := c.Describe(stack)
+// DescribeChangeSet gathers and returns all changes for the stack's current change set.
+// If the stack or changeset does not exist, returns ErrChangeSetNotFound.
+func (c *CloudFormation) DescribeChangeSet(stack *Stack) (*ChangeSetDescription, error) {
+	cs := &changeSet{name: stack.ChangeSetArn, stackName: stack.Name, region: stack.Region, client: c.client}
+	out, err := cs.describe()
 	if err != nil {
-		return nil, fmt.Errorf("retrieve outputs of stack description: %w", err)
+		if stackDoesNotExist(err) {
+			return nil, &ErrChangeSetNotFound{name: stack.ChangeSetArn, stackName: stack.Name}
+		}
+		return nil, err
 	}
-	outputs := make(map[string]string)
-	for _, output := range stackDescription.Outputs {
-		outputs[*output.OutputKey] = *output.OutputValue
+
+	// The change set was empty. The status reason will be like
+	// "The submitted information didn't contain changes. Submit different information to create a change set."
+	if changeSetIsEmpty(out) {
+		return nil, &ErrChangeSetEmpty{name: stack.ChangeSetArn, stackName: stack.Name}
 	}
-	return outputs, nil
+
+	return out, nil
 }
 
-func (c *CloudFormation) create(stack *Stack) (string, error) {
+// CreateStack begins the process of deploying a new CloudFormation stack by creating a change set.
+// The change set must be executed when it is successfully created.
+func (c *CloudFormation) CreateStack(stack *Stack) (changeSetArn string, err error) {
 	cs, err := newCreateChangeSet(c.ctx, c.client, stack.Region, stack.Name, stack.Generation)
 	if err != nil {
 		return "", err
 	}
-	if err := cs.createAndExecute(stack.stackConfig); err != nil {
+	arn, err := cs.create(stack.stackConfig)
+	if err != nil {
 		return "", err
 	}
-	return cs.name, nil
+	stack.ChangeSetArn = arn
+	return arn, nil
 }
 
-func (c *CloudFormation) update(stack *Stack) (string, error) {
+// UpdateStack begins the process of updating an existing CloudFormation stack with new configuration
+// by creating a change set.
+// The change set must be executed when it is successfully created.
+func (c *CloudFormation) UpdateStack(stack *Stack) (changeSetArn string, err error) {
 	cs, err := newUpdateChangeSet(c.ctx, c.client, stack.Region, stack.Name, stack.Generation)
 	if err != nil {
 		return "", err
 	}
-	if err := cs.createAndExecute(stack.stackConfig); err != nil {
+	arn, err := cs.create(stack.stackConfig)
+	if err != nil {
 		return "", err
 	}
-	return cs.name, nil
+	stack.ChangeSetArn = arn
+	return arn, nil
+}
+
+// ExecutChangeSet starts the execution of the stack's current change set.
+// If the stack or changeset does not exist, returns ErrChangeSetNotFound.
+func (c *CloudFormation) ExecuteChangeSet(stack *Stack) error {
+	cs := &changeSet{name: stack.ChangeSetArn, stackName: stack.Name, region: stack.Region, client: c.client}
+	return cs.execute()
+}
+
+// Delete removes an existing CloudFormation stack.
+// If the stack doesn't exist then do nothing.
+func (c *CloudFormation) DeleteStack(stack *Stack) error {
+	_, err := c.client.DeleteStack(c.ctx, &cloudformation.DeleteStackInput{
+		StackName: aws.String(stack.Name),
+	}, func(opts *cloudformation.Options) {
+		opts.Region = stack.Region
+	})
+	if err != nil {
+		if !stackDoesNotExist(err) {
+			return fmt.Errorf("delete stack %s: %w", stack.Name, err)
+		}
+		// Move on if stack is already deleted.
+	}
+	return nil
+}
+
+// Delete removes an existing CloudFormation change set.
+// If the change set doesn't exist then do nothing.
+func (c *CloudFormation) DeleteChangeSet(stack *Stack) error {
+	cs := &changeSet{name: stack.ChangeSetArn, stackName: stack.Name, region: stack.Region, client: c.client}
+	if err := cs.delete(); err != nil {
+		if !stackDoesNotExist(err) {
+			return err
+		}
+		// Move on if change set is already deleted.
+	}
+	return nil
+}
+
+// ContinueRollback attempts to continue an Update rollback for an existing CloudFormation stack.
+func (c *CloudFormation) ContinueRollback(stack *Stack) error {
+	_, err := c.client.ContinueUpdateRollback(c.ctx, &cloudformation.ContinueUpdateRollbackInput{
+		StackName: aws.String(stack.Name),
+	}, func(opts *cloudformation.Options) {
+		opts.Region = stack.Region
+	})
+	return err
 }

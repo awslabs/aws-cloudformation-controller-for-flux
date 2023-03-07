@@ -8,81 +8,76 @@ import (
 )
 
 var (
-	successStackStatuses = []types.StackStatus{
+	successfulDeploymentStackStatuses = []types.StackStatus{
 		types.StackStatusCreateComplete,
-		types.StackStatusDeleteComplete,
 		types.StackStatusUpdateComplete,
-		types.StackStatusUpdateCompleteCleanupInProgress,
 		types.StackStatusImportComplete,
-	}
-
-	failureStackStatuses = []types.StackStatus{
-		types.StackStatusCreateFailed,
-		types.StackStatusDeleteFailed,
-		types.StackStatusUpdateFailed,
-		types.StackStatusRollbackInProgress,
-		types.StackStatusRollbackComplete,
-		types.StackStatusRollbackFailed,
-		types.StackStatusUpdateRollbackComplete,
-		types.StackStatusUpdateRollbackCompleteCleanupInProgress,
-		types.StackStatusUpdateRollbackInProgress,
-		types.StackStatusUpdateRollbackFailed,
-		types.StackStatusImportRollbackInProgress,
-		types.StackStatusImportRollbackComplete,
-		types.StackStatusImportRollbackFailed,
 	}
 
 	inProgressStackStatuses = []types.StackStatus{
 		types.StackStatusCreateInProgress,
-		types.StackStatusRollbackInProgress,
 		types.StackStatusDeleteInProgress,
-		types.StackStatusUpdateInProgress,
+		types.StackStatusRollbackInProgress,
 		types.StackStatusUpdateCompleteCleanupInProgress,
-		types.StackStatusUpdateRollbackInProgress,
+		types.StackStatusUpdateInProgress,
 		types.StackStatusUpdateRollbackCompleteCleanupInProgress,
-		types.StackStatusReviewInProgress,
+		types.StackStatusUpdateRollbackInProgress,
 		types.StackStatusImportInProgress,
 		types.StackStatusImportRollbackInProgress,
+	}
+
+	unrecoverableFailureStackStatuses = []types.StackStatus{
+		types.StackStatusCreateFailed,
+		types.StackStatusDeleteFailed,
+		types.StackStatusRollbackComplete,
+		types.StackStatusRollbackFailed,
+	}
+
+	recoverableFailureStackStatuses = []types.StackStatus{
+		types.StackStatusUpdateFailed,
+		types.StackStatusUpdateRollbackComplete,
+		types.StackStatusImportRollbackComplete,
+		types.StackStatusImportRollbackFailed,
 	}
 )
 
 // StackStatus represents the status of a stack.
 type StackStatus string
 
-// requiresCleanup returns true if the stack was created, but failed and should be deleted.
-func (ss StackStatus) requiresCleanup() bool {
-	return string(types.StackStatusRollbackComplete) == string(ss) || string(types.StackStatusRollbackFailed) == string(ss)
+// RequiresCleanup returns true if the stack was created or deleted, but the action failed and the stack should be deleted.
+func (ss StackStatus) RequiresCleanup() bool {
+	return stackStatusListContains(ss, unrecoverableFailureStackStatuses)
 }
 
-// InProgress returns true if the stack is currently being updated.
+// ReadyForStackCleanup returns true if the stack is in a state where it can be deleted.
+func (ss StackStatus) ReadyForStackCleanup() bool {
+	return !ss.InProgress()
+}
+
+// RequiresRollbackContinuation returns true if the stack failed an update, and the rollback failed.
+// The only valid actions for the stack in this state are the ContinueUpdateRollback or DeleteStack operations
+func (ss StackStatus) RequiresRollbackContinuation() bool {
+	return string(types.StackStatusUpdateRollbackFailed) == string(ss)
+}
+
+// InProgress returns true if the stack is currently being deployed.
 func (ss StackStatus) InProgress() bool {
-	for _, inProgress := range inProgressStackStatuses {
-		if string(ss) == string(inProgress) {
-			return true
-		}
-	}
-	return false
+	return stackStatusListContains(ss, inProgressStackStatuses)
 }
 
-// UpsertInProgress returns true if the resource is updating or being created.
-func (ss StackStatus) UpsertInProgress() bool {
-	return string(types.StackStatusCreateInProgress) == string(ss) || string(types.StackStatusUpdateInProgress) == string(ss)
-}
-
-// IsSuccess returns true if the resource mutated successfully.
+// IsSuccess returns true if the stack mutated successfully.
 func (ss StackStatus) IsSuccess() bool {
-	for _, success := range successStackStatuses {
-		if string(ss) == string(success) {
-			return true
-		}
-	}
-	return false
+	return stackStatusListContains(ss, successfulDeploymentStackStatuses)
 }
 
-// IsFailure returns true if the resource failed to mutate.
-func (ss StackStatus) IsFailure() bool {
-	for _, failure := range failureStackStatuses {
-		if string(ss) == string(failure) {
+// IsRecoverableFailure returns true if the stack failed to mutate, but can be further updated.
+func (ss StackStatus) IsRecoverableFailure() bool {
+	return stackStatusListContains(ss, recoverableFailureStackStatuses)
+}
+
+func stackStatusListContains(element StackStatus, statusList []types.StackStatus) bool {
+	for _, status := range statusList {
+		if string(element) == string(status) {
 			return true
 		}
 	}

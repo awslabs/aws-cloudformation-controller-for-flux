@@ -40,9 +40,13 @@ type changeSet struct {
 	ctx       context.Context
 }
 
+func getChangeSetId(generation int64) string {
+	return fmt.Sprintf(fmtChangeSetName, generation)
+}
+
 func newCreateChangeSet(ctx context.Context, cfnClient changeSetAPI, region string, stackName string, generation int64) (*changeSet, error) {
 	return &changeSet{
-		name:      fmt.Sprintf(fmtChangeSetName, generation),
+		name:      getChangeSetId(generation),
 		stackName: stackName,
 		region:    region,
 		csType:    types.ChangeSetTypeCreate,
@@ -53,7 +57,7 @@ func newCreateChangeSet(ctx context.Context, cfnClient changeSetAPI, region stri
 
 func newUpdateChangeSet(ctx context.Context, cfnClient changeSetAPI, region string, stackName string, generation int64) (*changeSet, error) {
 	return &changeSet{
-		name:      fmt.Sprintf(fmtChangeSetName, generation),
+		name:      getChangeSetId(generation),
 		stackName: stackName,
 		region:    region,
 		csType:    types.ChangeSetTypeUpdate,
@@ -66,8 +70,8 @@ func (cs *changeSet) String() string {
 	return fmt.Sprintf("change set %s for stack %s", cs.name, cs.stackName)
 }
 
-// create creates a ChangeSet, waits until it's created, and returns the ChangeSet ID on success.
-func (cs *changeSet) create(conf *stackConfig) error {
+// create creates a ChangeSet, waits until it's created, and returns the change set ARN on success.
+func (cs *changeSet) create(conf *stackConfig) (string, error) {
 	input := &cloudformation.CreateChangeSetInput{
 		ChangeSetName:       aws.String(cs.name),
 		StackName:           aws.String(cs.stackName),
@@ -94,14 +98,9 @@ func (cs *changeSet) create(conf *stackConfig) error {
 
 	out, err := cs.client.CreateChangeSet(cs.ctx, input, opts)
 	if err != nil {
-		return fmt.Errorf("create %s: %w", cs, err)
+		return "", fmt.Errorf("create %s: %w", cs, err)
 	}
-	// Use the full changeset ARN instead of the name.
-	// Using the full ID is essential in case the ChangeSet execution status is obsolete.
-	// If we call DescribeChangeSet using the ChangeSet name and Stack name on an obsolete changeset, the results is empty.
-	// On the other hand, if you DescribeChangeSet using the full ID then the ChangeSet summary is retrieved correctly.
-	cs.name = *out.Id
-	return nil
+	return *out.Id, nil
 }
 
 // describe collects all the changes and statuses that the change set will apply and returns them.
@@ -142,24 +141,7 @@ func (cs *changeSet) describe() (*ChangeSetDescription, error) {
 
 // execute executes a created change set.
 func (cs *changeSet) execute() error {
-	descr, err := cs.describe()
-	if err != nil {
-		return err
-	}
-	if descr.ExecutionStatus != types.ExecutionStatusAvailable {
-		// Ignore execute request if the change set does not contain any modifications.
-		if descr.StatusReason == noChangesReason {
-			return nil
-		}
-		if descr.StatusReason == noUpdatesReason {
-			return nil
-		}
-		return &ErrChangeSetNotExecutable{
-			cs:    cs,
-			descr: descr,
-		}
-	}
-	_, err = cs.client.ExecuteChangeSet(cs.ctx, &cloudformation.ExecuteChangeSetInput{
+	_, err := cs.client.ExecuteChangeSet(cs.ctx, &cloudformation.ExecuteChangeSetInput{
 		ChangeSetName: aws.String(cs.name),
 		StackName:     aws.String(cs.stackName),
 	}, func(opts *cloudformation.Options) {
@@ -169,64 +151,6 @@ func (cs *changeSet) execute() error {
 		return fmt.Errorf("execute %s: %w", cs, err)
 	}
 	return nil
-}
-
-// executeWithNoRollback executes a created change set without automatic stack rollback.
-func (cs *changeSet) executeWithNoRollback() error {
-	descr, err := cs.describe()
-	if err != nil {
-		return err
-	}
-	if descr.ExecutionStatus != types.ExecutionStatusAvailable {
-		// Ignore execute request if the change set does not contain any modifications.
-		if descr.StatusReason == noChangesReason {
-			return nil
-		}
-		if descr.StatusReason == noUpdatesReason {
-			return nil
-		}
-		return &ErrChangeSetNotExecutable{
-			cs:    cs,
-			descr: descr,
-		}
-	}
-	_, err = cs.client.ExecuteChangeSet(cs.ctx, &cloudformation.ExecuteChangeSetInput{
-		ChangeSetName:   aws.String(cs.name),
-		StackName:       aws.String(cs.stackName),
-		DisableRollback: aws.Bool(true),
-	}, func(opts *cloudformation.Options) {
-		opts.Region = cs.region
-	})
-	if err != nil {
-		return fmt.Errorf("execute %s: %w", cs, err)
-	}
-	return nil
-}
-
-// createAndExecute calls create and then execute.
-// If the change set is empty, returns a ErrChangeSetEmpty.
-func (cs *changeSet) createAndExecute(conf *stackConfig) error {
-	if err := cs.create(conf); err != nil {
-		// It's possible that there are no changes between the previous and proposed stack change sets.
-		// We make a call to describe the change set to see if that is indeed the case and handle it gracefully.
-		descr, descrErr := cs.describe()
-		if descrErr != nil {
-			return fmt.Errorf("check if changeset is empty: %v: %w", err, descrErr)
-		}
-		// The change set was empty - so we clean it up. The status reason will be like
-		// "The submitted information didn't contain changes. Submit different information to create a change set."
-		// We try to clean up the change set because there's a limit on the number
-		// of failed change sets a customer can have on a particular stack.
-		// See https://cloudonaut.io/aws-cli-cloudformation-deploy-limit-exceeded/.
-		if len(descr.Changes) == 0 && strings.Contains(descr.StatusReason, "didn't contain changes") {
-			_ = cs.delete()
-			return &ErrChangeSetEmpty{
-				cs: cs,
-			}
-		}
-		return fmt.Errorf("%w: %s", err, descr.StatusReason)
-	}
-	return cs.execute()
 }
 
 // delete removes the change set.
@@ -241,4 +165,10 @@ func (cs *changeSet) delete() error {
 		return fmt.Errorf("delete %s: %w", cs, err)
 	}
 	return nil
+}
+
+func changeSetIsEmpty(d *ChangeSetDescription) bool {
+	return (len(d.Changes) == 0 && strings.Contains(d.StatusReason, "didn't contain changes")) ||
+		d.StatusReason == noChangesReason ||
+		d.StatusReason == noUpdatesReason
 }

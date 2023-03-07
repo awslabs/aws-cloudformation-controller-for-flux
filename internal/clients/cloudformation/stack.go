@@ -12,9 +12,10 @@ import (
 
 // Stack represents a AWS CloudFormation stack.
 type Stack struct {
-	Name       string
-	Region     string
-	Generation int64
+	Name         string
+	Region       string
+	Generation   int64
+	ChangeSetArn string
 	*stackConfig
 }
 
