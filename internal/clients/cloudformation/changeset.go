@@ -23,8 +23,33 @@ const (
 	noUpdatesReason = "NO_UPDATES_REASON"
 )
 
+var (
+	inProgressChangeSetStatuses = []types.ChangeSetStatus{
+		types.ChangeSetStatusCreateInProgress,
+		types.ChangeSetStatusCreatePending,
+		types.ChangeSetStatusDeleteInProgress,
+		types.ChangeSetStatusDeletePending,
+	}
+
+	failedChangeSetStatuses = []types.ChangeSetStatus{
+		types.ChangeSetStatusDeleteFailed,
+		types.ChangeSetStatusFailed,
+	}
+
+	inProgressChangeSetExecutionStatuses = []types.ExecutionStatus{
+		types.ExecutionStatusExecuteInProgress,
+		types.ExecutionStatusUnavailable,
+	}
+
+	failedChangeSetExecutionStatuses = []types.ExecutionStatus{
+		types.ExecutionStatusExecuteFailed,
+		types.ExecutionStatusObsolete,
+	}
+)
+
 // ChangeSetDescription is the output of the DescribeChangeSet action.
 type ChangeSetDescription struct {
+	Status          types.ChangeSetStatus
 	ExecutionStatus types.ExecutionStatus
 	StatusReason    string
 	CreationTime    time.Time
@@ -105,6 +130,7 @@ func (cs *changeSet) create(conf *stackConfig) (string, error) {
 
 // describe collects all the changes and statuses that the change set will apply and returns them.
 func (cs *changeSet) describe() (*ChangeSetDescription, error) {
+	var status types.ChangeSetStatus
 	var executionStatus types.ExecutionStatus
 	var statusReason string
 	var creationTime time.Time
@@ -121,6 +147,7 @@ func (cs *changeSet) describe() (*ChangeSetDescription, error) {
 		if err != nil {
 			return nil, fmt.Errorf("describe %s: %w", cs, err)
 		}
+		status = out.Status
 		executionStatus = out.ExecutionStatus
 		statusReason = *out.StatusReason
 		creationTime = *out.CreationTime
@@ -132,6 +159,7 @@ func (cs *changeSet) describe() (*ChangeSetDescription, error) {
 		}
 	}
 	return &ChangeSetDescription{
+		Status:          status,
 		ExecutionStatus: executionStatus,
 		StatusReason:    statusReason,
 		CreationTime:    creationTime,
@@ -167,8 +195,52 @@ func (cs *changeSet) delete() error {
 	return nil
 }
 
-func changeSetIsEmpty(d *ChangeSetDescription) bool {
+func (d *ChangeSetDescription) IsEmpty() bool {
 	return (len(d.Changes) == 0 && strings.Contains(d.StatusReason, "didn't contain changes")) ||
 		d.StatusReason == noChangesReason ||
 		d.StatusReason == noUpdatesReason
+}
+
+func (d *ChangeSetDescription) IsDeleted() bool {
+	return d.Status == types.ChangeSetStatusDeleteComplete
+}
+
+func (d *ChangeSetDescription) IsCreated() bool {
+	return d.Status == types.ChangeSetStatusCreateComplete
+}
+
+func (d *ChangeSetDescription) InProgress() bool {
+	return changesetStatusListContains(d.Status, inProgressChangeSetStatuses) ||
+		changesetExecutionStatusListContains(d.ExecutionStatus, inProgressChangeSetExecutionStatuses)
+}
+
+func (d *ChangeSetDescription) IsFailed() bool {
+	return changesetStatusListContains(d.Status, failedChangeSetStatuses) ||
+		changesetExecutionStatusListContains(d.ExecutionStatus, failedChangeSetExecutionStatuses)
+}
+
+func (d *ChangeSetDescription) IsSuccess() bool {
+	return d.IsCreated() && d.ExecutionStatus == types.ExecutionStatusExecuteComplete
+}
+
+func (d *ChangeSetDescription) ReadyForExecution() bool {
+	return d.IsCreated() && d.ExecutionStatus == types.ExecutionStatusAvailable
+}
+
+func changesetStatusListContains(element types.ChangeSetStatus, statusList []types.ChangeSetStatus) bool {
+	for _, status := range statusList {
+		if element == status {
+			return true
+		}
+	}
+	return false
+}
+
+func changesetExecutionStatusListContains(element types.ExecutionStatus, statusList []types.ExecutionStatus) bool {
+	for _, status := range statusList {
+		if element == status {
+			return true
+		}
+	}
+	return false
 }
