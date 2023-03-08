@@ -288,7 +288,9 @@ func (r *CloudFormationStackReconciler) reconcileStack(ctx context.Context, cfnS
 
 	// Keep polling if the stack is still in progress
 	if desc.InProgress() {
-		// TODO do we need to set a status here?
+		msg := fmt.Sprintf("Deployment of stack '%s' in progress (status: '%s')", cfnStack.Name, desc.StackStatus)
+		log.Info(msg)
+		cfnStack = cfnv1.CloudFormationStackProgressing(cfnStack, msg)
 		return cfnStack, cfnStack.Spec.PollInterval.Duration, nil
 	}
 
@@ -301,6 +303,9 @@ func (r *CloudFormationStackReconciler) reconcileStack(ctx context.Context, cfnS
 			return cfnStack, cfnStack.GetRetryInterval(), err
 		}
 		// TODO emit a failure event for the recoverable failure, but keep the stack object in 'Progressing' status
+		msg := fmt.Sprintf("Stack '%s' has a previously failed update rollback (status '%s'), continuing rollback", cfnStack.Name, desc.StackStatus)
+		log.Info(msg)
+		cfnStack = cfnv1.CloudFormationStackProgressing(cfnStack, msg)
 		return cfnStack, cfnStack.Spec.PollInterval.Duration, nil
 	}
 
@@ -332,7 +337,6 @@ func (r *CloudFormationStackReconciler) reconcileStack(ctx context.Context, cfnS
 }
 
 func (r *CloudFormationStackReconciler) reconcileChangeset(ctx context.Context, cfnStack cfnv1.CloudFormationStack, clientStack *cloudformation.Stack, revision string, isCreate bool) (cfnv1.CloudFormationStack, time.Duration, error) {
-	// TODO need to update stack conditions everywhere before returning
 	log := ctrl.LoggerFrom(ctx)
 
 	desc, err := r.CfnClient.DescribeChangeSet(clientStack)
@@ -351,7 +355,9 @@ func (r *CloudFormationStackReconciler) reconcileChangeset(ctx context.Context, 
 				return cfnStack, cfnStack.GetRetryInterval(), err
 			}
 			// TODO figure out how to save the new change set ARN to the stack object
-			// TODO do we need to set a status here?
+			msg := fmt.Sprintf("Stack creation for stack '%s' in progress", cfnStack.Name)
+			log.Info(msg)
+			cfnStack = cfnv1.CloudFormationStackProgressing(cfnStack, msg)
 			return cfnStack, cfnStack.Spec.PollInterval.Duration, nil
 		} else if errors.As(err, &emptyErr) {
 			// This changeset was empty, meaning that the stack is up to date with the latest template
@@ -388,7 +394,9 @@ func (r *CloudFormationStackReconciler) reconcileChangeset(ctx context.Context, 
 
 	// Keep polling if the change set is still in progress
 	if desc.InProgress() {
-		// TODO do we need to set a status here?
+		msg := fmt.Sprintf("Change set is in progress for stack '%s': status '%s', execution status '%s', reason '%s'", cfnStack.Name, desc.Status, desc.ExecutionStatus, desc.StatusReason)
+		log.Info(msg)
+		cfnStack = cfnv1.CloudFormationStackProgressing(cfnStack, msg)
 		return cfnStack, cfnStack.Spec.PollInterval.Duration, nil
 	}
 
@@ -406,7 +414,9 @@ func (r *CloudFormationStackReconciler) reconcileChangeset(ctx context.Context, 
 			cfnStack = cfnv1.CloudFormationStackNotReady(cfnStack, revision, cfnv1.CloudFormationApiCallFailedReason, msg)
 			return cfnStack, cfnStack.GetRetryInterval(), err
 		}
-		// TODO do we need to set a status here?
+		msg := fmt.Sprintf("Change set execution started for stack '%s'", cfnStack.Name)
+		log.Info(msg)
+		cfnStack = cfnv1.CloudFormationStackProgressing(cfnStack, msg)
 		return cfnStack, cfnStack.Spec.PollInterval.Duration, nil
 	}
 
@@ -446,7 +456,9 @@ func (r *CloudFormationStackReconciler) reconcileDelete(ctx context.Context, cfn
 
 		if desc.InProgress() {
 			// Let the current action complete before deleting the stack
-			cfnStack = cfnv1.CloudFormationStackProgressing(cfnStack, "Stack deletion in progress")
+			msg := fmt.Sprintf("Stack action in progress for stack marked for deletion '%s'", cfnStack.Name)
+			log.Info(msg)
+			cfnStack = cfnv1.CloudFormationStackProgressing(cfnStack, msg)
 			return cfnStack, ctrl.Result{RequeueAfter: cfnStack.Spec.PollInterval.Duration}, err
 		}
 
@@ -459,7 +471,9 @@ func (r *CloudFormationStackReconciler) reconcileDelete(ctx context.Context, cfn
 				return cfnStack, ctrl.Result{RequeueAfter: cfnStack.GetRetryInterval()}, err
 			}
 			// TODO emit error event if we entered delete failed state
-			cfnStack = cfnv1.CloudFormationStackProgressing(cfnStack, "Stack deletion in progress")
+			msg := fmt.Sprintf("Started deletion of stack '%s'", cfnStack.Name)
+			log.Info(msg)
+			cfnStack = cfnv1.CloudFormationStackProgressing(cfnStack, msg)
 			return cfnStack, ctrl.Result{RequeueAfter: cfnStack.Spec.PollInterval.Duration}, nil
 		}
 
