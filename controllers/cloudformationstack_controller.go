@@ -20,6 +20,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/source"
@@ -136,7 +137,7 @@ func (r *CloudFormationStackReconciler) Reconcile(ctx context.Context, req ctrl.
 	defer r.recordSuspension(ctx, cfnStack)
 
 	// Add our finalizer if it does not exist
-	/*if !controllerutil.ContainsFinalizer(&cfnStack, cfnv1.CloudFormationStackFinalizer) {
+	if !controllerutil.ContainsFinalizer(&cfnStack, cfnv1.CloudFormationStackFinalizer) {
 		patch := client.MergeFrom(cfnStack.DeepCopy())
 		controllerutil.AddFinalizer(&cfnStack, cfnv1.CloudFormationStackFinalizer)
 		if err := r.Patch(ctx, &cfnStack, patch); err != nil {
@@ -144,7 +145,6 @@ func (r *CloudFormationStackReconciler) Reconcile(ctx context.Context, req ctrl.
 			return ctrl.Result{}, err
 		}
 	}
-	*/
 
 	// Check if the CloudFormationStack is suspended
 	if cfnStack.Spec.Suspend {
@@ -471,13 +471,10 @@ func (r *CloudFormationStackReconciler) reconcileDelete(ctx context.Context, cfn
 			var e *cloudformation.ErrStackNotFound
 			if errors.As(err, &e) {
 				// The stack is successfully deleted, no re-queue needed
-				// TODO Remove our finalizer from the list and update it.
-				/*controllerutil.RemoveFinalizer(&hr, cfnv1.CloudFormationStackFinalizer)
-				if err := r.Update(ctx, &hr); err != nil {
-					return ctrl.Result{}, err
-				}
-				*/
-				return cfnv1.CloudFormationStackReady(cfnStack, ""), ctrl.Result{}, nil
+				// Remove our finalizer from the list and update it.
+				controllerutil.RemoveFinalizer(&cfnStack, cfnv1.CloudFormationStackFinalizer)
+				err := r.Update(ctx, &cfnStack)
+				return cfnv1.CloudFormationStackReady(cfnStack, ""), ctrl.Result{}, err
 			} else {
 				msg := fmt.Sprintf("Failed to describe the stack '%s'", cfnStack.Name)
 				log.Error(err, msg)
@@ -516,7 +513,10 @@ func (r *CloudFormationStackReconciler) reconcileDelete(ctx context.Context, cfn
 	}
 
 	ctrl.LoggerFrom(ctx).Info("skipping CloudFormation stack deletion for suspended resource")
-	return cfnStack, ctrl.Result{}, nil
+	// Remove finalizer
+	controllerutil.RemoveFinalizer(&cfnStack, cfnv1.CloudFormationStackFinalizer)
+	err := r.Update(ctx, &cfnStack)
+	return cfnStack, ctrl.Result{}, err
 }
 
 // Converts the Flux controller stack type into the CloudFormation client stack type
