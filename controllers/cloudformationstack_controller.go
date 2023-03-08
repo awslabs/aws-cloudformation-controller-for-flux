@@ -253,34 +253,10 @@ func (r *CloudFormationStackReconciler) reconcile(ctx context.Context, cfnStack 
 		cfnStack = cfnv1.CloudFormationStackNotReady(cfnStack, "", cfnv1.ArtifactFailedReason, msg)
 		return cfnStack, ctrl.Result{RequeueAfter: cfnStack.GetRetryInterval()}, nil
 	}
-
-	// Check dependencies
-	/*if len(cfnStack.Spec.DependsOn) > 0 {
-		if err := r.checkDependencies(cfnStack); err != nil {
-			msg := fmt.Sprintf("dependencies do not meet ready condition (%s), retrying in %s",
-				err.Error(), r.requeueDependency.String())
-			r.event(ctx, cfnStack, hc.GetArtifact().Revision, eventv1.EventSeverityInfo, msg)
-			log.Info(msg)
-
-			// Exponential backoff would cause execution to be prolonged too much,
-			// instead we requeue on a fixed interval.
-			return cfnv1.HelmReleaseNotReady(cfnStack,
-				cfnv1.DependencyNotReadyReason, err.Error()), ctrl.Result{RequeueAfter: r.requeueDependency}, nil
-		}
-		log.Info("all dependencies are ready, proceeding with release")
-	}
-	*/
-
-	// Compose values
-	/*values, err := r.composeValues(ctx, cfnStack)
-	if err != nil {
-		r.event(ctx, cfnStack, cfnStack.Status.LastAttemptedRevision, eventv1.EventSeverityError, err.Error())
-		return cfnv1.HelmReleaseNotReady(cfnStack, cfnv1.InitFailedReason, err.Error()), ctrl.Result{Requeue: true}, nil
-	}
-	*/
+	revision := sourceObj.GetArtifact().Revision
 
 	// Reconcile CloudFormation stack
-	reconciledCfnStack, requeueInterval, err := r.reconcileStack(ctx, *cfnStack.DeepCopy(), templateContents)
+	reconciledCfnStack, requeueInterval, err := r.reconcileStack(ctx, *cfnStack.DeepCopy(), templateContents, revision)
 	if err != nil {
 		log.Error(err, "Failed to reconcile stack")
 		return reconciledCfnStack, ctrl.Result{RequeueAfter: requeueInterval}, err
@@ -289,7 +265,7 @@ func (r *CloudFormationStackReconciler) reconcile(ctx context.Context, cfnStack 
 	return reconciledCfnStack, ctrl.Result{RequeueAfter: requeueInterval}, nil
 }
 
-func (r *CloudFormationStackReconciler) reconcileStack(ctx context.Context, cfnStack cfnv1.CloudFormationStack, templateContents *bytes.Buffer) (cfnv1.CloudFormationStack, time.Duration, error) {
+func (r *CloudFormationStackReconciler) reconcileStack(ctx context.Context, cfnStack cfnv1.CloudFormationStack, templateContents *bytes.Buffer, revision string) (cfnv1.CloudFormationStack, time.Duration, error) {
 	log := ctrl.LoggerFrom(ctx)
 
 	clientStack := toClientStack(cfnStack)
@@ -297,53 +273,65 @@ func (r *CloudFormationStackReconciler) reconcileStack(ctx context.Context, cfnS
 
 	desc, err := r.CfnClient.DescribeStack(clientStack)
 
-	// TODO need to update stack conditions everywhere before returning
-
 	// Check if the stack exists; if not, create it
 	if err != nil {
 		var e *cloudformation.ErrStackNotFound
 		if errors.As(err, &e) {
-			return r.reconcileChangeset(ctx, cfnStack, clientStack, true)
+			return r.reconcileChangeset(ctx, cfnStack, clientStack, revision, true)
 		} else {
-			log.Error(err, "Failed to describe the stack")
+			msg := fmt.Sprintf("Failed to describe the stack '%s'", cfnStack.Name)
+			log.Error(err, msg)
+			cfnStack = cfnv1.CloudFormationStackNotReady(cfnStack, revision, cfnv1.CloudFormationApiCallFailedReason, msg)
 			return cfnStack, cfnStack.GetRetryInterval(), err
 		}
 	}
 
 	// Keep polling if the stack is still in progress
 	if desc.InProgress() {
+		// TODO do we need to set a status here?
 		return cfnStack, cfnStack.Spec.PollInterval.Duration, nil
 	}
 
 	// Continue rollback if a previous update rollback failed
 	if desc.RequiresRollbackContinuation() {
 		if err := r.CfnClient.ContinueRollback(clientStack); err != nil {
-			log.Error(err, "Failed to continue rollback")
+			msg := fmt.Sprintf("Failed to continue a failed rollback for stack '%s'", cfnStack.Name)
+			log.Error(err, msg)
+			cfnStack = cfnv1.CloudFormationStackNotReady(cfnStack, revision, cfnv1.CloudFormationApiCallFailedReason, msg)
 			return cfnStack, cfnStack.GetRetryInterval(), err
 		}
+		// TODO emit a failure event for the recoverable failure, but keep the stack object in 'Progressing' status
 		return cfnStack, cfnStack.Spec.PollInterval.Duration, nil
 	}
 
 	// Delete the stack if it has failed to create or delete
 	if desc.RequiresCleanup() {
 		if err := r.CfnClient.DeleteStack(clientStack); err != nil {
-			log.Error(err, "Failed to delete stack")
+			msg := fmt.Sprintf("Failed to delete the failed stack '%s'", cfnStack.Name)
+			log.Error(err, msg)
+			cfnStack = cfnv1.CloudFormationStackNotReady(cfnStack, revision, cfnv1.CloudFormationApiCallFailedReason, msg)
 			return cfnStack, cfnStack.GetRetryInterval(), err
 		}
-		return cfnStack, cfnStack.Spec.PollInterval.Duration, nil
+
+		msg := fmt.Sprintf("Stack '%s' is in an unrecoverable state and must be recreated: status '%s', reason '%s'", cfnStack.Name, desc.StackStatus, *desc.StackStatusReason)
+		log.Info(msg)
+		cfnStack = cfnv1.CloudFormationStackNotReady(cfnStack, revision, cfnv1.UnrecoverableStackFailureReason, msg)
+		return cfnStack, cfnStack.GetRetryInterval(), nil
 	}
 
 	// Check if the stack is ready for an update
 	if desc.IsSuccess() || desc.IsRecoverableFailure() {
-		return r.reconcileChangeset(ctx, cfnStack, clientStack, false)
+		// TODO emit a failure event for the recoverable failure, but keep the stack object in 'Progressing' status
+		return r.reconcileChangeset(ctx, cfnStack, clientStack, revision, false)
 	}
 
-	// Do nothing
-	// TODO should we be able to get here??
-	return cfnv1.CloudFormationStackReady(cfnStack), cfnStack.Spec.Interval.Duration, nil
+	msg := fmt.Sprintf("Unexpected stack status for stack '%s': status '%s', reason '%s'", cfnStack.Name, desc.StackStatus, *desc.StackStatusReason)
+	log.Info(msg)
+	cfnStack = cfnv1.CloudFormationStackNotReady(cfnStack, revision, cfnv1.UnexpectedStatusReason, msg)
+	return cfnStack, cfnStack.GetRetryInterval(), nil
 }
 
-func (r *CloudFormationStackReconciler) reconcileChangeset(ctx context.Context, cfnStack cfnv1.CloudFormationStack, clientStack *cloudformation.Stack, isCreate bool) (cfnv1.CloudFormationStack, time.Duration, error) {
+func (r *CloudFormationStackReconciler) reconcileChangeset(ctx context.Context, cfnStack cfnv1.CloudFormationStack, clientStack *cloudformation.Stack, revision string, isCreate bool) (cfnv1.CloudFormationStack, time.Duration, error) {
 	// TODO need to update stack conditions everywhere before returning
 	log := ctrl.LoggerFrom(ctx)
 
@@ -357,20 +345,28 @@ func (r *CloudFormationStackReconciler) reconcileChangeset(ctx context.Context, 
 		if errors.As(err, &notFoundErr) {
 			_, err := r.CfnClient.CreateStack(clientStack)
 			if err != nil {
-				log.Error(err, "Failed to create change set to create the stack")
+				msg := fmt.Sprintf("Failed to create a change set for stack '%s'", cfnStack.Name)
+				log.Error(err, msg)
+				cfnStack = cfnv1.CloudFormationStackNotReady(cfnStack, revision, cfnv1.CloudFormationApiCallFailedReason, msg)
 				return cfnStack, cfnStack.GetRetryInterval(), err
 			}
 			// TODO figure out how to save the new change set ARN to the stack object
+			// TODO do we need to set a status here?
 			return cfnStack, cfnStack.Spec.PollInterval.Duration, nil
 		} else if errors.As(err, &emptyErr) {
 			// This changeset was empty, meaning that the stack is up to date with the latest template
 			if err := r.CfnClient.DeleteChangeSet(clientStack); err != nil {
-				log.Error(err, "Failed to delete empty change set")
+				msg := fmt.Sprintf("Failed to delete an empty change set for stack '%s'", cfnStack.Name)
+				log.Error(err, msg)
+				cfnStack = cfnv1.CloudFormationStackNotReady(cfnStack, revision, cfnv1.CloudFormationApiCallFailedReason, msg)
 				return cfnStack, cfnStack.GetRetryInterval(), err
 			}
+			// Success!
 			return cfnv1.CloudFormationStackReady(cfnStack), cfnStack.Spec.Interval.Duration, nil
 		} else {
-			log.Error(err, "Failed to describe the change set")
+			msg := fmt.Sprintf("Failed to describe a change set for stack '%s'", cfnStack.Name)
+			log.Error(err, msg)
+			cfnStack = cfnv1.CloudFormationStackNotReady(cfnStack, revision, cfnv1.CloudFormationApiCallFailedReason, msg)
 			return cfnStack, cfnStack.GetRetryInterval(), err
 		}
 	}
@@ -378,33 +374,46 @@ func (r *CloudFormationStackReconciler) reconcileChangeset(ctx context.Context, 
 	// If change set failed, delete it so we can create it again
 	if desc.IsFailed() {
 		if err := r.CfnClient.DeleteChangeSet(clientStack); err != nil {
-			log.Error(err, "Failed to delete failed change set")
+			msg := fmt.Sprintf("Failed to delete a failed change set for stack '%s'", cfnStack.Name)
+			log.Error(err, msg)
+			cfnStack = cfnv1.CloudFormationStackNotReady(cfnStack, revision, cfnv1.CloudFormationApiCallFailedReason, msg)
 			return cfnStack, cfnStack.GetRetryInterval(), err
 		}
+
+		msg := fmt.Sprintf("Change set failed for stack '%s': status '%s', execution status '%s', reason '%s'", cfnStack.Name, desc.Status, desc.ExecutionStatus, desc.StatusReason)
+		log.Info(msg)
+		cfnStack = cfnv1.CloudFormationStackNotReady(cfnStack, revision, cfnv1.ChangeSetFailedReason, msg)
 		return cfnStack, cfnStack.GetRetryInterval(), nil
 	}
 
 	// Keep polling if the change set is still in progress
 	if desc.InProgress() {
+		// TODO do we need to set a status here?
 		return cfnStack, cfnStack.Spec.PollInterval.Duration, nil
 	}
 
 	// This changeset was successfully applied, meaning that the stack is up to date with the latest template
 	if desc.IsSuccess() {
+		// Success!
 		return cfnv1.CloudFormationStackReady(cfnStack), cfnStack.Spec.Interval.Duration, nil
 	}
 
 	// Start the change set execution
 	if desc.ReadyForExecution() {
 		if err := r.CfnClient.ExecuteChangeSet(clientStack); err != nil {
-			log.Error(err, "Failed to execute change set")
+			msg := fmt.Sprintf("Failed to execute a change set for stack '%s'", cfnStack.Name)
+			log.Error(err, msg)
+			cfnStack = cfnv1.CloudFormationStackNotReady(cfnStack, revision, cfnv1.CloudFormationApiCallFailedReason, msg)
 			return cfnStack, cfnStack.GetRetryInterval(), err
 		}
+		// TODO do we need to set a status here?
 		return cfnStack, cfnStack.Spec.PollInterval.Duration, nil
 	}
 
-	// TODO should we be able to get here??
-	return cfnv1.CloudFormationStackReady(cfnStack), cfnStack.Spec.Interval.Duration, nil
+	msg := fmt.Sprintf("Unexpected change set status for stack '%s': status '%s', execution status '%s', reason '%s'", cfnStack.Name, desc.Status, desc.ExecutionStatus, desc.StatusReason)
+	log.Info(msg)
+	cfnStack = cfnv1.CloudFormationStackNotReady(cfnStack, revision, cfnv1.UnexpectedStatusReason, msg)
+	return cfnStack, cfnStack.GetRetryInterval(), nil
 }
 
 // reconcileDelete deletes the CloudFormation stack.
@@ -420,40 +429,47 @@ func (r *CloudFormationStackReconciler) reconcileDelete(ctx context.Context, cfn
 			var e *cloudformation.ErrStackNotFound
 			if errors.As(err, &e) {
 				// The stack is successfully deleted, no re-queue needed
-				// TODO figure out the right status for successful deletion
+				// TODO Remove our finalizer from the list and update it.
+				/*controllerutil.RemoveFinalizer(&hr, cfnv1.CloudFormationStackFinalizer)
+				if err := r.Update(ctx, &hr); err != nil {
+					return ctrl.Result{}, err
+				}
+				*/
 				return cfnv1.CloudFormationStackReady(cfnStack), ctrl.Result{}, nil
 			} else {
-				log.Error(err, "Failed to describe the stack")
+				msg := fmt.Sprintf("Failed to describe the stack '%s'", cfnStack.Name)
+				log.Error(err, msg)
+				cfnStack = cfnv1.CloudFormationStackNotReady(cfnStack, "", cfnv1.CloudFormationApiCallFailedReason, msg)
 				return cfnStack, ctrl.Result{RequeueAfter: cfnStack.GetRetryInterval()}, err
 			}
 		}
 
 		if desc.InProgress() {
 			// Let the current action complete before deleting the stack
+			cfnStack = cfnv1.CloudFormationStackProgressing(cfnStack, "Stack deletion in progress")
 			return cfnStack, ctrl.Result{RequeueAfter: cfnStack.Spec.PollInterval.Duration}, err
 		}
 
 		if desc.ReadyForCleanup() {
 			// start the stack deletion
 			if err := r.CfnClient.DeleteStack(clientStack); err != nil {
-				log.Error(err, "Failed to delete stack")
+				msg := fmt.Sprintf("Failed to delete the stack '%s'", cfnStack.Name)
+				log.Error(err, msg)
+				cfnStack = cfnv1.CloudFormationStackNotReady(cfnStack, "", cfnv1.CloudFormationApiCallFailedReason, msg)
 				return cfnStack, ctrl.Result{RequeueAfter: cfnStack.GetRetryInterval()}, err
 			}
+			// TODO emit error event if we entered delete failed state
+			cfnStack = cfnv1.CloudFormationStackProgressing(cfnStack, "Stack deletion in progress")
 			return cfnStack, ctrl.Result{RequeueAfter: cfnStack.Spec.PollInterval.Duration}, nil
 		}
 
-		// TODO should we be able to get here??
-	} else {
-		ctrl.LoggerFrom(ctx).Info("skipping CloudFormation stack deletion for suspended resource")
+		msg := fmt.Sprintf("Unexpected stack status for stack '%s': %s (reason '%s')", cfnStack.Name, desc.StackStatus, *desc.StackStatusReason)
+		log.Error(err, msg)
+		cfnStack = cfnv1.CloudFormationStackNotReady(cfnStack, "", cfnv1.UnexpectedStatusReason, msg)
+		return cfnStack, ctrl.Result{RequeueAfter: cfnStack.GetRetryInterval()}, err
 	}
 
-	// Remove our finalizer from the list and update it.
-	/*controllerutil.RemoveFinalizer(&hr, cfnv1.CloudFormationStackFinalizer)
-	if err := r.Update(ctx, &hr); err != nil {
-		return ctrl.Result{}, err
-	}
-	*/
-
+	ctrl.LoggerFrom(ctx).Info("skipping CloudFormation stack deletion for suspended resource")
 	return cfnStack, ctrl.Result{}, nil
 }
 

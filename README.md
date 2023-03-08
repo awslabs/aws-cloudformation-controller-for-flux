@@ -2,6 +2,7 @@
 
 TODO:
 * Implement finalizer
+* Emit events for failed reconciliation attempts
 * Support for large templates (upload to S3 first)
 * Support for stack parameters
 * Support for stack tags

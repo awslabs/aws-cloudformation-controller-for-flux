@@ -162,11 +162,15 @@ type CloudFormationStackList struct {
 	Items           []CloudFormationStack `json:"items"`
 }
 
-// The potential reasons that are associated with condition types
+// The potential reasons that are associated with the condition types
 const (
-	ArtifactFailedReason          = "ArtifactFailed"
-	DependencyNotReadyReason      = "DependencyNotReady"
-	ReconciliationSucceededReason = "ReconciliationSucceededReason"
+	ArtifactFailedReason              = "ArtifactFailed"
+	ChangeSetFailedReason             = "ChangeSetFailed"
+	CloudFormationApiCallFailedReason = "CloudFormationApiCallFailed"
+	UnrecoverableStackFailureReason   = "UnrecoverableStackFailure"
+	DependencyNotReadyReason          = "DependencyNotReady"
+	UnexpectedStatusReason            = "UnexpectedStatus"
+	ReconciliationSucceededReason     = "ReconciliationSucceededReason"
 )
 
 // SetCloudFormationStackReadiness sets the ReadyCondition, ObservedGeneration, and LastAttemptedRevision
@@ -217,7 +221,7 @@ func CloudFormationStackReady(cfnStack CloudFormationStack) CloudFormationStack 
 		&cfnStack,
 		metav1.ConditionTrue,
 		ReconciliationSucceededReason,
-		"Release reconciliation succeeded",
+		"Stack reconciliation succeeded",
 		cfnStack.Status.LastAttemptedRevision,
 	)
 	cfnStack.Status.LastAppliedRevision = cfnStack.Status.LastAttemptedRevision
