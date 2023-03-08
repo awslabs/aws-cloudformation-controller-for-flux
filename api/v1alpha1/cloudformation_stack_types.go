@@ -131,6 +131,14 @@ type CloudFormationStackStatus struct {
 	// +optional
 	LastAttemptedRevision string `json:"lastAttemptedRevision,omitempty"`
 
+	// LastAppliedChangeSet is the ARN of the last successfully applied CloudFormation change set.
+	// +optional
+	LastAppliedChangeSet string `json:"lastAppliedChangeSet,omitempty"`
+
+	// LastAttemptedChangeSet is the ARN of the CloudFormation change set for the last reconciliation attempt.
+	// +optional
+	LastAttemptedChangeSet string `json:"lastAttemptedChangeSet,omitempty"`
+
 	// StackName is the name of the CloudFormation stack created by
 	// the controller for the CloudFormationStack resource.
 	// +optional
@@ -170,61 +178,64 @@ const (
 	UnrecoverableStackFailureReason   = "UnrecoverableStackFailure"
 	DependencyNotReadyReason          = "DependencyNotReady"
 	UnexpectedStatusReason            = "UnexpectedStatus"
-	ReconciliationSucceededReason     = "ReconciliationSucceededReason"
 )
 
-// SetCloudFormationStackReadiness sets the ReadyCondition, ObservedGeneration, and LastAttemptedRevision
+type ReadinessUpdate struct {
+	Reason         string
+	Message        string
+	SourceRevision string
+	ChangeSetArn   string
+}
+
+// SetCloudFormationStackReadiness sets the ReadyCondition, ObservedGeneration, LastAttemptedChangeSet, and LastAttemptedRevision
 // on the CloudFormation stack.
-func SetCloudFormationStackReadiness(cfnStack *CloudFormationStack, status metav1.ConditionStatus, reason, message string, revision string) {
+func SetCloudFormationStackReadiness(cfnStack *CloudFormationStack, status metav1.ConditionStatus, update ReadinessUpdate) {
 	newCondition := metav1.Condition{
 		Type:    meta.ReadyCondition,
 		Status:  status,
-		Reason:  reason,
-		Message: message,
+		Reason:  update.Reason,
+		Message: update.Message,
 	}
 
 	apimeta.SetStatusCondition(cfnStack.GetStatusConditions(), newCondition)
 	cfnStack.Status.ObservedGeneration = cfnStack.Generation
-	if revision != "" {
-		cfnStack.Status.LastAttemptedRevision = revision
+	cfnStack.Status.StackName = cfnStack.Spec.StackName
+	if update.SourceRevision != "" {
+		cfnStack.Status.LastAttemptedRevision = update.SourceRevision
+	}
+	if update.ChangeSetArn != "" {
+		cfnStack.Status.LastAttemptedChangeSet = update.ChangeSetArn
 	}
 }
 
 // CloudFormationStackProgressing resets the conditions of the given CloudFormation
 // stack to a single ReadyCondition with status ConditionUnknown.
-func CloudFormationStackProgressing(cfnStack CloudFormationStack, message string) CloudFormationStack {
-	newCondition := metav1.Condition{
-		Type:    meta.ReadyCondition,
-		Status:  metav1.ConditionUnknown,
-		Reason:  meta.ProgressingReason,
-		Message: message,
-	}
-	apimeta.SetStatusCondition(cfnStack.GetStatusConditions(), newCondition)
+func CloudFormationStackProgressing(cfnStack CloudFormationStack, update ReadinessUpdate) CloudFormationStack {
+	update.Reason = meta.ProgressingReason
+	SetCloudFormationStackReadiness(&cfnStack, metav1.ConditionUnknown, update)
 	return cfnStack
 }
 
 // CloudFormationStackNotReady registers a failed reconciliation attempt of the given CloudFormation stack.
-func CloudFormationStackNotReady(cfnStack CloudFormationStack, revision, reason, message string) CloudFormationStack {
-	SetCloudFormationStackReadiness(
-		&cfnStack,
-		metav1.ConditionFalse,
-		reason,
-		message,
-		revision,
-	)
+func CloudFormationStackNotReady(cfnStack CloudFormationStack, update ReadinessUpdate) CloudFormationStack {
+	SetCloudFormationStackReadiness(&cfnStack, metav1.ConditionFalse, update)
 	return cfnStack
 }
 
 // CloudFormationStackReady registers a successful reconciliation of the given CloudFormation stack.
-func CloudFormationStackReady(cfnStack CloudFormationStack) CloudFormationStack {
+func CloudFormationStackReady(cfnStack CloudFormationStack, changeSetArn string) CloudFormationStack {
 	SetCloudFormationStackReadiness(
 		&cfnStack,
 		metav1.ConditionTrue,
-		ReconciliationSucceededReason,
-		"Stack reconciliation succeeded",
-		cfnStack.Status.LastAttemptedRevision,
+		ReadinessUpdate{
+			Reason:         meta.SucceededReason,
+			Message:        "Stack reconciliation succeeded",
+			SourceRevision: cfnStack.Status.LastAttemptedRevision,
+			ChangeSetArn:   changeSetArn,
+		},
 	)
 	cfnStack.Status.LastAppliedRevision = cfnStack.Status.LastAttemptedRevision
+	cfnStack.Status.LastAppliedChangeSet = cfnStack.Status.LastAttemptedChangeSet
 	return cfnStack
 }
 

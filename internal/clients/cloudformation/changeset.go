@@ -49,6 +49,7 @@ var (
 
 // ChangeSetDescription is the output of the DescribeChangeSet action.
 type ChangeSetDescription struct {
+	Arn             string
 	Status          types.ChangeSetStatus
 	ExecutionStatus types.ExecutionStatus
 	StatusReason    string
@@ -66,6 +67,9 @@ type changeSet struct {
 }
 
 func getChangeSetId(generation int64) string {
+	// TODO Determine whether this is enough uniqueness:
+	// Does the generation change when the source revision changes?
+	// Does the generation change when the status changes?
 	return fmt.Sprintf(fmtChangeSetName, generation)
 }
 
@@ -130,6 +134,7 @@ func (cs *changeSet) create(conf *stackConfig) (string, error) {
 
 // describe collects all the changes and statuses that the change set will apply and returns them.
 func (cs *changeSet) describe() (*ChangeSetDescription, error) {
+	var arn string
 	var status types.ChangeSetStatus
 	var executionStatus types.ExecutionStatus
 	var statusReason string
@@ -147,6 +152,7 @@ func (cs *changeSet) describe() (*ChangeSetDescription, error) {
 		if err != nil {
 			return nil, fmt.Errorf("describe %s: %w", cs, err)
 		}
+		arn = *out.ChangeSetId
 		status = out.Status
 		executionStatus = out.ExecutionStatus
 		statusReason = *out.StatusReason
@@ -159,6 +165,7 @@ func (cs *changeSet) describe() (*ChangeSetDescription, error) {
 		}
 	}
 	return &ChangeSetDescription{
+		Arn:             arn,
 		Status:          status,
 		ExecutionStatus: executionStatus,
 		StatusReason:    statusReason,

@@ -89,6 +89,8 @@ func (c *CloudFormation) DescribeChangeSet(stack *Stack) (*ChangeSetDescription,
 		return nil, err
 	}
 
+	stack.ChangeSetArn = out.Arn
+
 	if out.IsDeleted() {
 		return nil, &ErrChangeSetNotFound{name: changeSetName, stackName: stack.Name}
 	}
@@ -96,7 +98,7 @@ func (c *CloudFormation) DescribeChangeSet(stack *Stack) (*ChangeSetDescription,
 	// The change set was empty. The status reason will be like
 	// "The submitted information didn't contain changes. Submit different information to create a change set."
 	if out.IsEmpty() {
-		return nil, &ErrChangeSetEmpty{name: changeSetName, stackName: stack.Name}
+		return nil, &ErrChangeSetEmpty{name: changeSetName, stackName: stack.Name, Arn: out.Arn}
 	}
 
 	return out, nil

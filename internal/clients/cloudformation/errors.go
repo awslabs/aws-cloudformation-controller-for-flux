@@ -15,18 +15,11 @@ import (
 type ErrChangeSetEmpty struct {
 	name      string
 	stackName string
+	Arn       string
 }
 
 func (e *ErrChangeSetEmpty) Error() string {
 	return fmt.Sprintf("change set with name %s for stack %s has no changes", e.name, e.stackName)
-}
-
-// NewMockErrChangeSetEmpty creates a mock ErrChangeSetEmpty.
-func NewMockErrChangeSetEmpty() *ErrChangeSetEmpty {
-	return &ErrChangeSetEmpty{
-		name:      "mockChangeSet",
-		stackName: "mockStack",
-	}
 }
 
 // ErrStackNotFound occurs when a CloudFormation stack does not exist.
