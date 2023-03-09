@@ -74,10 +74,12 @@ type changeSet struct {
 // getChangeSetId generates a unique change set ID using the generation number
 // (a specific version of the CloudFormationStack Spec contents) and the source
 // revision (such as the branch and commit ID for git sources).
+//
 // Examples:
-//   Git repository: main@sha1:132f4e719209eb10b9485302f8593fc0e680f4fc
-//   Bucket: sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
-//   OCI repository: latest@sha256:3b6cdcc7adcc9a84d3214ee1c029543789d90b5ae69debe9efa3f66e982875de
+//
+//	Git repository: main@sha1:132f4e719209eb10b9485302f8593fc0e680f4fc
+//	Bucket: sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+//	OCI repository: latest@sha256:3b6cdcc7adcc9a84d3214ee1c029543789d90b5ae69debe9efa3f66e982875de
 func getChangeSetId(generation int64, sourceRevision string) string {
 	name := fmt.Sprintf(fmtChangeSetName, generation, sourceRevision)
 	name = changeSetNameSpecialChars.ReplaceAllString(name, "-")
