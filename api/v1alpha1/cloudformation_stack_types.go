@@ -28,10 +28,6 @@ type CloudFormationStackSpec struct {
 	// +required
 	StackName string `json:"stackName,omitempty"`
 
-	// AWS Region for the CloudFormation stack.
-	// +required
-	Region string `json:"region,omitempty"`
-
 	// Path to the CloudFormation template file.
 	// Defaults to the root path of the SourceRef and filename 'template.yaml'.
 	// +optional

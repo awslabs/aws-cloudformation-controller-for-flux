@@ -522,8 +522,8 @@ func (r *CloudFormationStackReconciler) reconcileDelete(ctx context.Context, cfn
 // Converts the Flux controller stack type into the CloudFormation client stack type
 func toClientStack(cfnStack cfnv1.CloudFormationStack, revision string) *cloudformation.Stack {
 	return &cloudformation.Stack{
-		Name:           cfnStack.Spec.StackName,
-		Region:         cfnStack.Spec.Region,
+		Name: cfnStack.Spec.StackName,
+		// Region:         cfnStack.Spec.Region,
 		Generation:     cfnStack.Generation,
 		SourceRevision: revision,
 		ChangeSetArn:   cfnStack.Status.LastAttemptedChangeSet,

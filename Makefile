@@ -63,7 +63,7 @@ build: generate fmt vet manifests
 
 # Run a controller from your host.
 run: generate fmt vet install
-	SOURCE_CONTROLLER_LOCALHOST=localhost:30000 go run ./main.go
+	SOURCE_CONTROLLER_LOCALHOST=localhost:30000 AWS_REGION=us-west-2 go run ./main.go
 
 # Install CRDs into a cluster
 install: manifests
