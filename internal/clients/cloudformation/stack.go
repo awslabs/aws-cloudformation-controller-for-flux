@@ -46,10 +46,11 @@ var (
 
 // Stack represents a AWS CloudFormation stack.
 type Stack struct {
-	Name         string
-	Region       string
-	Generation   int64
-	ChangeSetArn string
+	Name           string
+	Region         string
+	Generation     int64
+	SourceRevision string
+	ChangeSetArn   string
 	*stackConfig
 }
 

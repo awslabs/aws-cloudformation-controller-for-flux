@@ -267,7 +267,7 @@ func (r *CloudFormationStackReconciler) reconcile(ctx context.Context, cfnStack 
 func (r *CloudFormationStackReconciler) reconcileStack(ctx context.Context, cfnStack cfnv1.CloudFormationStack, templateContents *bytes.Buffer, revision string) (cfnv1.CloudFormationStack, time.Duration, error) {
 	log := ctrl.LoggerFrom(ctx)
 
-	clientStack := toClientStack(cfnStack)
+	clientStack := toClientStack(cfnStack, revision)
 	clientStack.TemplateBody = templateContents.String()
 
 	desc, err := r.CfnClient.DescribeStack(clientStack)
@@ -464,7 +464,7 @@ func (r *CloudFormationStackReconciler) reconcileDelete(ctx context.Context, cfn
 	r.recordReadiness(ctx, cfnStack)
 
 	if !cfnStack.Spec.Suspend {
-		clientStack := toClientStack(cfnStack)
+		clientStack := toClientStack(cfnStack, cfnStack.Status.LastAttemptedRevision)
 		desc, err := r.CfnClient.DescribeStack(clientStack)
 
 		if err != nil {
@@ -520,11 +520,12 @@ func (r *CloudFormationStackReconciler) reconcileDelete(ctx context.Context, cfn
 }
 
 // Converts the Flux controller stack type into the CloudFormation client stack type
-func toClientStack(cfnStack cfnv1.CloudFormationStack) *cloudformation.Stack {
+func toClientStack(cfnStack cfnv1.CloudFormationStack, revision string) *cloudformation.Stack {
 	return &cloudformation.Stack{
-		Name:         cfnStack.Spec.StackName,
-		Region:       cfnStack.Spec.Region,
-		Generation:   cfnStack.Generation,
-		ChangeSetArn: cfnStack.Status.LastAttemptedChangeSet,
+		Name:           cfnStack.Spec.StackName,
+		Region:         cfnStack.Spec.Region,
+		Generation:     cfnStack.Generation,
+		SourceRevision: revision,
+		ChangeSetArn:   cfnStack.Status.LastAttemptedChangeSet,
 	}
 }

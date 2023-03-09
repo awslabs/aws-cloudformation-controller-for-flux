@@ -6,6 +6,7 @@ package cloudformation
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
@@ -16,7 +17,8 @@ import (
 
 const (
 	// The change set name will be formatted as "flux-<generation sequence number>".
-	fmtChangeSetName = "flux-%d"
+	fmtChangeSetName       = "flux-%d-%s"
+	maxLengthChangeSetName = 128
 
 	// Status reasons that can occur if the change set execution status is "FAILED".
 	noChangesReason = "NO_CHANGES_REASON"
@@ -45,6 +47,9 @@ var (
 		types.ExecutionStatusExecuteFailed,
 		types.ExecutionStatusObsolete,
 	}
+
+	// all except alphanumeric characters
+	changeSetNameSpecialChars, _ = regexp.Compile("[^a-zA-Z0-9]+")
 )
 
 // ChangeSetDescription is the output of the DescribeChangeSet action.
@@ -66,16 +71,25 @@ type changeSet struct {
 	ctx       context.Context
 }
 
-func getChangeSetId(generation int64) string {
-	// TODO Determine whether this is enough uniqueness:
-	// Does the generation change when the source revision changes?
-	// Does the generation change when the status changes?
-	return fmt.Sprintf(fmtChangeSetName, generation)
+// getChangeSetId generates a unique change set ID using the generation number
+// (a specific version of the CloudFormationStack Spec contents) and the source
+// revision (such as the branch and commit ID for git sources).
+// Examples:
+//   Git repository: main@sha1:132f4e719209eb10b9485302f8593fc0e680f4fc
+//   Bucket: sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+//   OCI repository: latest@sha256:3b6cdcc7adcc9a84d3214ee1c029543789d90b5ae69debe9efa3f66e982875de
+func getChangeSetId(generation int64, sourceRevision string) string {
+	name := fmt.Sprintf(fmtChangeSetName, generation, sourceRevision)
+	name = changeSetNameSpecialChars.ReplaceAllString(name, "-")
+	if len(name) <= maxLengthChangeSetName {
+		return name
+	}
+	return name[:maxLengthChangeSetName]
 }
 
-func newCreateChangeSet(ctx context.Context, cfnClient changeSetAPI, region string, stackName string, generation int64) (*changeSet, error) {
+func newCreateChangeSet(ctx context.Context, cfnClient changeSetAPI, region string, stackName string, generation int64, sourceRevision string) (*changeSet, error) {
 	return &changeSet{
-		name:      getChangeSetId(generation),
+		name:      getChangeSetId(generation, sourceRevision),
 		stackName: stackName,
 		region:    region,
 		csType:    types.ChangeSetTypeCreate,
@@ -84,9 +98,9 @@ func newCreateChangeSet(ctx context.Context, cfnClient changeSetAPI, region stri
 	}, nil
 }
 
-func newUpdateChangeSet(ctx context.Context, cfnClient changeSetAPI, region string, stackName string, generation int64) (*changeSet, error) {
+func newUpdateChangeSet(ctx context.Context, cfnClient changeSetAPI, region string, stackName string, generation int64, sourceRevision string) (*changeSet, error) {
 	return &changeSet{
-		name:      getChangeSetId(generation),
+		name:      getChangeSetId(generation, sourceRevision),
 		stackName: stackName,
 		region:    region,
 		csType:    types.ChangeSetTypeUpdate,

@@ -123,19 +123,22 @@ type CloudFormationStackStatus struct {
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
 
 	// LastAppliedRevision is the revision of the last successfully applied source.
-	// The revision format for Git sources is <branch|tag>/<commit-sha>.
+	// The revision format for Git sources is <branch|tag>@sha1:<commit-sha>.
 	// +optional
 	LastAppliedRevision string `json:"lastAppliedRevision,omitempty"`
 
 	// LastAttemptedRevision is the revision of the last reconciliation attempt.
+	// The revision format for Git sources is <branch|tag>@sha1:<commit-sha>.
 	// +optional
 	LastAttemptedRevision string `json:"lastAttemptedRevision,omitempty"`
 
 	// LastAppliedChangeSet is the ARN of the last successfully applied CloudFormation change set.
+	// The change set name format is flux-<generation>-<source-revision>.
 	// +optional
 	LastAppliedChangeSet string `json:"lastAppliedChangeSet,omitempty"`
 
 	// LastAttemptedChangeSet is the ARN of the CloudFormation change set for the last reconciliation attempt.
+	// The change set name format is flux-<generation>-<source-revision>.
 	// +optional
 	LastAttemptedChangeSet string `json:"lastAttemptedChangeSet,omitempty"`
 
