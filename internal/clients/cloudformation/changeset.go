@@ -120,6 +120,7 @@ func (cs *changeSet) create(conf *StackConfig) (string, error) {
 	input := &cloudformation.CreateChangeSetInput{
 		ChangeSetName:       aws.String(cs.name),
 		StackName:           aws.String(cs.stackName),
+		Description:         aws.String("Managed by Flux"),
 		ChangeSetType:       cs.csType,
 		Parameters:          conf.Parameters,
 		Tags:                conf.Tags,
