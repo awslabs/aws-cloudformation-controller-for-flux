@@ -175,7 +175,9 @@ func (cs *changeSet) describe() (*ChangeSetDescription, error) {
 		arn = *out.ChangeSetId
 		status = out.Status
 		executionStatus = out.ExecutionStatus
-		statusReason = *out.StatusReason
+		if out.StatusReason != nil {
+			statusReason = *out.StatusReason
+		}
 		creationTime = *out.CreationTime
 		changes = append(changes, out.Changes...)
 		nextToken = out.NextToken

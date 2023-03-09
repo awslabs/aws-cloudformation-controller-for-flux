@@ -327,7 +327,10 @@ func (r *CloudFormationStackReconciler) reconcileStack(ctx context.Context, cfnS
 			return cfnStack, cfnStack.GetRetryInterval(), err
 		}
 
-		msg := fmt.Sprintf("Stack '%s' is in an unrecoverable state and must be recreated: status '%s', reason '%s'", cfnStack.Name, desc.StackStatus, *desc.StackStatusReason)
+		msg := fmt.Sprintf("Stack '%s' is in an unrecoverable state and must be recreated: status '%s'", cfnStack.Name, desc.StackStatus)
+		if desc.StackStatusReason != nil {
+			msg = fmt.Sprintf("%s, reason '%s'", msg, *desc.StackStatusReason)
+		}
 		log.Info(msg)
 		cfnStack = cfnv1.CloudFormationStackNotReady(cfnStack, cfnv1.ReadinessUpdate{SourceRevision: revision, Message: msg, Reason: cfnv1.UnrecoverableStackFailureReason})
 		return cfnStack, cfnStack.GetRetryInterval(), nil
@@ -339,7 +342,10 @@ func (r *CloudFormationStackReconciler) reconcileStack(ctx context.Context, cfnS
 		return r.reconcileChangeset(ctx, cfnStack, clientStack, revision, false)
 	}
 
-	msg := fmt.Sprintf("Unexpected stack status for stack '%s': status '%s', reason '%s'", cfnStack.Name, desc.StackStatus, *desc.StackStatusReason)
+	msg := fmt.Sprintf("Unexpected stack status for stack '%s': status '%s'", cfnStack.Name, desc.StackStatus)
+	if desc.StackStatusReason != nil {
+		msg = fmt.Sprintf("%s, reason '%s'", msg, *desc.StackStatusReason)
+	}
 	log.Info(msg)
 	cfnStack = cfnv1.CloudFormationStackNotReady(cfnStack, cfnv1.ReadinessUpdate{SourceRevision: revision, Message: msg, Reason: cfnv1.UnexpectedStatusReason})
 	return cfnStack, cfnStack.GetRetryInterval(), nil
@@ -390,6 +396,7 @@ func (r *CloudFormationStackReconciler) reconcileChangeset(ctx context.Context, 
 				return cfnStack, cfnStack.GetRetryInterval(), err
 			}
 			// Success!
+			log.Info(fmt.Sprintf("Successfully reconciled stack '%s' with change set '%s'", cfnStack.Name, emptyErr.Arn))
 			return cfnv1.CloudFormationStackReady(cfnStack, emptyErr.Arn), cfnStack.Spec.Interval.Duration, nil
 		} else {
 			msg := fmt.Sprintf("Failed to describe a change set for stack '%s'", cfnStack.Name)
@@ -435,6 +442,7 @@ func (r *CloudFormationStackReconciler) reconcileChangeset(ctx context.Context, 
 	// This changeset was successfully applied, meaning that the stack is up to date with the latest template
 	if desc.IsSuccess() {
 		// Success!
+		log.Info(fmt.Sprintf("Successfully reconciled stack '%s' with change set '%s'", cfnStack.Name, desc.Arn))
 		return cfnv1.CloudFormationStackReady(cfnStack, desc.Arn), cfnStack.Spec.Interval.Duration, nil
 	}
 
@@ -493,6 +501,10 @@ func (r *CloudFormationStackReconciler) reconcileDelete(ctx context.Context, cfn
 				// Remove our finalizer from the list and update it.
 				controllerutil.RemoveFinalizer(&cfnStack, cfnv1.CloudFormationStackFinalizer)
 				err := r.Update(ctx, &cfnStack)
+				if err != nil {
+					log.Error(err, fmt.Sprintf("Failed to remove finalizer from stack '%s/%s'", cfnStack.Namespace, cfnStack.Name))
+				}
+				log.Info(fmt.Sprintf("Successfully deleted stack '%s'", cfnStack.Name))
 				return cfnv1.CloudFormationStackReady(cfnStack, ""), ctrl.Result{}, err
 			} else {
 				msg := fmt.Sprintf("Failed to describe the stack '%s'", cfnStack.Name)
@@ -525,7 +537,10 @@ func (r *CloudFormationStackReconciler) reconcileDelete(ctx context.Context, cfn
 			return cfnStack, ctrl.Result{RequeueAfter: cfnStack.Spec.PollInterval.Duration}, nil
 		}
 
-		msg := fmt.Sprintf("Unexpected stack status for stack '%s': %s (reason '%s')", cfnStack.Name, desc.StackStatus, *desc.StackStatusReason)
+		msg := fmt.Sprintf("Unexpected stack status for stack '%s': %s", cfnStack.Name, desc.StackStatus)
+		if desc.StackStatusReason != nil {
+			msg = fmt.Sprintf("%s (reason '%s')", msg, *desc.StackStatusReason)
+		}
 		log.Error(err, msg)
 		cfnStack = cfnv1.CloudFormationStackNotReady(cfnStack, cfnv1.ReadinessUpdate{Message: msg, Reason: cfnv1.UnexpectedStatusReason})
 		return cfnStack, ctrl.Result{RequeueAfter: cfnStack.GetRetryInterval()}, err
