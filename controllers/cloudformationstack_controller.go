@@ -267,9 +267,19 @@ func (r *CloudFormationStackReconciler) reconcile(ctx context.Context, cfnStack 
 func (r *CloudFormationStackReconciler) reconcileStack(ctx context.Context, cfnStack cfnv1.CloudFormationStack, templateContents *bytes.Buffer, revision string) (cfnv1.CloudFormationStack, time.Duration, error) {
 	log := ctrl.LoggerFrom(ctx)
 
-	clientStack := toClientStack(cfnStack, revision)
-	clientStack.TemplateBody = templateContents.String()
+	// Convert the Flux controller stack type into the CloudFormation client stack type
+	clientStack := &cloudformation.Stack{
+		Name: cfnStack.Spec.StackName,
+		// Region:         cfnStack.Spec.Region,
+		Generation:     cfnStack.Generation,
+		SourceRevision: revision,
+		ChangeSetArn:   cfnStack.Status.LastAttemptedChangeSet,
+		StackConfig: &cloudformation.StackConfig{
+			TemplateBody: templateContents.String(),
+		},
+	}
 
+	// Find the existing stack, if any
 	desc, err := r.CfnClient.DescribeStack(clientStack)
 
 	// Check if the stack exists; if not, create it
@@ -464,7 +474,16 @@ func (r *CloudFormationStackReconciler) reconcileDelete(ctx context.Context, cfn
 	r.recordReadiness(ctx, cfnStack)
 
 	if !cfnStack.Spec.Suspend {
-		clientStack := toClientStack(cfnStack, cfnStack.Status.LastAttemptedRevision)
+		// Convert the Flux controller stack type into the CloudFormation client stack type
+		clientStack := &cloudformation.Stack{
+			Name: cfnStack.Spec.StackName,
+			// Region:         cfnStack.Spec.Region,
+			Generation:     cfnStack.Generation,
+			SourceRevision: cfnStack.Status.LastAttemptedRevision,
+			ChangeSetArn:   cfnStack.Status.LastAttemptedChangeSet,
+		}
+
+		// Find the existing stack, if any
 		desc, err := r.CfnClient.DescribeStack(clientStack)
 
 		if err != nil {
@@ -517,15 +536,4 @@ func (r *CloudFormationStackReconciler) reconcileDelete(ctx context.Context, cfn
 	controllerutil.RemoveFinalizer(&cfnStack, cfnv1.CloudFormationStackFinalizer)
 	err := r.Update(ctx, &cfnStack)
 	return cfnStack, ctrl.Result{}, err
-}
-
-// Converts the Flux controller stack type into the CloudFormation client stack type
-func toClientStack(cfnStack cfnv1.CloudFormationStack, revision string) *cloudformation.Stack {
-	return &cloudformation.Stack{
-		Name: cfnStack.Spec.StackName,
-		// Region:         cfnStack.Spec.Region,
-		Generation:     cfnStack.Generation,
-		SourceRevision: revision,
-		ChangeSetArn:   cfnStack.Status.LastAttemptedChangeSet,
-	}
 }

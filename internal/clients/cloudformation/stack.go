@@ -4,9 +4,6 @@
 package cloudformation
 
 import (
-	"bytes"
-
-	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cloudformation/types"
 )
 
@@ -51,73 +48,14 @@ type Stack struct {
 	Generation     int64
 	SourceRevision string
 	ChangeSetArn   string
-	*stackConfig
+	*StackConfig
 }
 
-type stackConfig struct {
+type StackConfig struct {
 	TemplateBody string
 	TemplateURL  string
 	Parameters   []types.Parameter
 	Tags         []types.Tag
-}
-
-// StackOption allows you to initialize a Stack with additional properties.
-type StackOption func(s *Stack)
-
-// NewStack creates a stack with the given name and template body.
-func NewStack(name string, template *bytes.Buffer, opts ...StackOption) *Stack {
-	s := &Stack{
-		Name: name,
-		stackConfig: &stackConfig{
-			TemplateBody: template.String(),
-		},
-	}
-	for _, opt := range opts {
-		opt(s)
-	}
-	return s
-}
-
-// NewStackWithURL creates a stack with a URL to the template.
-func NewStackWithURL(name string, templateURL string, opts ...StackOption) *Stack {
-	s := &Stack{
-		Name: name,
-		stackConfig: &stackConfig{
-			TemplateURL: templateURL,
-		},
-	}
-	for _, opt := range opts {
-		opt(s)
-	}
-	return s
-}
-
-// WithParameters passes parameters to a stack.
-func WithParameters(params map[string]string) StackOption {
-	return func(s *Stack) {
-		var flatParams []types.Parameter
-		for k, v := range params {
-			flatParams = append(flatParams, types.Parameter{
-				ParameterKey:   aws.String(k),
-				ParameterValue: aws.String(v),
-			})
-		}
-		s.Parameters = flatParams
-	}
-}
-
-// WithTags applies the tags to a stack.
-func WithTags(tags map[string]string) StackOption {
-	return func(s *Stack) {
-		var flatTags []types.Tag
-		for k, v := range tags {
-			flatTags = append(flatTags, types.Tag{
-				Key:   aws.String(k),
-				Value: aws.String(v),
-			})
-		}
-		s.Tags = flatTags
-	}
 }
 
 // StackEvent is an alias the SDK's StackEvent type.

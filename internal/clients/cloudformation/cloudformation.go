@@ -46,7 +46,9 @@ func (c *CloudFormation) DescribeStack(stack *Stack) (*StackDescription, error) 
 	out, err := c.client.DescribeStacks(c.ctx, &cloudformation.DescribeStacksInput{
 		StackName: aws.String(stack.Name),
 	}, func(opts *cloudformation.Options) {
-		opts.Region = stack.Region
+		if stack.Region != "" {
+			opts.Region = stack.Region
+		}
 	})
 	if err != nil {
 		if stackDoesNotExist(err) {
@@ -111,7 +113,7 @@ func (c *CloudFormation) CreateStack(stack *Stack) (changeSetArn string, err err
 	if err != nil {
 		return "", err
 	}
-	arn, err := cs.create(stack.stackConfig)
+	arn, err := cs.create(stack.StackConfig)
 	if err != nil {
 		return "", err
 	}
@@ -127,7 +129,7 @@ func (c *CloudFormation) UpdateStack(stack *Stack) (changeSetArn string, err err
 	if err != nil {
 		return "", err
 	}
-	arn, err := cs.create(stack.stackConfig)
+	arn, err := cs.create(stack.StackConfig)
 	if err != nil {
 		return "", err
 	}
@@ -148,7 +150,9 @@ func (c *CloudFormation) DeleteStack(stack *Stack) error {
 	_, err := c.client.DeleteStack(c.ctx, &cloudformation.DeleteStackInput{
 		StackName: aws.String(stack.Name),
 	}, func(opts *cloudformation.Options) {
-		opts.Region = stack.Region
+		if stack.Region != "" {
+			opts.Region = stack.Region
+		}
 	})
 	if err != nil {
 		if !stackDoesNotExist(err) {
@@ -177,7 +181,9 @@ func (c *CloudFormation) ContinueRollback(stack *Stack) error {
 	_, err := c.client.ContinueUpdateRollback(c.ctx, &cloudformation.ContinueUpdateRollbackInput{
 		StackName: aws.String(stack.Name),
 	}, func(opts *cloudformation.Options) {
-		opts.Region = stack.Region
+		if stack.Region != "" {
+			opts.Region = stack.Region
+		}
 	})
 	return err
 }

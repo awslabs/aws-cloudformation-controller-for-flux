@@ -116,7 +116,7 @@ func (cs *changeSet) String() string {
 }
 
 // create creates a ChangeSet, waits until it's created, and returns the change set ARN on success.
-func (cs *changeSet) create(conf *stackConfig) (string, error) {
+func (cs *changeSet) create(conf *StackConfig) (string, error) {
 	input := &cloudformation.CreateChangeSetInput{
 		ChangeSetName:       aws.String(cs.name),
 		StackName:           aws.String(cs.stackName),
@@ -138,7 +138,9 @@ func (cs *changeSet) create(conf *stackConfig) (string, error) {
 	}
 
 	opts := func(opts *cloudformation.Options) {
-		opts.Region = cs.region
+		if cs.region != "" {
+			opts.Region = cs.region
+		}
 	}
 
 	out, err := cs.client.CreateChangeSet(cs.ctx, input, opts)
@@ -163,7 +165,9 @@ func (cs *changeSet) describe() (*ChangeSetDescription, error) {
 			StackName:     aws.String(cs.stackName),
 			NextToken:     nextToken,
 		}, func(opts *cloudformation.Options) {
-			opts.Region = cs.region
+			if cs.region != "" {
+				opts.Region = cs.region
+			}
 		})
 		if err != nil {
 			return nil, fmt.Errorf("describe %s: %w", cs, err)
@@ -196,7 +200,9 @@ func (cs *changeSet) execute() error {
 		ChangeSetName: aws.String(cs.name),
 		StackName:     aws.String(cs.stackName),
 	}, func(opts *cloudformation.Options) {
-		opts.Region = cs.region
+		if cs.region != "" {
+			opts.Region = cs.region
+		}
 	})
 	if err != nil {
 		return fmt.Errorf("execute %s: %w", cs, err)
@@ -210,7 +216,9 @@ func (cs *changeSet) delete() error {
 		ChangeSetName: aws.String(cs.name),
 		StackName:     aws.String(cs.stackName),
 	}, func(opts *cloudformation.Options) {
-		opts.Region = cs.region
+		if cs.region != "" {
+			opts.Region = cs.region
+		}
 	})
 	if err != nil {
 		return fmt.Errorf("delete %s: %w", cs, err)
