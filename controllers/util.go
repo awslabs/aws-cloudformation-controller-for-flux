@@ -106,7 +106,7 @@ func (r *CloudFormationStackReconciler) recordSuspension(ctx context.Context, cf
 
 	objRef, err := reference.GetReference(r.Scheme, &cfnStack)
 	if err != nil {
-		log.Error(err, "unable to record suspended metric")
+		log.Error(err, "Unable to record suspended metric")
 		return
 	}
 
@@ -124,7 +124,7 @@ func (r *CloudFormationStackReconciler) recordReadiness(ctx context.Context, cfn
 
 	objRef, err := reference.GetReference(r.Scheme, &cfnStack)
 	if err != nil {
-		ctrl.LoggerFrom(ctx).Error(err, "unable to record readiness metric")
+		ctrl.LoggerFrom(ctx).Error(err, "Unable to record readiness metric")
 		return
 	}
 	if rc := apimeta.FindStatusCondition(cfnStack.Status.Conditions, meta.ReadyCondition); rc != nil {

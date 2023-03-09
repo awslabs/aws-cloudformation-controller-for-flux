@@ -141,7 +141,7 @@ func (r *CloudFormationStackReconciler) Reconcile(ctx context.Context, req ctrl.
 		patch := client.MergeFrom(cfnStack.DeepCopy())
 		controllerutil.AddFinalizer(&cfnStack, cfnv1.CloudFormationStackFinalizer)
 		if err := r.Patch(ctx, &cfnStack, patch); err != nil {
-			log.Error(err, "unable to register finalizer")
+			log.Error(err, "Unable to register finalizer")
 			return ctrl.Result{}, err
 		}
 	}
@@ -158,7 +158,7 @@ func (r *CloudFormationStackReconciler) Reconcile(ctx context.Context, req ctrl.
 
 		// Update status
 		if updateStatusErr := r.patchStatus(ctx, &cfnStack); updateStatusErr != nil {
-			log.Error(updateStatusErr, "unable to update status after delete reconciliation")
+			log.Error(updateStatusErr, "Unable to update status after delete reconciliation")
 			return ctrl.Result{Requeue: true}, updateStatusErr
 		}
 
@@ -170,7 +170,7 @@ func (r *CloudFormationStackReconciler) Reconcile(ctx context.Context, req ctrl.
 
 	// Update status
 	if updateStatusErr := r.patchStatus(ctx, &cfnStack); updateStatusErr != nil {
-		log.Error(updateStatusErr, "unable to update status after reconciliation")
+		log.Error(updateStatusErr, "Unable to update status after reconciliation")
 		return ctrl.Result{Requeue: true}, updateStatusErr
 	}
 
@@ -178,7 +178,7 @@ func (r *CloudFormationStackReconciler) Reconcile(ctx context.Context, req ctrl.
 	r.recordReadiness(ctx, cfnStack)
 
 	// Log reconciliation duration
-	durationMsg := fmt.Sprintf("reconcilation loop finished in %s", time.Now().Sub(start).String())
+	durationMsg := fmt.Sprintf("Reconcilation loop finished in %s", time.Now().Sub(start).String())
 	if result.RequeueAfter > 0 {
 		durationMsg = fmt.Sprintf("%s, next run in %s", durationMsg, result.RequeueAfter.String())
 	}
@@ -201,7 +201,7 @@ func (r *CloudFormationStackReconciler) reconcile(ctx context.Context, cfnStack 
 	if cfnStack.Status.ObservedGeneration != cfnStack.Generation {
 		cfnStack = cfnv1.CloudFormationStackProgressing(cfnStack, cfnv1.ReadinessUpdate{Message: "Stack reconciliation in progress"})
 		if updateStatusErr := r.patchStatus(ctx, &cfnStack); updateStatusErr != nil {
-			log.Error(updateStatusErr, "unable to update status after generation update")
+			log.Error(updateStatusErr, "Unable to update status after generation update")
 			return cfnStack, ctrl.Result{Requeue: true}, updateStatusErr
 		}
 		// Record progressing status
@@ -546,7 +546,7 @@ func (r *CloudFormationStackReconciler) reconcileDelete(ctx context.Context, cfn
 		return cfnStack, ctrl.Result{RequeueAfter: cfnStack.GetRetryInterval()}, err
 	}
 
-	ctrl.LoggerFrom(ctx).Info("skipping CloudFormation stack deletion for suspended resource")
+	ctrl.LoggerFrom(ctx).Info("Skipping CloudFormation stack deletion for suspended resource")
 	// Remove finalizer
 	controllerutil.RemoveFinalizer(&cfnStack, cfnv1.CloudFormationStackFinalizer)
 	err := r.Update(ctx, &cfnStack)
