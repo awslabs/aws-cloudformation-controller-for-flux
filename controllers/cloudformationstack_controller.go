@@ -409,8 +409,9 @@ func (r *CloudFormationStackReconciler) reconcileChangeset(ctx context.Context, 
 					cfnStack = cfnv1.CloudFormationStackNotReady(cfnStack, cfnv1.ReadinessUpdate{SourceRevision: revision, Message: msg, Reason: cfnv1.CloudFormationApiCallFailedReason})
 					return cfnStack, cfnStack.GetRetryInterval(), err
 				}
-				msg := fmt.Sprintf("Stack creation for stack '%s' in progress", clientStack.Name)
+				msg := fmt.Sprintf("Creation of stack '%s' in progress (change set %s)", clientStack.Name, arn)
 				log.Info(msg)
+				r.event(ctx, cfnStack, revision, eventv1.EventSeverityInfo, msg)
 				cfnStack = cfnv1.CloudFormationStackProgressing(cfnStack, cfnv1.ReadinessUpdate{SourceRevision: revision, Message: msg, ChangeSetArn: arn})
 				return cfnStack, cfnStack.Spec.PollInterval.Duration, nil
 			} else {
@@ -421,8 +422,9 @@ func (r *CloudFormationStackReconciler) reconcileChangeset(ctx context.Context, 
 					cfnStack = cfnv1.CloudFormationStackNotReady(cfnStack, cfnv1.ReadinessUpdate{SourceRevision: revision, Message: msg, Reason: cfnv1.CloudFormationApiCallFailedReason})
 					return cfnStack, cfnStack.GetRetryInterval(), err
 				}
-				msg := fmt.Sprintf("Stack update for stack '%s' in progress", clientStack.Name)
+				msg := fmt.Sprintf("Update of stack '%s' in progress (change set %s)", clientStack.Name, arn)
 				log.Info(msg)
+				r.event(ctx, cfnStack, revision, eventv1.EventSeverityInfo, msg)
 				cfnStack = cfnv1.CloudFormationStackProgressing(cfnStack, cfnv1.ReadinessUpdate{SourceRevision: revision, Message: msg, ChangeSetArn: arn})
 				return cfnStack, cfnStack.Spec.PollInterval.Duration, nil
 			}
@@ -499,8 +501,9 @@ func (r *CloudFormationStackReconciler) reconcileChangeset(ctx context.Context, 
 			})
 			return cfnStack, cfnStack.GetRetryInterval(), err
 		}
-		msg := fmt.Sprintf("Change set execution started for stack '%s'", clientStack.Name)
+		msg := fmt.Sprintf("Change set execution started for stack '%s' (change set %s)", clientStack.Name, desc.Arn)
 		log.Info(msg)
+		r.event(ctx, cfnStack, revision, eventv1.EventSeverityInfo, msg)
 		cfnStack = cfnv1.CloudFormationStackProgressing(cfnStack, cfnv1.ReadinessUpdate{Message: msg})
 		return cfnStack, cfnStack.Spec.PollInterval.Duration, nil
 	}
@@ -601,6 +604,7 @@ func (r *CloudFormationStackReconciler) reconcileDelete(ctx context.Context, cfn
 
 			msg := fmt.Sprintf("Started deletion of stack '%s'", clientStack.Name)
 			log.Info(msg)
+			r.event(ctx, cfnStack, cfnStack.Status.LastAttemptedRevision, eventv1.EventSeverityInfo, msg)
 			cfnStack = cfnv1.CloudFormationStackProgressing(cfnStack, cfnv1.ReadinessUpdate{Message: msg})
 			return cfnStack, ctrl.Result{RequeueAfter: cfnStack.Spec.PollInterval.Duration}, nil
 		}
