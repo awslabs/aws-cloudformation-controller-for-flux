@@ -105,6 +105,11 @@ func (d *StackDescription) IsRecoverableFailure() bool {
 	return stackStatusListContains(d.StackStatus, recoverableFailureStackStatuses)
 }
 
+// DeleteFailed returns true if the stack is in DELETE_FAILED state
+func (d *StackDescription) DeleteFailed() bool {
+	return types.StackStatusDeleteFailed == d.StackStatus
+}
+
 func stackStatusListContains(element types.StackStatus, statusList []types.StackStatus) bool {
 	for _, status := range statusList {
 		if element == status {

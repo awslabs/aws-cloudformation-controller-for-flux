@@ -1,7 +1,6 @@
 # AWS CloudFormation Template Sync Controller for Flux
 
 TODO:
-* Emit events for failed reconciliation attempts
 * Package as helm chart
 * Support for stack parameters
 * Support for stack tags

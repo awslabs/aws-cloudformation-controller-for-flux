@@ -13,6 +13,7 @@ import (
 
 	cfnv1 "github.com/awslabs/aws-cloudformation-controller-for-flux/api/v1alpha1"
 	securejoin "github.com/cyphar/filepath-securejoin"
+	eventv1 "github.com/fluxcd/pkg/apis/event/v1beta1"
 	"github.com/fluxcd/pkg/apis/meta"
 	"github.com/fluxcd/pkg/runtime/dependency"
 	"github.com/fluxcd/pkg/untar"
@@ -288,4 +289,17 @@ func (r *CloudFormationStackReconciler) copyAndVerifyArtifact(artifact *sourcev1
 	}
 
 	return nil
+}
+
+// event emits a Kubernetes event and forwards the event to notification controller if configured.
+func (r *CloudFormationStackReconciler) event(_ context.Context, cfnStack cfnv1.CloudFormationStack, revision, severity, msg string) {
+	var meta map[string]string
+	if revision != "" {
+		meta = map[string]string{cfnv1.GroupVersion.Group + "/revision": revision}
+	}
+	eventtype := "Normal"
+	if severity == eventv1.EventSeverityError {
+		eventtype = "Warning"
+	}
+	r.EventRecorder.AnnotatedEventf(&cfnStack, meta, eventtype, severity, msg)
 }

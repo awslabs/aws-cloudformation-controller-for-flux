@@ -28,6 +28,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
+	eventv1 "github.com/fluxcd/pkg/apis/event/v1beta1"
 	"github.com/fluxcd/pkg/apis/meta"
 	"github.com/fluxcd/pkg/runtime/metrics"
 	"github.com/fluxcd/pkg/runtime/predicates"
@@ -242,7 +243,6 @@ func (r *CloudFormationStackReconciler) reconcile(ctx context.Context, cfnStack 
 			// do not requeue immediately, when the source is created the watcher should trigger a reconciliation
 			return cfnStack, ctrl.Result{RequeueAfter: cfnStack.GetRetryInterval()}, nil
 		} else {
-			// retry on transient errors
 			msg := fmt.Sprintf("Failed to resolve source '%s'", cfnStack.Spec.SourceRef.String())
 			log.Error(err, msg)
 			cfnStack = cfnv1.CloudFormationStackNotReady(cfnStack, cfnv1.ReadinessUpdate{Message: msg, Reason: cfnv1.ArtifactFailedReason})
@@ -273,6 +273,8 @@ func (r *CloudFormationStackReconciler) reconcile(ctx context.Context, cfnStack 
 	reconciledCfnStack, requeueInterval, err := r.reconcileStack(ctx, *cfnStack.DeepCopy(), templateContents, revision)
 	if err != nil {
 		log.Error(err, "Failed to reconcile stack")
+		msg := fmt.Sprintf("Failed to reconcile stack: %s", err.Error())
+		r.event(ctx, cfnStack, cfnStack.Status.LastAttemptedRevision, eventv1.EventSeverityError, msg)
 		return reconciledCfnStack, ctrl.Result{RequeueAfter: requeueInterval}, err
 	}
 
@@ -328,9 +330,10 @@ func (r *CloudFormationStackReconciler) reconcileStack(ctx context.Context, cfnS
 			cfnStack = cfnv1.CloudFormationStackNotReady(cfnStack, cfnv1.ReadinessUpdate{SourceRevision: revision, Message: msg, Reason: cfnv1.CloudFormationApiCallFailedReason})
 			return cfnStack, cfnStack.GetRetryInterval(), err
 		}
-		// TODO emit a failure event for the recoverable failure, but keep the stack object in 'Progressing' status
+
 		msg := fmt.Sprintf("Stack '%s' has a previously failed update rollback (status '%s'), continuing rollback", clientStack.Name, desc.StackStatus)
 		log.Info(msg)
+		r.event(ctx, cfnStack, revision, eventv1.EventSeverityError, msg)
 		cfnStack = cfnv1.CloudFormationStackProgressing(cfnStack, cfnv1.ReadinessUpdate{SourceRevision: revision, Message: msg})
 		return cfnStack, cfnStack.Spec.PollInterval.Duration, nil
 	}
@@ -349,13 +352,22 @@ func (r *CloudFormationStackReconciler) reconcileStack(ctx context.Context, cfnS
 			msg = fmt.Sprintf("%s, reason '%s'", msg, *desc.StackStatusReason)
 		}
 		log.Info(msg)
+		r.event(ctx, cfnStack, revision, eventv1.EventSeverityError, msg)
 		cfnStack = cfnv1.CloudFormationStackNotReady(cfnStack, cfnv1.ReadinessUpdate{SourceRevision: revision, Message: msg, Reason: cfnv1.UnrecoverableStackFailureReason})
 		return cfnStack, cfnStack.GetRetryInterval(), nil
 	}
 
 	// Check if the stack is ready for an update
 	if desc.IsSuccess() || desc.IsRecoverableFailure() {
-		// TODO emit a failure event for the recoverable failure, but keep the stack object in 'Progressing' status
+		// emit a failure event for the recoverable failure, but keep the stack object in 'Progressing' status
+		if desc.IsRecoverableFailure() {
+			msg := fmt.Sprintf("Stack '%s' is in a failed state (status '%s'", clientStack.Name, desc.StackStatus)
+			if desc.StackStatusReason != nil {
+				msg = fmt.Sprintf("%s, reason '%s'", msg, *desc.StackStatusReason)
+			}
+			msg = fmt.Sprintf("%s), creating a new change set", msg)
+			r.event(ctx, cfnStack, revision, eventv1.EventSeverityError, msg)
+		}
 		return r.reconcileChangeset(ctx, cfnStack, clientStack, revision, false)
 	}
 
@@ -364,6 +376,7 @@ func (r *CloudFormationStackReconciler) reconcileStack(ctx context.Context, cfnS
 		msg = fmt.Sprintf("%s, reason '%s'", msg, *desc.StackStatusReason)
 	}
 	log.Info(msg)
+	r.event(ctx, cfnStack, revision, eventv1.EventSeverityError, msg)
 	cfnStack = cfnv1.CloudFormationStackNotReady(cfnStack, cfnv1.ReadinessUpdate{SourceRevision: revision, Message: msg, Reason: cfnv1.UnexpectedStatusReason})
 	return cfnStack, cfnStack.GetRetryInterval(), nil
 }
@@ -454,6 +467,7 @@ func (r *CloudFormationStackReconciler) reconcileChangeset(ctx context.Context, 
 			Message:        msg,
 			Reason:         cfnv1.ChangeSetFailedReason,
 		})
+		r.event(ctx, cfnStack, revision, eventv1.EventSeverityError, msg)
 		return cfnStack, cfnStack.GetRetryInterval(), nil
 	}
 
@@ -499,6 +513,7 @@ func (r *CloudFormationStackReconciler) reconcileChangeset(ctx context.Context, 
 		Message:        msg,
 		Reason:         cfnv1.UnexpectedStatusReason,
 	})
+	r.event(ctx, cfnStack, revision, eventv1.EventSeverityError, msg)
 	return cfnStack, cfnStack.GetRetryInterval(), nil
 }
 
@@ -570,6 +585,12 @@ func (r *CloudFormationStackReconciler) reconcileDelete(ctx context.Context, cfn
 		}
 
 		if desc.ReadyForCleanup() {
+			// emit error event if the stack entered delete failed state
+			if desc.DeleteFailed() {
+				msg := fmt.Sprintf("Stack '%s' failed to delete, retrying", clientStack.Name)
+				r.event(ctx, cfnStack, cfnStack.Status.LastAttemptedRevision, eventv1.EventSeverityError, msg)
+			}
+
 			// start the stack deletion
 			if err := r.CfnClient.DeleteStack(clientStack); err != nil {
 				msg := fmt.Sprintf("Failed to delete the stack '%s'", clientStack.Name)
@@ -577,7 +598,7 @@ func (r *CloudFormationStackReconciler) reconcileDelete(ctx context.Context, cfn
 				cfnStack = cfnv1.CloudFormationStackNotReady(cfnStack, cfnv1.ReadinessUpdate{Message: msg, Reason: cfnv1.CloudFormationApiCallFailedReason})
 				return cfnStack, ctrl.Result{RequeueAfter: cfnStack.GetRetryInterval()}, err
 			}
-			// TODO emit error event if we entered delete failed state
+
 			msg := fmt.Sprintf("Started deletion of stack '%s'", clientStack.Name)
 			log.Info(msg)
 			cfnStack = cfnv1.CloudFormationStackProgressing(cfnStack, cfnv1.ReadinessUpdate{Message: msg})
@@ -588,9 +609,10 @@ func (r *CloudFormationStackReconciler) reconcileDelete(ctx context.Context, cfn
 		if desc.StackStatusReason != nil {
 			msg = fmt.Sprintf("%s (reason '%s')", msg, *desc.StackStatusReason)
 		}
-		log.Error(err, msg)
+		log.Info(msg)
+		r.event(ctx, cfnStack, cfnStack.Status.LastAttemptedRevision, eventv1.EventSeverityError, msg)
 		cfnStack = cfnv1.CloudFormationStackNotReady(cfnStack, cfnv1.ReadinessUpdate{Message: msg, Reason: cfnv1.UnexpectedStatusReason})
-		return cfnStack, ctrl.Result{RequeueAfter: cfnStack.GetRetryInterval()}, err
+		return cfnStack, ctrl.Result{RequeueAfter: cfnStack.GetRetryInterval()}, nil
 	}
 
 	ctrl.LoggerFrom(ctx).Info("Skipping CloudFormation stack deletion for suspended resource")
