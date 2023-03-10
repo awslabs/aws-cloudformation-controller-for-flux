@@ -173,6 +173,7 @@ type CloudFormationStackList struct {
 const (
 	ArtifactFailedReason              = "ArtifactFailed"
 	ChangeSetFailedReason             = "ChangeSetFailed"
+	TemplateUploadFailedReason        = "TemplateUploadFailed"
 	CloudFormationApiCallFailedReason = "CloudFormationApiCallFailed"
 	UnrecoverableStackFailureReason   = "UnrecoverableStackFailure"
 	DependencyNotReadyReason          = "DependencyNotReady"

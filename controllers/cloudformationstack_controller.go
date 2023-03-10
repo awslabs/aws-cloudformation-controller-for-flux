@@ -8,8 +8,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
+	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/hashicorp/go-retryablehttp"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -32,6 +35,7 @@ import (
 
 	cfnv1 "github.com/awslabs/aws-cloudformation-controller-for-flux/api/v1alpha1"
 	"github.com/awslabs/aws-cloudformation-controller-for-flux/internal/clients/cloudformation"
+	"github.com/awslabs/aws-cloudformation-controller-for-flux/internal/clients/s3"
 )
 
 //+kubebuilder:rbac:groups=cloudformation.contrib.fluxcd.io,resources=cloudformationstacks,verbs=get;list;watch;create;update;patch;delete
@@ -49,6 +53,7 @@ type CloudFormationStackReconciler struct {
 	requeueDependency time.Duration
 
 	CfnClient       *cloudformation.CloudFormation
+	S3Client        *s3.S3
 	EventRecorder   kuberecorder.EventRecorder
 	MetricsRecorder *metrics.Recorder
 	Scheme          *runtime.Scheme
@@ -157,10 +162,20 @@ func (r *CloudFormationStackReconciler) Reconcile(ctx context.Context, req ctrl.
 		cfnStack, result, err := r.reconcileDelete(ctx, cfnStack)
 
 		// Update status
-		if updateStatusErr := r.patchStatus(ctx, &cfnStack); updateStatusErr != nil {
-			log.Error(updateStatusErr, "Unable to update status after delete reconciliation")
-			return ctrl.Result{Requeue: true}, updateStatusErr
+		// Skip updating the status if the stack is successfully deleted (no requeueAfter set).
+		// The finalizer has been removed, so the object is likely gone from the API server already.
+		if result.Requeue || result.RequeueAfter > 0 {
+			if updateStatusErr := r.patchStatus(ctx, &cfnStack); updateStatusErr != nil {
+				log.Error(updateStatusErr, "Unable to update status after delete reconciliation")
+				return ctrl.Result{Requeue: true}, updateStatusErr
+			}
 		}
+
+		durationMsg := fmt.Sprintf("Deletion reconcilation loop finished in %s", time.Now().Sub(start).String())
+		if result.RequeueAfter > 0 {
+			durationMsg = fmt.Sprintf("%s, next run in %s", durationMsg, result.RequeueAfter.String())
+		}
+		log.Info(durationMsg)
 
 		return result, err
 	}
@@ -275,7 +290,9 @@ func (r *CloudFormationStackReconciler) reconcileStack(ctx context.Context, cfnS
 		SourceRevision: revision,
 		ChangeSetArn:   cfnStack.Status.LastAttemptedChangeSet,
 		StackConfig: &cloudformation.StackConfig{
-			TemplateBody: templateContents.String(),
+			// TODO get bucket from annotations, controller flags, etc
+			TemplateBucket: os.Getenv("TEMPLATE_BUCKET"),
+			TemplateBody:   templateContents.String(),
 		},
 	}
 
@@ -362,6 +379,15 @@ func (r *CloudFormationStackReconciler) reconcileChangeset(ctx context.Context, 
 		var notFoundErr *cloudformation.ErrChangeSetNotFound
 		var emptyErr *cloudformation.ErrChangeSetEmpty
 		if errors.As(err, &notFoundErr) {
+			err := r.uploadStackTemplate(clientStack)
+			if err != nil {
+				msg := fmt.Sprintf("Failed to upload template to S3 for stack '%s'", clientStack.Name)
+				log.Error(err, msg)
+				cfnStack = cfnv1.CloudFormationStackNotReady(cfnStack, cfnv1.ReadinessUpdate{SourceRevision: revision, Message: msg, Reason: cfnv1.TemplateUploadFailedReason})
+				return cfnStack, cfnStack.GetRetryInterval(), err
+			}
+			log.Info(fmt.Sprintf("Creating a change set for stack '%s' with template '%s'", clientStack.Name, clientStack.TemplateURL))
+
 			if isCreate {
 				arn, err := r.CfnClient.CreateStack(clientStack)
 				if err != nil {
@@ -474,6 +500,27 @@ func (r *CloudFormationStackReconciler) reconcileChangeset(ctx context.Context, 
 		Reason:         cfnv1.UnexpectedStatusReason,
 	})
 	return cfnStack, cfnStack.GetRetryInterval(), nil
+}
+
+func (r *CloudFormationStackReconciler) uploadStackTemplate(clientStack *cloudformation.Stack) error {
+	id, err := uuid.NewRandom()
+	if err != nil {
+		return fmt.Errorf("generate random id: %w", err)
+	}
+	objectKey := fmt.Sprintf("flux-%s-%s.template", clientStack.Name, id.String())
+
+	url, err := r.S3Client.UploadTemplate(
+		clientStack.TemplateBucket,
+		clientStack.Region,
+		objectKey,
+		strings.NewReader(clientStack.TemplateBody),
+	)
+	if err != nil {
+		return err
+	}
+
+	clientStack.TemplateURL = url
+	return nil
 }
 
 // reconcileDelete deletes the CloudFormation stack.

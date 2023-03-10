@@ -2,12 +2,13 @@
 
 TODO:
 * Emit events for failed reconciliation attempts
-* Support for large templates (upload to S3 first)
+* Package as helm chart
 * Support for stack parameters
 * Support for stack tags
 * Support for declaring dependency on other CFN stacks
 * Support for managing stacks cross-account (see https://aws-controllers-k8s.github.io/community/docs/user-docs/cross-account-resource-management/)
 * Support for managing stacks cross-region (see https://aws-controllers-k8s.github.io/community/docs/user-docs/multi-region-resource-management/)
+* Support for per-namespace S3 buckets
 
 ## Set up a local development environment
 
@@ -39,11 +40,27 @@ $ curl -s https://fluxcd.io/install.sh | sudo bash
 
 ## Set up Flux on a local kind cluster
 
-1. Set up HTTPS access to CodeCommit for an IAM user using Git credentials:
+1. Create an S3 bucket to hold the temporary template files that get uploaded to CloudFormation:
+
+```
+$ ACCOUNT_ID=`aws sts get-caller-identity --query 'Account' --output text`
+
+$ aws s3api create-bucket \
+    --region us-west-2 \
+    --bucket flux-templates-$ACCOUNT_ID \
+    --create-bucket-configuration LocationConstraint=us-west-2
+
+$ aws s3api put-bucket-lifecycle-configuration \
+    --region us-west-2 \
+    --bucket flux-templates-$ACCOUNT_ID \
+    --lifecycle-configuration '{ "Rules": [ { "ID": "one_day", "Prefix": "", "Status": "Enabled", "Expiration": { "Days": 1 } } ] }'
+```
+
+2. Set up HTTPS access to CodeCommit for an IAM user using Git credentials:
 
 https://docs.aws.amazon.com/codecommit/latest/userguide/setting-up-gc.html
 
-2. Create a CodeCommit repository to store a sample CloudFormation template, then clone it:
+3. Create a CodeCommit repository to store a sample CloudFormation template, then clone it:
 ```
 $ aws codecommit create-repository --region us-west-2 --repository-name cfn-flux-controller-sample-template
 
@@ -54,7 +71,7 @@ $ cd cfn-flux-controller-sample-template
 $ git checkout --orphan main
 ```
 
-3. Create a file `hello-world-template.yaml` in the sample template repo with the following contents:
+4. Create a file `hello-world-template.yaml` in the sample template repo with the following contents:
 ```yaml
 Resources:
   SampleResource:
@@ -64,7 +81,7 @@ Resources:
       Value: "Hello World"
 ```
 
-4. Push the sample template file to the repo:
+5. Push the sample template file to the repo:
 ```
 $ git add hello-world-template.yaml
 
@@ -75,12 +92,12 @@ $ git push --set-upstream origin main
 $ cd ../
 ```
 
-5. Create another CodeCommit repository to store the Flux configuration for your local cluster:
+6. Create another CodeCommit repository to store the Flux configuration for your local cluster:
 ```
 $ aws codecommit create-repository --region us-west-2 --repository-name flux-local-kind-cluster
 ```
 
-6. Create a file `kind-cluster.yaml` with the following contents to expose the source controller API endpoint to your host on port 30000:
+7. Create a file `kind-cluster.yaml` with the following contents to expose the source controller API endpoint to your host on port 30000:
 ```yaml
 apiVersion: kind.x-k8s.io/v1alpha4
 kind: Cluster
@@ -91,12 +108,12 @@ nodes:
     hostPort: 30000
 ```
 
-7. Create your kind cluster using that configuration:
+8. Create your kind cluster using that configuration:
 ```
 $ kind create cluster --config=kind-cluster.yaml
 ```
 
-8. Bootstrap Flux on the local cluster, which will push some initial configuration to your Flux config repository:
+9. Bootstrap Flux on the local cluster, which will push some initial configuration to your Flux config repository:
 ```
 $ flux check --pre
 
@@ -116,19 +133,19 @@ $ flux create secret git cfn-sample-template-repo-auth \
     --password=$CODECOMMIT_PASSWORD
 ```
 
-9. Install the CloudFormation Flux CRDs into the local cluster:
+10. Install the CloudFormation Flux CRDs into the local cluster:
 ```
 make install
 ```
 
-10. Clone your Flux config repository:
+11. Clone your Flux config repository:
 ```
 $ git clone https://git-codecommit.us-west-2.amazonaws.com/v1/repos/flux-local-kind-cluster
 
 $ cd flux-local-kind-cluster
 ```
 
-11. Open the file `flux-system/gotk-components.yaml` in your Flux config repository and find the Service object named source-controller.  Update the object's configuration like this:
+12. Open the file `flux-system/gotk-components.yaml` in your Flux config repository and find the Service object named source-controller.  Update the object's configuration like this:
 ```diff
  apiVersion: v1
  kind: Service
@@ -154,7 +171,7 @@ $ cd flux-local-kind-cluster
 +  type: NodePort
 ```
 
-12. Open the file `flux-system/gotk-sync.yaml` in your Flux config repository and find the Kustomization object named flux-system.  Update the object's configuration like this:
+13. Open the file `flux-system/gotk-sync.yaml` in your Flux config repository and find the Kustomization object named flux-system.  Update the object's configuration like this:
 ```diff
  apiVersion: kustomize.toolkit.fluxcd.io/v1beta2
  kind: Kustomization
@@ -166,7 +183,7 @@ $ cd flux-local-kind-cluster
 +  interval: 1m0s
 ```
 
-13. Create a file `cfn-sample-repo.yaml` in your Flux config repository with the following contents:
+14. Create a file `cfn-sample-repo.yaml` in your Flux config repository with the following contents:
 ```yaml
 apiVersion: source.toolkit.fluxcd.io/v1beta1
 kind: GitRepository
@@ -182,7 +199,7 @@ spec:
     name: cfn-sample-template-repo-auth
 ```
 
-14. Create a file `cfn-sample-stack.yaml` in your Flux config repository with the following contents:
+15. Create a file `cfn-sample-stack.yaml` in your Flux config repository with the following contents:
 ```yaml
 apiVersion: cloudformation.contrib.fluxcd.io/v1alpha1
 kind: CloudFormationStack
@@ -200,7 +217,7 @@ spec:
   retryInterval: 5m
 ```
 
-15. Push the files into the repo:
+16. Push the files into the repo:
 ```
 $ git add flux-system/gotk-components.yaml
 
@@ -213,7 +230,7 @@ $ git commit -m "Add sample CFN stack"
 $ git push
 ```
 
-16. Ensure that the sample template repo is successfully hooked up to Flux:
+17. Ensure that the sample template repo is successfully hooked up to Flux:
 ```
 $ flux get sources git
 ```

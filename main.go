@@ -28,6 +28,7 @@ import (
 	cfnv1 "github.com/awslabs/aws-cloudformation-controller-for-flux/api/v1alpha1"
 	"github.com/awslabs/aws-cloudformation-controller-for-flux/controllers"
 	"github.com/awslabs/aws-cloudformation-controller-for-flux/internal/clients/cloudformation"
+	"github.com/awslabs/aws-cloudformation-controller-for-flux/internal/clients/s3"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -124,7 +125,13 @@ func main() {
 
 	cfnClient, err := cloudformation.New(signalHandlerContext)
 	if err != nil {
-		setupLog.Error(err, "unable to create cloudformation client")
+		setupLog.Error(err, "unable to create CloudFormation client")
+		os.Exit(1)
+	}
+
+	s3Client, err := s3.New(signalHandlerContext)
+	if err != nil {
+		setupLog.Error(err, "unable to create S3 client")
 		os.Exit(1)
 	}
 
@@ -134,6 +141,7 @@ func main() {
 		EventRecorder:   eventRecorder,
 		MetricsRecorder: metricsRecorder,
 		CfnClient:       cfnClient,
+		S3Client:        s3Client,
 	}
 
 	reconcilerOpts := controllers.CloudFormationStackReconcilerOptions{

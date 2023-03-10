@@ -52,10 +52,11 @@ type Stack struct {
 }
 
 type StackConfig struct {
-	TemplateBody string
-	TemplateURL  string
-	Parameters   []types.Parameter
-	Tags         []types.Tag
+	TemplateBucket string
+	TemplateBody   string
+	TemplateURL    string
+	Parameters     []types.Parameter
+	Tags           []types.Tag
 }
 
 // StackEvent is an alias the SDK's StackEvent type.

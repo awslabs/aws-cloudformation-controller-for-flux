@@ -122,6 +122,7 @@ func (cs *changeSet) create(conf *StackConfig) (string, error) {
 		StackName:           aws.String(cs.stackName),
 		Description:         aws.String("Managed by Flux"),
 		ChangeSetType:       cs.csType,
+		TemplateURL:         aws.String(conf.TemplateURL),
 		Parameters:          conf.Parameters,
 		Tags:                conf.Tags,
 		IncludeNestedStacks: aws.Bool(true),
@@ -130,12 +131,6 @@ func (cs *changeSet) create(conf *StackConfig) (string, error) {
 			types.CapabilityCapabilityNamedIam,
 			types.CapabilityCapabilityAutoExpand,
 		},
-	}
-	if conf.TemplateBody != "" {
-		input.TemplateBody = aws.String(conf.TemplateBody)
-	}
-	if conf.TemplateURL != "" {
-		input.TemplateURL = aws.String(conf.TemplateURL)
 	}
 
 	opts := func(opts *cloudformation.Options) {

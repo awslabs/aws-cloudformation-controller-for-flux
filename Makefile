@@ -61,9 +61,11 @@ build: generate fmt vet manifests
 
 ##### Run locally #####
 
+BUCKET_ACCOUNT_ID="$(shell aws sts get-caller-identity --query 'Account' --output text)"
+
 # Run a controller from your host.
 run: generate fmt vet install
-	SOURCE_CONTROLLER_LOCALHOST=localhost:30000 AWS_REGION=us-west-2 go run ./main.go
+	SOURCE_CONTROLLER_LOCALHOST=localhost:30000 AWS_REGION=us-west-2 TEMPLATE_BUCKET=flux-templates-$(BUCKET_ACCOUNT_ID) go run ./main.go
 
 # Install CRDs into a cluster
 install: manifests
