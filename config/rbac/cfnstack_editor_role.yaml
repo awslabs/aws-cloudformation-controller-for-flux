@@ -1,0 +1,24 @@
+# permissions for end users to edit cfnstacks.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cfnstack-editor-role
+rules:
+- apiGroups:
+  - cloudformation.contrib.fluxcd.io
+  resources:
+  - cfnstacks
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - cloudformation.contrib.fluxcd.io
+  resources:
+  - cfnstacks/status
+  verbs:
+  - get

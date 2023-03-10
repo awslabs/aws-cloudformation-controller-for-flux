@@ -1,0 +1,72 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: manager-role
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  - secrets
+  - serviceaccounts
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
+- apiGroups:
+  - cloudformation.contrib.fluxcd.io
+  resources:
+  - cloudformationstacks
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - cloudformation.contrib.fluxcd.io
+  resources:
+  - cloudformationstacks/finalizers
+  verbs:
+  - create
+  - delete
+  - get
+  - patch
+  - update
+- apiGroups:
+  - cloudformation.contrib.fluxcd.io
+  resources:
+  - cloudformationstacks/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - source.toolkit.fluxcd.io
+  resources:
+  - buckets
+  - gitrepositories
+  - ocirepositories
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - source.toolkit.fluxcd.io
+  resources:
+  - buckets/status
+  - gitrepositories/status
+  - ocirepositories/status
+  verbs:
+  - get

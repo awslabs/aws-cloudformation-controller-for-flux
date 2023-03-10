@@ -1,6 +1,7 @@
 # AWS CloudFormation Template Sync Controller for Flux
 
 TODO:
+* Demo gif
 * Package as helm chart
 * Support for stack parameters
 * Support for stack tags
