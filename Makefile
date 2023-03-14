@@ -59,6 +59,14 @@ build: generate fmt vet manifests
  		-ldflags "-X main.BuildSHA=$(BUILD_SHA) -X main.BuildVersion=$(BUILD_VERSION)" \
  		main.go
 
+build-docker-image:
+	docker build \
+		-t "aws-cloudformation-controller-for-flux:$(BUILD_SHA)" \
+		-f "./Dockerfile" \
+		--build-arg BUILD_SHA="$(BUILD_SHA)" \
+		--build-arg BUILD_VERSION="$(BUILD_VERSION)" \
+		"."
+
 ##### Run locally #####
 
 BUCKET_ACCOUNT_ID="$(shell aws sts get-caller-identity --query 'Account' --output text)"

@@ -1,46 +1,45 @@
-ARG GO_VERSION=1.19
-ARG XX_VERSION=1.1.0
+# Build the controller binary
+FROM public.ecr.aws/docker/library/golang:1.19 as builder
 
-FROM --platform=$BUILDPLATFORM tonistiigi/xx:${XX_VERSION} AS xx
-
-# Docker buildkit multi-arch build requires golang alpine
-FROM --platform=$BUILDPLATFORM golang:${GO_VERSION}-alpine as builder
-
-# Copy the build utilities.
-COPY --from=xx / /
-
-ARG TARGETPLATFORM
+ARG BUILD_SHA
+ARG BUILD_VERSION
+ARG GOARCH=amd64
 
 WORKDIR /workspace
 
-# copy api submodule
-COPY api/ api/
+ENV GOPROXY=https://proxy.golang.org|direct
+ENV GO111MODULE=on
+ENV GOARCH=$GOARCH
+ENV GOOS=linux
+ENV CGO_ENABLED=0
 
-# copy modules manifests
+# Copy license and attributions
+COPY LICENSE LICENSE
+COPY THIRD-PARTY-LICENSES.txt THIRD-PARTY-LICENSES.txt
+
+# Copy API submodule and module manifests
+COPY api/ api/
 COPY go.mod go.mod
 COPY go.sum go.sum
 
-# cache modules
+# Cache deps
 RUN go mod download
 
-# copy source code
+# Copy controller source code
 COPY main.go main.go
 COPY controllers/ controllers/
 COPY internal/ internal/
 
-# build without specifing the arch
-ENV CGO_ENABLED=0
-RUN xx-go build -trimpath -a -o helm-controller main.go
+# Build
+RUN go build \
+ 	-ldflags "-X main.BuildSHA=$BUILD_SHA -X main.BuildVersion=$BUILD_VERSION" \
+ 	-a -o bin/cfn-controller main.go
 
-FROM alpine:3.16
+# Build the controller image
+FROM public.ecr.aws/eks-distro-build-tooling/eks-distro-minimal-base-nonroot:2021-12-01-1638322424
 
-# link repo to the GitHub Container Registry image
-LABEL org.opencontainers.image.source="https://github.com/fluxcd/helm-controller"
+COPY --from=builder /workspace/bin/cfn-controller /workspace/LICENSE /workspace/THIRD-PARTY-LICENSES.txt /bin/
 
-RUN apk add --no-cache ca-certificates tini
+USER 1000
 
-COPY --from=builder /workspace/helm-controller /usr/local/bin/
-
-USER 65534:65534
-
-ENTRYPOINT [ "/sbin/tini", "--", "helm-controller" ]
+ENTRYPOINT ["/bin/cfn-controller"]
