@@ -1,0 +1,12 @@
+apiVersion: source.toolkit.fluxcd.io/v1beta1
+kind: GitRepository
+metadata:
+  name: my-cfn-templates-repo
+  namespace: flux-system
+spec:
+  url: https://git-codecommit.us-west-2.amazonaws.com/v1/repos/my-cloudformation-templates
+  interval: 5m
+  ref:
+    branch: main
+  secretRef:
+    name: cfn-template-repo-auth

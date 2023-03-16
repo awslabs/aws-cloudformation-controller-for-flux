@@ -1,0 +1,14 @@
+apiVersion: cloudformation.contrib.fluxcd.io/v1alpha1
+kind: CloudFormationStack
+metadata:
+  name: my-cfn-stack
+  namespace: flux-system
+spec:
+  stackName: my-cfn-stack-deployed-by-flux
+  templatePath: ./template.yaml
+  sourceRef:
+    kind: GitRepository
+    name: my-cfn-templates-repo
+  interval: 1h
+  retryInterval: 5m
+  destroyStackOnDeletion: true
