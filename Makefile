@@ -17,6 +17,9 @@ SHELL = /usr/bin/env bash -o pipefail
 # Allows for defining additional Docker buildx arguments, e.g. '--push'.
 BUILD_ARGS ?=
 
+AWS_ACCOUNT_ID="$(shell aws sts get-caller-identity --query 'Account' --output text)"
+AWS_REGION=us-west-2
+
 all: build
 
 ##### Generate CRDs #####
@@ -61,19 +64,22 @@ build: generate fmt vet manifests
 
 build-docker-image:
 	docker build \
-		-t "aws-cloudformation-controller-for-flux:$(BUILD_SHA)" \
+		-t "aws-cloudformation-controller-for-flux:latest" \
 		-f "./Dockerfile" \
 		--build-arg BUILD_SHA="$(BUILD_SHA)" \
 		--build-arg BUILD_VERSION="$(BUILD_VERSION)" \
 		"."
 
-##### Run locally #####
+push-docker-image-to-ecr:
+	aws ecr get-login-password --region $(AWS_REGION) | docker login --username AWS --password-stdin $(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com
+	docker tag aws-cloudformation-controller-for-flux:latest $(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com/aws-cloudformation-controller-for-flux:latest
+	docker push $(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com/aws-cloudformation-controller-for-flux:latest
 
-BUCKET_ACCOUNT_ID="$(shell aws sts get-caller-identity --query 'Account' --output text)"
+##### Run locally #####
 
 # Run a controller from your host.
 run: generate fmt vet install
-	SOURCE_CONTROLLER_LOCALHOST=localhost:30000 AWS_REGION=us-west-2 TEMPLATE_BUCKET=flux-templates-$(BUCKET_ACCOUNT_ID) go run ./main.go
+	SOURCE_CONTROLLER_LOCALHOST=localhost:30000 AWS_REGION=$(AWS_REGION) TEMPLATE_BUCKET=flux-templates-$(AWS_ACCOUNT_ID) go run ./main.go
 
 # Install CRDs into a cluster
 install: manifests
@@ -83,9 +89,12 @@ install: manifests
 uninstall: manifests
 	$(KUSTOMIZE) build config/crd | kubectl delete -f -
 
-deploy: manifests
-	cd config/manager && kustomize edit set image fluxcd/helm-controller=${IMG}
-	kustomize build config/default | kubectl apply -f -
+# Deploy into cluster - the cluster must already have Flux installed
+deploy: manifests build-docker-image push-docker-image-to-ecr
+	mkdir -p config/dev && cp config/default/* config/dev
+	cd config/dev && $(KUSTOMIZE) edit set image public.ecr.aws/aws-cloudformation/aws-cloudformation-controller-for-flux=$(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com/aws-cloudformation-controller-for-flux:latest
+	$(KUSTOMIZE) build config/dev | kubectl apply -f -
+	rm -rf config/dev
 
 ##### Install dev tools #####
 

@@ -223,6 +223,11 @@ $ git push
 $ flux get sources git
 ```
 
+17. Create an ECR repository:
+```
+$ aws ecr create-repository --repository-name aws-cloudformation-controller-for-flux --region us-west-2
+```
+
 ## Security
 
 See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more information.

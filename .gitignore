@@ -16,7 +16,7 @@ testdata
 *.out
 
 # Generated files - skip generated files, except for vendored files
-
+config/dev
 !vendor/**/zz_generated.*
 
 # editor and IDE paraphernalia
