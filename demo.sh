@@ -5,10 +5,10 @@
 #      kind delete cluster
 # * Delete the CloudFormation stacks from my AWS account
 #      aws cloudformation delete-stack --stack-name my-cfn-stack-deployed-by-flux
-#      aws cloudformation wait stack-delete-complete --stack-name my-cfn-stack-deployed-by-flux
 #      aws cloudformation delete-stack --stack-name my-other-cfn-stack-deployed-by-flux
-#      aws cloudformation wait stack-delete-complete --stack-name my-other-cfn-stack-deployed-by-flux
 #      aws cloudformation delete-stack --stack-name yet-another-cfn-stack-deployed-by-flux
+#      aws cloudformation wait stack-delete-complete --stack-name my-cfn-stack-deployed-by-flux
+#      aws cloudformation wait stack-delete-complete --stack-name my-other-cfn-stack-deployed-by-flux
 #      aws cloudformation wait stack-delete-complete --stack-name yet-another-cfn-stack-deployed-by-flux
 # * Delete the stack files from testdata/my-flux-configuration (git push)
 # * Re-copy the examples into testdata

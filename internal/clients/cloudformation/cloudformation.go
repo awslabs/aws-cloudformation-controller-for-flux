@@ -85,7 +85,7 @@ func (c *CloudFormation) DescribeChangeSet(stack *Stack) (*ChangeSetDescription,
 
 	out, err := cs.describe()
 	if err != nil {
-		if changeSetDoesNotExist(err) {
+		if changeSetDoesNotExist(err) || stackDoesNotExist(err) {
 			return nil, &ErrChangeSetNotFound{name: changeSetName, stackName: stack.Name}
 		}
 		return nil, err
@@ -168,7 +168,7 @@ func (c *CloudFormation) DeleteStack(stack *Stack) error {
 func (c *CloudFormation) DeleteChangeSet(stack *Stack) error {
 	cs := &changeSet{name: stack.ChangeSetArn, stackName: stack.Name, region: stack.Region, client: c.client, ctx: c.ctx}
 	if err := cs.delete(); err != nil {
-		if !changeSetDoesNotExist(err) {
+		if !changeSetDoesNotExist(err) && !stackDoesNotExist(err) {
 			return err
 		}
 		// Move on if change set is already deleted.
