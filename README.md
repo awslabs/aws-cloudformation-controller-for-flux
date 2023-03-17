@@ -62,16 +62,16 @@ https://docs.aws.amazon.com/codecommit/latest/userguide/setting-up-gc.html
 
 3. Create a CodeCommit repository to store a sample CloudFormation template, then clone it:
 ```
-$ aws codecommit create-repository --region us-west-2 --repository-name cfn-flux-controller-sample-template
+$ aws codecommit create-repository --region us-west-2 --repository-name my-cloudformation-templates
 
-$ git clone https://git-codecommit.us-west-2.amazonaws.com/v1/repos/cfn-flux-controller-sample-template
+$ git clone https://git-codecommit.us-west-2.amazonaws.com/v1/repos/my-cloudformation-templates
 
-$ cd cfn-flux-controller-sample-template
+$ cd my-cloudformation-templates
 
 $ git checkout --orphan main
 ```
 
-4. Create a file `hello-world-template.yaml` in the sample template repo with the following contents:
+4. Create a file `template.yaml` in the sample template repo with the following contents:
 ```yaml
 Resources:
   SampleResource:
@@ -83,7 +83,7 @@ Resources:
 
 5. Push the sample template file to the repo:
 ```
-$ git add hello-world-template.yaml
+$ git add template.yaml
 
 $ git commit -m "Sample template"
 
@@ -127,8 +127,8 @@ $ flux bootstrap git \
     --username=$CODECOMMIT_USERNAME \
     --password=$CODECOMMIT_PASSWORD
 
-$ flux create secret git cfn-sample-template-repo-auth \
-    --url=https://git-codecommit.us-west-2.amazonaws.com/v1/repos/cfn-flux-controller-sample-template \
+$ flux create secret git cfn-template-repo-auth \
+    --url=https://git-codecommit.us-west-2.amazonaws.com/v1/repos/my-cloudformation-templates \
     --username=$CODECOMMIT_USERNAME \
     --password=$CODECOMMIT_PASSWORD
 ```
@@ -171,19 +171,7 @@ $ cd flux-local-kind-cluster
 +  type: NodePort
 ```
 
-13. Open the file `flux-system/gotk-sync.yaml` in your Flux config repository and find the Kustomization object named flux-system.  Update the object's configuration like this:
-```diff
- apiVersion: kustomize.toolkit.fluxcd.io/v1beta2
- kind: Kustomization
- metadata:
-   name: flux-system
-   namespace: flux-system
- spec:
--  interval: 10m0s
-+  interval: 1m0s
-```
-
-14. Create a file `cfn-sample-repo.yaml` in your Flux config repository with the following contents:
+13. Create a file `cfn-sample-repo.yaml` in your Flux config repository with the following contents:
 ```yaml
 apiVersion: source.toolkit.fluxcd.io/v1beta1
 kind: GitRepository
@@ -194,12 +182,12 @@ spec:
   interval: 1h
   ref:
     branch: main
-  url: https://git-codecommit.us-west-2.amazonaws.com/v1/repos/cfn-flux-controller-sample-template
+  url: https://git-codecommit.us-west-2.amazonaws.com/v1/repos/my-cloudformation-templates
   secretRef:
-    name: cfn-sample-template-repo-auth
+    name: cfn-template-repo-auth
 ```
 
-15. Create a file `cfn-sample-stack.yaml` in your Flux config repository with the following contents:
+14. Create a file `cfn-sample-stack.yaml` in your Flux config repository with the following contents:
 ```yaml
 apiVersion: cloudformation.contrib.fluxcd.io/v1alpha1
 kind: CloudFormationStack
@@ -209,7 +197,7 @@ metadata:
 spec:
   stackName: flux-cfn-controller-sample-stack
   region: us-west-2
-  templatePath: ./hello-world-template.yaml
+  templatePath: ./template.yaml
   sourceRef:
     kind: GitRepository
     name: cfn-sample-template-repo
@@ -217,7 +205,7 @@ spec:
   retryInterval: 5m
 ```
 
-16. Push the files into the repo:
+15. Push the files into the repo:
 ```
 $ git add flux-system/gotk-components.yaml
 
@@ -230,7 +218,7 @@ $ git commit -m "Add sample CFN stack"
 $ git push
 ```
 
-17. Ensure that the sample template repo is successfully hooked up to Flux:
+16. Ensure that the sample template repo is successfully hooked up to Flux:
 ```
 $ flux get sources git
 ```
