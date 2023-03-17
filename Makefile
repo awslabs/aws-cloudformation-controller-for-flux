@@ -91,6 +91,10 @@ uninstall: manifests
 
 # Deploy into cluster - the cluster must already have Flux installed
 deploy: manifests build-docker-image push-docker-image-to-ecr
+	# Note that this token will expire, so this is only for development use
+	kubectl create secret docker-registry ecr-cred --docker-server=$(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com --docker-username=AWS --docker-password=$(shell aws ecr get-login-password --region $(AWS_REGION)) -n flux-system
+	kubectl patch serviceaccount default -p "{\"imagePullSecrets\": [{\"name\": \"ecr-cred\"}]}" -n flux-system
+
 	mkdir -p config/dev && cp config/default/* config/dev
 	cd config/dev && $(KUSTOMIZE) edit set image public.ecr.aws/aws-cloudformation/aws-cloudformation-controller-for-flux=$(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com/aws-cloudformation-controller-for-flux:latest
 	$(KUSTOMIZE) build config/dev | kubectl apply -f -
