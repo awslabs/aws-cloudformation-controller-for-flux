@@ -1,8 +1,6 @@
 # Build the controller binary
 FROM public.ecr.aws/docker/library/golang:1.19 as builder
 
-ARG BUILD_SHA
-ARG BUILD_VERSION
 ARG GOARCH=amd64
 
 WORKDIR /workspace
@@ -31,6 +29,9 @@ COPY controllers/ controllers/
 COPY internal/ internal/
 
 # Build
+ARG BUILD_SHA
+ARG BUILD_VERSION
+
 RUN go build \
  	-ldflags "-X main.BuildSHA=$BUILD_SHA -X main.BuildVersion=$BUILD_VERSION" \
  	-a -o bin/cfn-controller main.go

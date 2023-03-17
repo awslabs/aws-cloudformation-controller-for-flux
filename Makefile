@@ -83,6 +83,10 @@ install: manifests
 uninstall: manifests
 	$(KUSTOMIZE) build config/crd | kubectl delete -f -
 
+deploy: manifests
+	cd config/manager && kustomize edit set image fluxcd/helm-controller=${IMG}
+	kustomize build config/default | kubectl apply -f -
+
 ##### Install dev tools #####
 
 .PHONY: install-tools
