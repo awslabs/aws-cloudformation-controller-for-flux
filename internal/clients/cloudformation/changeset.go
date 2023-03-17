@@ -71,7 +71,7 @@ type changeSet struct {
 	ctx       context.Context
 }
 
-// getChangeSetId generates a unique change set ID using the generation number
+// GetChangeSetName generates a unique change set name using the generation number
 // (a specific version of the CloudFormationStack Spec contents) and the source
 // revision (such as the branch and commit ID for git sources).
 //
@@ -80,7 +80,7 @@ type changeSet struct {
 //	Git repository: main@sha1:132f4e719209eb10b9485302f8593fc0e680f4fc
 //	Bucket: sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
 //	OCI repository: latest@sha256:3b6cdcc7adcc9a84d3214ee1c029543789d90b5ae69debe9efa3f66e982875de
-func getChangeSetId(generation int64, sourceRevision string) string {
+func GetChangeSetName(generation int64, sourceRevision string) string {
 	name := fmt.Sprintf(fmtChangeSetName, generation, sourceRevision)
 	name = changeSetNameSpecialChars.ReplaceAllString(name, "-")
 	if len(name) <= maxLengthChangeSetName {
@@ -89,9 +89,20 @@ func getChangeSetId(generation int64, sourceRevision string) string {
 	return name[:maxLengthChangeSetName]
 }
 
+// ExtractChangeSetName extracts the name of the change set from the change set ARN
+// Example:
+// arn:aws:cloudformation:us-west-2:123456789012:changeSet/<name>/<uuid> -> name
+func ExtractChangeSetName(arn string) string {
+	arnParts := strings.Split(arn, "/")
+	if len(arnParts) < 2 {
+		return ""
+	}
+	return arnParts[1]
+}
+
 func newCreateChangeSet(ctx context.Context, cfnClient changeSetAPI, region string, stackName string, generation int64, sourceRevision string) (*changeSet, error) {
 	return &changeSet{
-		name:      getChangeSetId(generation, sourceRevision),
+		name:      GetChangeSetName(generation, sourceRevision),
 		stackName: stackName,
 		region:    region,
 		csType:    types.ChangeSetTypeCreate,
@@ -102,7 +113,7 @@ func newCreateChangeSet(ctx context.Context, cfnClient changeSetAPI, region stri
 
 func newUpdateChangeSet(ctx context.Context, cfnClient changeSetAPI, region string, stackName string, generation int64, sourceRevision string) (*changeSet, error) {
 	return &changeSet{
-		name:      getChangeSetId(generation, sourceRevision),
+		name:      GetChangeSetName(generation, sourceRevision),
 		stackName: stackName,
 		region:    region,
 		csType:    types.ChangeSetTypeUpdate,

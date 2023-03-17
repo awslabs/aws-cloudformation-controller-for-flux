@@ -235,6 +235,7 @@ func CloudFormationStackReady(cfnStack CloudFormationStack, changeSetArn string)
 		},
 	)
 	cfnStack.Status.LastAppliedRevision = cfnStack.Status.LastAttemptedRevision
+	// TODO only update this if the change set was actually applied (the last attempted change set may have been empty)
 	cfnStack.Status.LastAppliedChangeSet = cfnStack.Status.LastAttemptedChangeSet
 	return cfnStack
 }

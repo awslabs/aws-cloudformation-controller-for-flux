@@ -290,12 +290,21 @@ func (r *CloudFormationStackReconciler) reconcileStack(ctx context.Context, cfnS
 		// Region:         cfnStack.Spec.Region,
 		Generation:     cfnStack.Generation,
 		SourceRevision: revision,
-		ChangeSetArn:   cfnStack.Status.LastAttemptedChangeSet,
 		StackConfig: &cloudformation.StackConfig{
 			// TODO get bucket from annotations, controller flags, etc
 			TemplateBucket: os.Getenv("TEMPLATE_BUCKET"),
 			TemplateBody:   templateContents.String(),
 		},
+	}
+
+	// Check if we need to generate a new change set or describe the current one
+	desiredChangeSetName := cloudformation.GetChangeSetName(cfnStack.Generation, revision)
+	lastAttemptedChangeSetName := cloudformation.ExtractChangeSetName(cfnStack.Status.LastAttemptedChangeSet)
+	if desiredChangeSetName != lastAttemptedChangeSetName {
+		// We need to create a new change set for the new revision
+		clientStack.ChangeSetArn = ""
+	} else {
+		clientStack.ChangeSetArn = cfnStack.Status.LastAttemptedChangeSet
 	}
 
 	// Find the existing stack, if any
@@ -437,7 +446,7 @@ func (r *CloudFormationStackReconciler) reconcileChangeset(ctx context.Context, 
 				return cfnStack, cfnStack.GetRetryInterval(), err
 			}
 			// Success!
-			log.Info(fmt.Sprintf("Successfully reconciled stack '%s' with change set '%s'", clientStack.Name, emptyErr.Arn))
+			log.Info(fmt.Sprintf("Successfully reconciled stack '%s' with change set '%s' (empty change set)", clientStack.Name, emptyErr.Arn))
 			return cfnv1.CloudFormationStackReady(cfnStack, emptyErr.Arn), cfnStack.Spec.Interval.Duration, nil
 		} else {
 			msg := fmt.Sprintf("Failed to describe a change set for stack '%s'", clientStack.Name)

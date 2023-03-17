@@ -55,3 +55,15 @@ func stackDoesNotExist(err error) bool {
 	}
 	return false
 }
+
+// changeSetDoesNotExist returns true if the underlying error is a change set doesn't exist.
+func changeSetDoesNotExist(err error) bool {
+	var ae smithy.APIError
+	if errors.As(err, &ae) {
+		switch ae.ErrorCode() {
+		case "ChangeSetNotFound":
+			return true
+		}
+	}
+	return false
+}
