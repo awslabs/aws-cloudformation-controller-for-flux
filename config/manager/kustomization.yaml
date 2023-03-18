@@ -6,3 +6,5 @@ images:
   - name: public.ecr.aws/aws-cloudformation/aws-cloudformation-controller-for-flux
     newName: public.ecr.aws/aws-cloudformation/aws-cloudformation-controller-for-flux
     newTag: v0.0.1
+patchesStrategicMerge:
+- env.yaml
