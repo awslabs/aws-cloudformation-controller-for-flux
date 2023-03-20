@@ -1,7 +1,6 @@
 # AWS CloudFormation Template Sync Controller for Flux
 
 TODO:
-* Demo gif
 * Package as helm chart
 * Support for stack parameters
 * Support for stack tags
@@ -9,6 +8,10 @@ TODO:
 * Support for managing stacks cross-account (see https://aws-controllers-k8s.github.io/community/docs/user-docs/cross-account-resource-management/)
 * Support for managing stacks cross-region (see https://aws-controllers-k8s.github.io/community/docs/user-docs/multi-region-resource-management/)
 * Support for per-namespace S3 buckets
+
+## Demo
+
+![Demo](/docs/demo.gif 'Demo')
 
 ## Security
 
