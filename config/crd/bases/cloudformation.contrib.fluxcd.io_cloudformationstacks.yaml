@@ -118,7 +118,9 @@ spec:
                 - name
                 type: object
               stackName:
-                description: Name of the CloudFormation stack.
+                description: Name of the CloudFormation stack. Note that if this value
+                  is changed after creation, the controller will NOT destroy the old
+                  stack and the old stack will no longer be updated by the controller.
                 maxLength: 128
                 minLength: 1
                 type: string

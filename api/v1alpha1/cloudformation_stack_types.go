@@ -23,6 +23,8 @@ const (
 // CloudFormationStackSpec defines the desired state of a CloudFormation stack
 type CloudFormationStackSpec struct {
 	// Name of the CloudFormation stack.
+	// Note that if this value is changed after creation, the controller will NOT
+	// destroy the old stack and the old stack will no longer be updated by the controller.
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=128
 	// +required
