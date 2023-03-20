@@ -3,6 +3,7 @@
 bin/
 testbin/
 testdata/
+internal/integtests/
 cover.out
 *.yaml
 config/

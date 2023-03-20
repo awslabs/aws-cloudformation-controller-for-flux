@@ -106,6 +106,9 @@ deploy-local-secrets:
 	kubectl delete secret aws-creds -n flux-system --ignore-not-found
 	kubectl create secret generic aws-creds -n flux-system --from-file ~/.aws/credentials
 
+integ-test: build
+	go test -tags=integration ./...
+
 ##### Install dev tools #####
 
 .PHONY: install-tools
