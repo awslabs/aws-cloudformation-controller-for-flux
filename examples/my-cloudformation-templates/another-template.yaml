@@ -3,4 +3,4 @@ Resources:
     Type: AWS::SSM::Parameter
     Properties:
       Type: String
-      Value: "Hello World"
+      Value: "ABC 123"
