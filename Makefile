@@ -79,7 +79,7 @@ push-docker-image-to-ecr:
 
 # Run a controller from your host.
 run: generate fmt vet install
-	SOURCE_CONTROLLER_LOCALHOST=localhost:30000 AWS_REGION=$(AWS_REGION) TEMPLATE_BUCKET=flux-templates-$(AWS_ACCOUNT_ID) go run ./main.go
+	SOURCE_CONTROLLER_LOCALHOST=localhost:30000 AWS_REGION=$(AWS_REGION) TEMPLATE_BUCKET=flux-cfn-templates-$(AWS_ACCOUNT_ID)-$(AWS_REGION) go run ./main.go
 
 # Install CRDs into a cluster
 install: manifests
@@ -90,21 +90,15 @@ uninstall: manifests
 	$(KUSTOMIZE) build config/crd | kubectl delete -f -
 
 # Deploy into cluster - the cluster must already have Flux installed
-deploy: manifests build-docker-image push-docker-image-to-ecr deploy-local-secrets
+deploy: manifests build-docker-image push-docker-image-to-ecr
 	mkdir -p config/dev && cp -r config/default config/crd config/manager config/rbac config/dev/
 	cd config/dev/default && $(KUSTOMIZE) edit set image public.ecr.aws/aws-cloudformation/aws-cloudformation-controller-for-flux=$(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com/aws-cloudformation-controller-for-flux:latest
-	cat config/manager/dev.yaml | AWS_REGION=$(AWS_REGION) TEMPLATE_BUCKET=flux-templates-$(AWS_ACCOUNT_ID) envsubst > config/dev/manager/env.yaml
+	cat config/manager/dev.yaml | AWS_REGION=$(AWS_REGION) TEMPLATE_BUCKET=flux-cfn-templates-$(AWS_ACCOUNT_ID)-$(AWS_REGION) envsubst > config/dev/manager/env.yaml
 	$(KUSTOMIZE) build config/dev/default | kubectl apply -f -
 	rm -rf config/dev
 
-deploy-local-secrets:
-	# Note that this ECR token will expire, so this is only for development use
-	kubectl delete secret docker-registry ecr-cred -n flux-system --ignore-not-found
-	kubectl create secret docker-registry ecr-cred --docker-server=$(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com --docker-username=AWS --docker-password=$(shell aws ecr get-login-password --region $(AWS_REGION)) -n flux-system
-	kubectl patch serviceaccount default -p "{\"imagePullSecrets\": [{\"name\": \"ecr-cred\"}]}" -n flux-system
-
-	kubectl delete secret aws-creds -n flux-system --ignore-not-found
-	kubectl create secret generic aws-creds -n flux-system --from-file ~/.aws/credentials
+bootstrap-local-cluster:
+	$(shell pwd)/local-dev/bootstrap-local-kind-cluster.sh
 
 integ-test: build
 	go test -tags=integration ./...

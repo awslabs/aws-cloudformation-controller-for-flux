@@ -1,0 +1,56 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Description: AWS resources needed to develop, run, and test the CloudFormation controller for Flux
+
+Resources:
+
+  # Bucket that the controller will use to upload CFN template files prior to syncing them to their CFN stack
+  TemplateBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      Tags:
+      - Key: Name
+        Value: !Sub flux-cfn-templates-${AWS::AccountId}-${AWS::Region}
+      LifecycleConfiguration:
+        Rules:
+          - ExpirationInDays : 1
+            Status: Enabled
+    DeletionPolicy: Delete
+
+  # Repository for storing CloudFormation templates
+  TemplateRepo:
+    Type: AWS::CodeCommit::Repository
+    Properties:
+      RepositoryName: my-cloudformation-templates
+
+  # Repository for storing Flux configuration
+  FluxRepo:
+    Type: AWS::CodeCommit::Repository
+    Properties:
+      RepositoryName: my-flux-configuration
+
+  # User for interacting with CodeCommit repos
+  GitUser:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: 'flux-git'
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/AWSCodeCommitPowerUser"
+
+  GitCredentials:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: flux-git-credentials
+      # CloudFormation does not yet support creating service-specific credentials,
+      # so this secret is a placeholder until the credentials are created manually.
+      SecretString: |
+        {
+          "ServiceUserName":"TO-FILL-IN",
+          "ServicePassword":"TO-FILL-IN"
+        }
+
+  # ECR repo for storing development images of the CFN controller
+  MyRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: aws-cloudformation-controller-for-flux
