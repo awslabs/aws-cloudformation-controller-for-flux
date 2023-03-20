@@ -13,6 +13,10 @@ TODO:
 
 ![Demo](/docs/demo.gif 'Demo')
 
+## Development
+
+For information about developing the CloudFormation controller locally, see [Developing the AWS CloudFormation Template Sync Controller for Flux](./docs/developing.md).
+
 ## Security
 
 See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more information.
