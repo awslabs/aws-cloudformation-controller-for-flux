@@ -20,6 +20,69 @@ the git repository is synced into your stack by re-deploying the template on a r
 
 ![Demo](/docs/demo.gif 'Demo')
 
+## Example
+
+Connect a git repository to Flux - this git repository will store your CloudFormation templates:
+
+```yaml
+apiVersion: source.toolkit.fluxcd.io/v1beta1
+kind: GitRepository
+metadata:
+  name: my-gitops-repo
+  namespace: flux-system
+spec:
+  url: https://git-codecommit.us-west-2.amazonaws.com/v1/repos/my-gitops-repo
+  ref:
+    branch: main
+  interval: 5m
+  secretRef:
+    name: my-gitops-repo-auth
+```
+
+In your git repository, add a CloudFormation template file for each stack that you want automatically deployed by Flux:
+
+```
+hello-world/stack-template.yaml
+hey-there/another-stack-template.yaml
+hi-friend/my-stack-template.yaml
+README.md
+```
+
+Register each CloudFormation template file in your git repository with Flux as a separate CloudFormation stack object:
+
+```yaml
+apiVersion: cloudformation.contrib.fluxcd.io/v1alpha1
+kind: CloudFormationStack
+metadata:
+  name: hello-world-stack
+  namespace: flux-system
+spec:
+  stackName: flux-hello-world
+  templatePath: ./hello-world/stack-template.yaml
+  sourceRef:
+    kind: GitRepository
+    name: my-gitops-repo
+  interval: 10m
+  retryInterval: 5m
+```
+
+When either the stack template file in the git repo OR the stack object in Flux is created or updated, you will see the CloudFormation stack created/updated in your AWS account:
+
+```yaml
+$ kubectl describe cfnstack hello-world-stack --namespace flux-system
+Name:         cfn-sample-stack
+Namespace:    flux-system
+...
+Status:
+  Conditions:
+    Last Transition Time:  2023-02-28T19:56:58Z
+    Message:               deployed stack 'flux-hello-world'
+    Observed Generation:   1
+    Reason:                Succeeded
+    Status:                True
+    Type:                  Ready
+```
+
 ## Development
 
 For information about developing the CloudFormation controller locally, see [Developing the AWS CloudFormation Template Sync Controller for Flux](./docs/developing.md).
