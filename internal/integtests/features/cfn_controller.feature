@@ -16,10 +16,9 @@ Feature: CloudFormation controller for Flux
       templatePath: {template_path}
       sourceRef:
         kind: GitRepository
-        name: integ-test-cfn-templates-repo
+        name: my-cfn-templates-repo
       interval: 1h
       retryInterval: 5s
-      destroyStackOnDeletion: true
       """
 
     Then the CloudFormationStack's Ready condition should eventually have "Unknown" status
@@ -36,10 +35,9 @@ Feature: CloudFormation controller for Flux
       templatePath: {template_path}
       sourceRef:
         kind: GitRepository
-        name: integ-test-cfn-templates-repo
+        name: my-cfn-templates-repo
       interval: 1h
       retryInterval: 5s
-      destroyStackOnDeletion: true
       """
     And the CloudFormationStack's Ready condition should eventually have "True" status
     And the CloudFormation stack in my AWS account should be in "CREATE_COMPLETE" state
@@ -50,10 +48,9 @@ Feature: CloudFormation controller for Flux
       templatePath: {other_template_path}
       sourceRef:
         kind: GitRepository
-        name: integ-test-cfn-templates-repo
+        name: my-cfn-templates-repo
       interval: 1h
       retryInterval: 5s
-      destroyStackOnDeletion: true
       """
 
     Then the CloudFormationStack's Ready condition should eventually have "Unknown" status
@@ -69,7 +66,7 @@ Feature: CloudFormation controller for Flux
       templatePath: {template_path}
       sourceRef:
         kind: GitRepository
-        name: integ-test-cfn-templates-repo
+        name: my-cfn-templates-repo
       interval: 1h
       retryInterval: 5s
       destroyStackOnDeletion: true
@@ -93,10 +90,9 @@ Feature: CloudFormation controller for Flux
       templatePath: {template_path}
       sourceRef:
         kind: GitRepository
-        name: integ-test-cfn-templates-repo
+        name: my-cfn-templates-repo
       interval: 1h
       retryInterval: 5s
-      destroyStackOnDeletion: true
       """
     And the CloudFormationStack's Ready condition should eventually have "True" status
     And the CloudFormation stack in my AWS account should be in "CREATE_COMPLETE" state
@@ -117,7 +113,7 @@ Feature: CloudFormation controller for Flux
       templatePath: {template_path}
       sourceRef:
         kind: GitRepository
-        name: integ-test-cfn-templates-repo
+        name: my-cfn-templates-repo
       interval: 1h
       retryInterval: 5s
       destroyStackOnDeletion: true

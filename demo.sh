@@ -15,7 +15,7 @@
 #      cp -rf examples/my-cloudformation-templates/* testdata/my-cloudformation-templates/ (git push)
 #      cp -rf examples/my-flux-configuration/* testdata/my-flux-configuration/
 # * Re-create the kind cluster
-#      ./testdata/setup-kind-cluster.sh
+#      make bootstrap-local-cluster
 # * Start up local controller:
 #      make run
 

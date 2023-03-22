@@ -100,8 +100,8 @@ deploy: manifests build-docker-image push-docker-image-to-ecr
 bootstrap-local-cluster:
 	$(shell pwd)/local-dev/bootstrap-local-kind-cluster.sh
 
-integ-test: build
-	go test -tags=integration ./...
+integ-test: generate fmt vet manifests
+	go test -v -tags=integration ./internal/integtests/
 
 ##### Install dev tools #####
 
