@@ -42,7 +42,6 @@ so this step must be repeated at least every 12 hours.
 ```
 $ git clone https://git-codecommit.us-west-2.amazonaws.com/v1/repos/my-cloudformation-templates
 $ cd my-cloudformation-templates
-$ git checkout --orphan main
 ```
 
 3. Copy the example CloudFormation templates found in examples/my-cloudformation-templates/ into your CFN template git repository. Then, push the sample template files to the repo:

@@ -22,10 +22,28 @@ if [ "$existing_creds" = "$empty_creds" ]; then
     aws secretsmanager put-secret-value --region $AWS_REGION --secret-string "$new_creds" --secret-id flux-git-credentials
 fi
 
-creds=`aws secretsmanager get-secret-value --region us-west-2 --secret-id flux-git-credentials --query 'SecretString' --output text`
+creds=`aws secretsmanager get-secret-value --region $AWS_REGION --secret-id flux-git-credentials --query 'SecretString' --output text`
 
 export CODECOMMIT_USERNAME=`echo $creds | jq -r '.ServiceUserName'`
 export CODECOMMIT_PASSWORD=`echo $creds | jq -r '.ServicePassword'`
+
+default_branch=`aws codecommit get-repository --repository-name my-cloudformation-templates --query 'repositoryMetadata.defaultBranch' --output text`
+no_default_branch="None"
+
+if [ "$default_branch" = "$no_default_branch" ]; then
+    rm -rf init-cfn-template-repo
+    mkdir init-cfn-template-repo
+    cd init-cfn-template-repo
+    git clone https://$CODECOMMIT_USERNAME:$CODECOMMIT_PASSWORD@git-codecommit.$AWS_REGION.amazonaws.com/v1/repos/my-cloudformation-templates
+    cd my-cloudformation-templates
+    git checkout --orphan main
+    echo My CloudFormation templates > README.md
+    git add README.md
+    git commit -m "Initial commit"
+    git push --set-upstream origin main
+    cd ../..
+    rm -rf init-cfn-template-repo
+fi
 
 # Set up the kind cluster
 
@@ -56,7 +74,7 @@ flux create secret git cfn-template-repo-auth \
 rm -rf patch-local-cluster
 mkdir patch-local-cluster
 cd patch-local-cluster
-git clone https://git-codecommit.us-west-2.amazonaws.com/v1/repos/my-flux-configuration
+git clone https://$CODECOMMIT_USERNAME:$CODECOMMIT_PASSWORD@git-codecommit.$AWS_REGION.amazonaws.com/v1/repos/my-flux-configuration
 cd my-flux-configuration
 git apply ../../local-dev/local-flux-dev-config.patch
 git add flux-system
