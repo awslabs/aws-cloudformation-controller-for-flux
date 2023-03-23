@@ -86,6 +86,8 @@ func (t *cfnControllerTestSuite) InitializeTestSuite(ctx *godog.TestSuiteContext
 			t.testingT.Error(err)
 			t.testingT.FailNow()
 		}
+
+		// TODO clear out any old CFN stacks from previous integ tests
 	})
 
 	// After completing the test suite:
@@ -159,6 +161,7 @@ func (s *cfnControllerTestSuite) checkTemplateGitRepository(ctx context.Context)
 	}
 
 	// Clone the template git repository locally
+	// TODO clear out any old integ test templates
 	repo, dir, err = cloneGitRepository(ctx, CfnTemplateRepoName, s.gitCredentials)
 	s.cfnTemplateRepo = repo
 	s.cfnTemplateRepoDir = dir

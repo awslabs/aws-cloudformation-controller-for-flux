@@ -22,6 +22,7 @@ import (
 const (
 	ValidCfnTemplateFile        = "examples/my-cloudformation-templates/template.yaml"
 	AnotherValidCfnTemplateFile = "examples/my-cloudformation-templates/another-template.yaml"
+	ThirdValidCfnTemplateFile   = "examples/my-cloudformation-templates/yet-another-template.yaml"
 
 	EventuallyMaxAttempts = 120
 	EventuallyRetryDelay  = "1s"
@@ -86,7 +87,7 @@ func (s *cfnControllerScenario) createCfnTemplateFile() error {
 }
 
 func (s *cfnControllerScenario) createSecondCfnTemplateFile() error {
-	newFilePath, err := copyFileToGitRepository(s.suite.cfnTemplateRepoDir, s.suite.cfnTemplateRepo, s.suite.gitCredentials, ValidCfnTemplateFile, "")
+	newFilePath, err := copyFileToGitRepository(s.suite.cfnTemplateRepoDir, s.suite.cfnTemplateRepo, s.suite.gitCredentials, AnotherValidCfnTemplateFile, "")
 	s.otherCfnTemplateFile = newFilePath
 	if err != nil {
 		return err
@@ -95,7 +96,7 @@ func (s *cfnControllerScenario) createSecondCfnTemplateFile() error {
 }
 
 func (s *cfnControllerScenario) updateCfnTemplateFile() error {
-	_, err := copyFileToGitRepository(s.suite.cfnTemplateRepoDir, s.suite.cfnTemplateRepo, s.suite.gitCredentials, AnotherValidCfnTemplateFile, s.cfnTemplateFile)
+	_, err := copyFileToGitRepository(s.suite.cfnTemplateRepoDir, s.suite.cfnTemplateRepo, s.suite.gitCredentials, ThirdValidCfnTemplateFile, s.cfnTemplateFile)
 	if err != nil {
 		return err
 	}
@@ -128,7 +129,7 @@ func (s *cfnControllerScenario) applyCfnStackConfiguration(cfnStackSpec *godog.D
 			return err
 		}
 		s.cfnStackObjectName = fmt.Sprintf("integ-test-cfnstack-%s", id.String())
-		s.realCfnStackName = fmt.Sprintf("flux-controller-integ-test-%s", id.String())
+		s.realCfnStackName = fmt.Sprintf("cfn-flux-controller-integ-test-%s", id.String())
 	}
 
 	stackSpec := cfnStackSpec.Content
