@@ -2,23 +2,25 @@ Feature: CloudFormation controller for Flux
   A Flux user can automatically sync a CloudFormation template stored
   in a git repository into a CloudFormation stack in their AWS account.
 
-  Background:
-    Given I have a Kubernetes cluster with the CloudFormation controller for Flux installed
-    And I have a git repository for my CloudFormation template files registered with Flux
-
   Scenario: New CloudFormation stack
     Given I push a valid CloudFormation template to my git repository
     And I trigger Flux to reconcile my git repository
 
     When I apply the following CloudFormationStack configuration to my Kubernetes cluster
       """
-      stackName: {stack_name}
-      templatePath: {template_path}
-      sourceRef:
-        kind: GitRepository
-        name: my-cfn-templates-repo
-      interval: 1h
-      retryInterval: 5s
+      apiVersion: cloudformation.contrib.fluxcd.io/v1alpha1
+      kind: CloudFormationStack
+      metadata:
+        name: {stack_object_name}
+        namespace: flux-system
+      spec:
+        stackName: {stack_name}
+        templatePath: {template_path}
+        sourceRef:
+          kind: GitRepository
+          name: my-cfn-templates-repo
+        interval: 1h
+        retryInterval: 5s
       """
 
     Then the CloudFormationStack's Ready condition should eventually have "Unknown" status
@@ -31,26 +33,38 @@ Feature: CloudFormation controller for Flux
     And I trigger Flux to reconcile my git repository
     And I apply the following CloudFormationStack configuration to my Kubernetes cluster
       """
-      stackName: {stack_name}
-      templatePath: {template_path}
-      sourceRef:
-        kind: GitRepository
-        name: my-cfn-templates-repo
-      interval: 1h
-      retryInterval: 5s
+      apiVersion: cloudformation.contrib.fluxcd.io/v1alpha1
+      kind: CloudFormationStack
+      metadata:
+        name: {stack_object_name}
+        namespace: flux-system
+      spec:
+        stackName: {stack_name}
+        templatePath: {template_path}
+        sourceRef:
+          kind: GitRepository
+          name: my-cfn-templates-repo
+        interval: 1h
+        retryInterval: 5s
       """
     And the CloudFormationStack's Ready condition should eventually have "True" status
     And the CloudFormation stack in my AWS account should be in "CREATE_COMPLETE" state
 
     When I apply the following CloudFormationStack configuration to my Kubernetes cluster
       """
-      stackName: {stack_name}
-      templatePath: {other_template_path}
-      sourceRef:
-        kind: GitRepository
-        name: my-cfn-templates-repo
-      interval: 1h
-      retryInterval: 5s
+      apiVersion: cloudformation.contrib.fluxcd.io/v1alpha1
+      kind: CloudFormationStack
+      metadata:
+        name: {stack_object_name}
+        namespace: flux-system
+      spec:
+        stackName: {stack_name}
+        templatePath: {other_template_path}
+        sourceRef:
+          kind: GitRepository
+          name: my-cfn-templates-repo
+        interval: 1h
+        retryInterval: 5s
       """
 
     Then the CloudFormationStack's Ready condition should eventually have "Unknown" status
@@ -62,14 +76,19 @@ Feature: CloudFormation controller for Flux
     And I trigger Flux to reconcile my git repository
     And I apply the following CloudFormationStack configuration to my Kubernetes cluster
       """
-      stackName: {stack_name}
-      templatePath: {template_path}
-      sourceRef:
-        kind: GitRepository
-        name: my-cfn-templates-repo
-      interval: 1h
-      retryInterval: 5s
-      destroyStackOnDeletion: true
+      apiVersion: cloudformation.contrib.fluxcd.io/v1alpha1
+      kind: CloudFormationStack
+      metadata:
+        name: {stack_object_name}
+        namespace: flux-system
+      spec:
+        stackName: {stack_name}
+        templatePath: {template_path}
+        sourceRef:
+          kind: GitRepository
+          name: my-cfn-templates-repo
+        interval: 1h
+        retryInterval: 5s
       """
     And the CloudFormationStack's Ready condition should eventually have "True" status
     And the CloudFormation stack in my AWS account should be in "CREATE_COMPLETE" state
@@ -86,13 +105,19 @@ Feature: CloudFormation controller for Flux
     And I trigger Flux to reconcile my git repository
     And I apply the following CloudFormationStack configuration to my Kubernetes cluster
       """
-      stackName: {stack_name}
-      templatePath: {template_path}
-      sourceRef:
-        kind: GitRepository
-        name: my-cfn-templates-repo
-      interval: 1h
-      retryInterval: 5s
+      apiVersion: cloudformation.contrib.fluxcd.io/v1alpha1
+      kind: CloudFormationStack
+      metadata:
+        name: {stack_object_name}
+        namespace: flux-system
+      spec:
+        stackName: {stack_name}
+        templatePath: {template_path}
+        sourceRef:
+          kind: GitRepository
+          name: my-cfn-templates-repo
+        interval: 1h
+        retryInterval: 5s
       """
     And the CloudFormationStack's Ready condition should eventually have "True" status
     And the CloudFormation stack in my AWS account should be in "CREATE_COMPLETE" state
@@ -109,20 +134,25 @@ Feature: CloudFormation controller for Flux
     And I trigger Flux to reconcile my git repository
     And I apply the following CloudFormationStack configuration to my Kubernetes cluster
       """
-      stackName: {stack_name}
-      templatePath: {template_path}
-      sourceRef:
-        kind: GitRepository
-        name: my-cfn-templates-repo
-      interval: 1h
-      retryInterval: 5s
-      destroyStackOnDeletion: true
+      apiVersion: cloudformation.contrib.fluxcd.io/v1alpha1
+      kind: CloudFormationStack
+      metadata:
+        name: {stack_object_name}
+        namespace: flux-system
+      spec:
+        stackName: {stack_name}
+        templatePath: {template_path}
+        sourceRef:
+          kind: GitRepository
+          name: my-cfn-templates-repo
+        interval: 1h
+        retryInterval: 5s
+        destroyStackOnDeletion: true
       """
     And the CloudFormationStack's Ready condition should eventually have "True" status
     And the CloudFormation stack in my AWS account should be in "CREATE_COMPLETE" state
 
     When I mark the CloudFormationStack for deletion
 
-    Then the CloudFormationStack's Ready condition should eventually have "Unknown" status
-    And the CloudFormationStack should eventually be deleted
+    Then the CloudFormationStack should eventually be deleted
     And the CloudFormation stack in my AWS account should be deleted

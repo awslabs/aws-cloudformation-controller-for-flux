@@ -95,6 +95,8 @@ deploy: manifests build-docker-image push-docker-image-to-ecr
 	cd config/dev/default && $(KUSTOMIZE) edit set image public.ecr.aws/aws-cloudformation/aws-cloudformation-controller-for-flux=$(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com/aws-cloudformation-controller-for-flux:latest
 	cat config/manager/dev.yaml | AWS_REGION=$(AWS_REGION) TEMPLATE_BUCKET=flux-cfn-templates-$(AWS_ACCOUNT_ID)-$(AWS_REGION) envsubst > config/dev/manager/env.yaml
 	$(KUSTOMIZE) build config/dev/default | kubectl apply -f -
+	kubectl rollout restart deployment cfn-controller --namespace=flux-system
+	kubectl rollout status deployment/cfn-controller --namespace=flux-system --timeout=10s
 	rm -rf config/dev
 
 bootstrap-local-cluster:

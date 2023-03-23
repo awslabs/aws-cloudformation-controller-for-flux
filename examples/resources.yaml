@@ -8,9 +8,7 @@ Resources:
   TemplateBucket:
     Type: AWS::S3::Bucket
     Properties:
-      Tags:
-      - Key: Name
-        Value: !Sub flux-cfn-templates-${AWS::AccountId}-${AWS::Region}
+      BucketName: !Sub flux-cfn-templates-${AWS::AccountId}-${AWS::Region}
       LifecycleConfiguration:
         Rules:
           - ExpirationInDays : 1
