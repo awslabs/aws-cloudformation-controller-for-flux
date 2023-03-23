@@ -1,43 +1,43 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: MIT-0
 
-package cloudformation
+package types
 
 import (
-	"github.com/aws/aws-sdk-go-v2/service/cloudformation/types"
+	sdktypes "github.com/aws/aws-sdk-go-v2/service/cloudformation/types"
 )
 
 var (
-	successfulDeploymentStackStatuses = []types.StackStatus{
-		types.StackStatusCreateComplete,
-		types.StackStatusUpdateComplete,
-		types.StackStatusImportComplete,
+	successfulDeploymentStackStatuses = []sdktypes.StackStatus{
+		sdktypes.StackStatusCreateComplete,
+		sdktypes.StackStatusUpdateComplete,
+		sdktypes.StackStatusImportComplete,
 	}
 
-	inProgressStackStatuses = []types.StackStatus{
-		types.StackStatusCreateInProgress,
-		types.StackStatusDeleteInProgress,
-		types.StackStatusRollbackInProgress,
-		types.StackStatusUpdateCompleteCleanupInProgress,
-		types.StackStatusUpdateInProgress,
-		types.StackStatusUpdateRollbackCompleteCleanupInProgress,
-		types.StackStatusUpdateRollbackInProgress,
-		types.StackStatusImportInProgress,
-		types.StackStatusImportRollbackInProgress,
+	inProgressStackStatuses = []sdktypes.StackStatus{
+		sdktypes.StackStatusCreateInProgress,
+		sdktypes.StackStatusDeleteInProgress,
+		sdktypes.StackStatusRollbackInProgress,
+		sdktypes.StackStatusUpdateCompleteCleanupInProgress,
+		sdktypes.StackStatusUpdateInProgress,
+		sdktypes.StackStatusUpdateRollbackCompleteCleanupInProgress,
+		sdktypes.StackStatusUpdateRollbackInProgress,
+		sdktypes.StackStatusImportInProgress,
+		sdktypes.StackStatusImportRollbackInProgress,
 	}
 
-	unrecoverableFailureStackStatuses = []types.StackStatus{
-		types.StackStatusCreateFailed,
-		types.StackStatusDeleteFailed,
-		types.StackStatusRollbackComplete,
-		types.StackStatusRollbackFailed,
+	unrecoverableFailureStackStatuses = []sdktypes.StackStatus{
+		sdktypes.StackStatusCreateFailed,
+		sdktypes.StackStatusDeleteFailed,
+		sdktypes.StackStatusRollbackComplete,
+		sdktypes.StackStatusRollbackFailed,
 	}
 
-	recoverableFailureStackStatuses = []types.StackStatus{
-		types.StackStatusUpdateFailed,
-		types.StackStatusUpdateRollbackComplete,
-		types.StackStatusImportRollbackComplete,
-		types.StackStatusImportRollbackFailed,
+	recoverableFailureStackStatuses = []sdktypes.StackStatus{
+		sdktypes.StackStatusUpdateFailed,
+		sdktypes.StackStatusUpdateRollbackComplete,
+		sdktypes.StackStatusImportRollbackComplete,
+		sdktypes.StackStatusImportRollbackFailed,
 	}
 )
 
@@ -55,22 +55,22 @@ type StackConfig struct {
 	TemplateBucket string
 	TemplateBody   string
 	TemplateURL    string
-	Parameters     []types.Parameter
-	Tags           []types.Tag
+	Parameters     []sdktypes.Parameter
+	Tags           []sdktypes.Tag
 }
 
 // StackEvent is an alias the SDK's StackEvent type.
-type StackEvent types.StackEvent
+type StackEvent sdktypes.StackEvent
 
 // StackDescription is an alias the SDK's Stack type.
-type StackDescription types.Stack
+type StackDescription sdktypes.Stack
 
 // StackResource is an alias the SDK's StackResource type.
-type StackResource types.StackResource
+type StackResource sdktypes.StackResource
 
 // SDK returns the underlying struct from the AWS SDK.
-func (d *StackDescription) SDK() *types.Stack {
-	raw := types.Stack(*d)
+func (d *StackDescription) SDK() *sdktypes.Stack {
+	raw := sdktypes.Stack(*d)
 	return &raw
 }
 
@@ -87,7 +87,7 @@ func (d *StackDescription) ReadyForCleanup() bool {
 // RequiresRollbackContinuation returns true if the stack failed an update, and the rollback failed.
 // The only valid actions for the stack in this state are the ContinueUpdateRollback or DeleteStack operations
 func (d *StackDescription) RequiresRollbackContinuation() bool {
-	return types.StackStatusUpdateRollbackFailed == d.StackStatus
+	return sdktypes.StackStatusUpdateRollbackFailed == d.StackStatus
 }
 
 // InProgress returns true if the stack is currently being deployed.
@@ -107,10 +107,10 @@ func (d *StackDescription) IsRecoverableFailure() bool {
 
 // DeleteFailed returns true if the stack is in DELETE_FAILED state
 func (d *StackDescription) DeleteFailed() bool {
-	return types.StackStatusDeleteFailed == d.StackStatus
+	return sdktypes.StackStatusDeleteFailed == d.StackStatus
 }
 
-func stackStatusListContains(element types.StackStatus, statusList []types.StackStatus) bool {
+func stackStatusListContains(element sdktypes.StackStatus, statusList []sdktypes.StackStatus) bool {
 	for _, status := range statusList {
 		if element == status {
 			return true

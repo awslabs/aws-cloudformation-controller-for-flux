@@ -12,8 +12,10 @@ import (
 	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/cloudformation"
-	"github.com/aws/aws-sdk-go-v2/service/cloudformation/types"
+	sdktypes "github.com/aws/aws-sdk-go-v2/service/cloudformation/types"
 	"github.com/aws/smithy-go/middleware"
+	"github.com/awslabs/aws-cloudformation-controller-for-flux/internal/clients"
+	"github.com/awslabs/aws-cloudformation-controller-for-flux/internal/clients/types"
 )
 
 // CloudFormation represents a client to make requests to AWS CloudFormation.
@@ -23,7 +25,7 @@ type CloudFormation struct {
 }
 
 // New creates a new CloudFormation client.
-func New(ctx context.Context) (*CloudFormation, error) {
+func New(ctx context.Context) (clients.CloudFormationClient, error) {
 	cfg, err := config.LoadDefaultConfig(
 		ctx,
 		config.WithAPIOptions([]func(*middleware.Stack) error{
@@ -40,9 +42,17 @@ func New(ctx context.Context) (*CloudFormation, error) {
 	}, nil
 }
 
+// For passing a mock client in tests
+func NewWithClient(ctx context.Context, client client) *CloudFormation {
+	return &CloudFormation{
+		client: client,
+		ctx:    ctx,
+	}
+}
+
 // Describe returns a description of an existing stack.
 // If the stack does not exist, returns ErrStackNotFound.
-func (c *CloudFormation) DescribeStack(stack *Stack) (*StackDescription, error) {
+func (c *CloudFormation) DescribeStack(stack *types.Stack) (*types.StackDescription, error) {
 	out, err := c.client.DescribeStacks(c.ctx, &cloudformation.DescribeStacksInput{
 		StackName: aws.String(stack.Name),
 	}, func(opts *cloudformation.Options) {
@@ -59,22 +69,22 @@ func (c *CloudFormation) DescribeStack(stack *Stack) (*StackDescription, error) 
 	if len(out.Stacks) == 0 {
 		return nil, &ErrStackNotFound{name: stack.Name}
 	}
-	if out.Stacks[0].StackStatus == types.StackStatusReviewInProgress {
+	if out.Stacks[0].StackStatus == sdktypes.StackStatusReviewInProgress {
 		// there is a creation change set for the stack, but it has not been executed,
 		// so the stack has not been created yet
 		return nil, &ErrStackNotFound{name: stack.Name}
 	}
-	if out.Stacks[0].StackStatus == types.StackStatusDeleteComplete {
+	if out.Stacks[0].StackStatus == sdktypes.StackStatusDeleteComplete {
 		// the stack was previously successfully deleted
 		return nil, &ErrStackNotFound{name: stack.Name}
 	}
-	descr := StackDescription(out.Stacks[0])
+	descr := types.StackDescription(out.Stacks[0])
 	return &descr, nil
 }
 
 // DescribeChangeSet gathers and returns all changes for the stack's current change set.
 // If the stack or changeset does not exist, returns ErrChangeSetNotFound.
-func (c *CloudFormation) DescribeChangeSet(stack *Stack) (*ChangeSetDescription, error) {
+func (c *CloudFormation) DescribeChangeSet(stack *types.Stack) (*types.ChangeSetDescription, error) {
 	var changeSetName string
 	if stack.ChangeSetArn != "" {
 		changeSetName = stack.ChangeSetArn
@@ -108,7 +118,7 @@ func (c *CloudFormation) DescribeChangeSet(stack *Stack) (*ChangeSetDescription,
 
 // CreateStack begins the process of deploying a new CloudFormation stack by creating a change set.
 // The change set must be executed when it is successfully created.
-func (c *CloudFormation) CreateStack(stack *Stack) (changeSetArn string, err error) {
+func (c *CloudFormation) CreateStack(stack *types.Stack) (changeSetArn string, err error) {
 	cs, err := newCreateChangeSet(c.ctx, c.client, stack.Region, stack.Name, stack.Generation, stack.SourceRevision)
 	if err != nil {
 		return "", err
@@ -124,7 +134,7 @@ func (c *CloudFormation) CreateStack(stack *Stack) (changeSetArn string, err err
 // UpdateStack begins the process of updating an existing CloudFormation stack with new configuration
 // by creating a change set.
 // The change set must be executed when it is successfully created.
-func (c *CloudFormation) UpdateStack(stack *Stack) (changeSetArn string, err error) {
+func (c *CloudFormation) UpdateStack(stack *types.Stack) (changeSetArn string, err error) {
 	cs, err := newUpdateChangeSet(c.ctx, c.client, stack.Region, stack.Name, stack.Generation, stack.SourceRevision)
 	if err != nil {
 		return "", err
@@ -139,14 +149,14 @@ func (c *CloudFormation) UpdateStack(stack *Stack) (changeSetArn string, err err
 
 // ExecutChangeSet starts the execution of the stack's current change set.
 // If the stack or changeset does not exist, returns ErrChangeSetNotFound.
-func (c *CloudFormation) ExecuteChangeSet(stack *Stack) error {
+func (c *CloudFormation) ExecuteChangeSet(stack *types.Stack) error {
 	cs := &changeSet{name: stack.ChangeSetArn, stackName: stack.Name, region: stack.Region, client: c.client, ctx: c.ctx}
 	return cs.execute()
 }
 
 // Delete removes an existing CloudFormation stack.
 // If the stack doesn't exist then do nothing.
-func (c *CloudFormation) DeleteStack(stack *Stack) error {
+func (c *CloudFormation) DeleteStack(stack *types.Stack) error {
 	_, err := c.client.DeleteStack(c.ctx, &cloudformation.DeleteStackInput{
 		StackName: aws.String(stack.Name),
 	}, func(opts *cloudformation.Options) {
@@ -165,7 +175,7 @@ func (c *CloudFormation) DeleteStack(stack *Stack) error {
 
 // Delete removes an existing CloudFormation change set.
 // If the change set doesn't exist then do nothing.
-func (c *CloudFormation) DeleteChangeSet(stack *Stack) error {
+func (c *CloudFormation) DeleteChangeSet(stack *types.Stack) error {
 	cs := &changeSet{name: stack.ChangeSetArn, stackName: stack.Name, region: stack.Region, client: c.client, ctx: c.ctx}
 	if err := cs.delete(); err != nil {
 		if !changeSetDoesNotExist(err) && !stackDoesNotExist(err) {
@@ -176,8 +186,8 @@ func (c *CloudFormation) DeleteChangeSet(stack *Stack) error {
 	return nil
 }
 
-// ContinueRollback attempts to continue an Update rollback for an existing CloudFormation stack.
-func (c *CloudFormation) ContinueRollback(stack *Stack) error {
+// ContinueStackRollback attempts to continue an Update rollback for an existing CloudFormation stack.
+func (c *CloudFormation) ContinueStackRollback(stack *types.Stack) error {
 	_, err := c.client.ContinueUpdateRollback(c.ctx, &cloudformation.ContinueUpdateRollbackInput{
 		StackName: aws.String(stack.Name),
 	}, func(opts *cloudformation.Options) {

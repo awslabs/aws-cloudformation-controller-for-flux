@@ -35,8 +35,9 @@ import (
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 
 	cfnv1 "github.com/awslabs/aws-cloudformation-controller-for-flux/api/v1alpha1"
+	"github.com/awslabs/aws-cloudformation-controller-for-flux/internal/clients"
 	"github.com/awslabs/aws-cloudformation-controller-for-flux/internal/clients/cloudformation"
-	"github.com/awslabs/aws-cloudformation-controller-for-flux/internal/clients/s3"
+	"github.com/awslabs/aws-cloudformation-controller-for-flux/internal/clients/types"
 )
 
 //+kubebuilder:rbac:groups=cloudformation.contrib.fluxcd.io,resources=cloudformationstacks,verbs=get;list;watch;create;update;patch;delete
@@ -53,8 +54,8 @@ type CloudFormationStackReconciler struct {
 	httpClient        *retryablehttp.Client
 	requeueDependency time.Duration
 
-	CfnClient       *cloudformation.CloudFormation
-	S3Client        *s3.S3
+	CfnClient       clients.CloudFormationClient
+	S3Client        clients.S3Client
 	EventRecorder   kuberecorder.EventRecorder
 	MetricsRecorder *metrics.Recorder
 	Scheme          *runtime.Scheme
@@ -285,12 +286,12 @@ func (r *CloudFormationStackReconciler) reconcileStack(ctx context.Context, cfnS
 	log := ctrl.LoggerFrom(ctx)
 
 	// Convert the Flux controller stack type into the CloudFormation client stack type
-	clientStack := &cloudformation.Stack{
+	clientStack := &types.Stack{
 		Name: cfnStack.Spec.StackName,
 		// Region:         cfnStack.Spec.Region,
 		Generation:     cfnStack.Generation,
 		SourceRevision: revision,
-		StackConfig: &cloudformation.StackConfig{
+		StackConfig: &types.StackConfig{
 			// TODO get bucket from annotations, controller flags, etc
 			TemplateBucket: os.Getenv("TEMPLATE_BUCKET"),
 			TemplateBody:   templateContents.String(),
@@ -333,7 +334,7 @@ func (r *CloudFormationStackReconciler) reconcileStack(ctx context.Context, cfnS
 
 	// Continue rollback if a previous update rollback failed
 	if desc.RequiresRollbackContinuation() {
-		if err := r.CfnClient.ContinueRollback(clientStack); err != nil {
+		if err := r.CfnClient.ContinueStackRollback(clientStack); err != nil {
 			msg := fmt.Sprintf("Failed to continue a failed rollback for stack '%s'", clientStack.Name)
 			log.Error(err, msg)
 			cfnStack = cfnv1.CloudFormationStackNotReady(cfnStack, cfnv1.ReadinessUpdate{SourceRevision: revision, Message: msg, Reason: cfnv1.CloudFormationApiCallFailedReason})
@@ -390,7 +391,7 @@ func (r *CloudFormationStackReconciler) reconcileStack(ctx context.Context, cfnS
 	return cfnStack, cfnStack.GetRetryInterval(), nil
 }
 
-func (r *CloudFormationStackReconciler) reconcileChangeset(ctx context.Context, cfnStack cfnv1.CloudFormationStack, clientStack *cloudformation.Stack, revision string, isCreate bool) (cfnv1.CloudFormationStack, time.Duration, error) {
+func (r *CloudFormationStackReconciler) reconcileChangeset(ctx context.Context, cfnStack cfnv1.CloudFormationStack, clientStack *types.Stack, revision string, isCreate bool) (cfnv1.CloudFormationStack, time.Duration, error) {
 	log := ctrl.LoggerFrom(ctx)
 
 	desc, err := r.CfnClient.DescribeChangeSet(clientStack)
@@ -529,7 +530,7 @@ func (r *CloudFormationStackReconciler) reconcileChangeset(ctx context.Context, 
 	return cfnStack, cfnStack.GetRetryInterval(), nil
 }
 
-func (r *CloudFormationStackReconciler) uploadStackTemplate(clientStack *cloudformation.Stack) error {
+func (r *CloudFormationStackReconciler) uploadStackTemplate(clientStack *types.Stack) error {
 	id, err := uuid.NewRandom()
 	if err != nil {
 		return fmt.Errorf("generate random id: %w", err)
@@ -557,7 +558,7 @@ func (r *CloudFormationStackReconciler) reconcileDelete(ctx context.Context, cfn
 
 	if !cfnStack.Spec.Suspend {
 		// Convert the Flux controller stack type into the CloudFormation client stack type
-		clientStack := &cloudformation.Stack{
+		clientStack := &types.Stack{
 			Name: cfnStack.Spec.StackName,
 			// Region:         cfnStack.Spec.Region,
 			Generation:     cfnStack.Generation,

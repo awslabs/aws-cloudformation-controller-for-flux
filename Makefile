@@ -50,14 +50,15 @@ clean:
 
 PHONY: gen-mocks
 gen-mocks: mockgen
-	${MOCKGEN} -package=mocks -destination=./internal/clients/cloudformation/mocks/mock_cloudformation.go -source=./internal/clients/cloudformation/interfaces.go
-	${MOCKGEN} -package=mocks -destination=./internal/clients/s3/mocks/mock_s3.go -source=./internal/clients/s3/interfaces.go
+	${MOCKGEN} -package=mocks -destination=./internal/clients/cloudformation/mocks/mock_sdk.go -source=./internal/clients/cloudformation/sdk_interfaces.go
+	${MOCKGEN} -package=mocks -destination=./internal/clients/s3/mocks/mock_sdk.go -source=./internal/clients/s3/sdk_interfaces.go
+	${MOCKGEN} -package=mocks -destination=./internal/clients/mocks/mock_clients.go -source=./internal/clients/clients.go
 
 test: tidy generate gen-mocks fmt vet manifests
 	go test ./... -coverprofile cover.out
 	cd api; go test ./... -coverprofile cover.out
 
-build: generate fmt vet manifests
+build: generate gen-mocks fmt vet manifests
 	go build -o bin/manager \
  		-ldflags "-X main.BuildSHA=$(BUILD_SHA) -X main.BuildVersion=$(BUILD_VERSION)" \
  		main.go

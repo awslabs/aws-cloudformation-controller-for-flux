@@ -16,6 +16,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/aws/aws-sdk-go-v2/service/sts"
 	"github.com/aws/smithy-go/middleware"
+	"github.com/awslabs/aws-cloudformation-controller-for-flux/internal/clients"
 )
 
 const (
@@ -32,7 +33,7 @@ type S3 struct {
 }
 
 // New returns an S3 client.
-func New(ctx context.Context) (*S3, error) {
+func New(ctx context.Context) (clients.S3Client, error) {
 	cfg, err := config.LoadDefaultConfig(
 		ctx,
 		config.WithAPIOptions([]func(*middleware.Stack) error{
