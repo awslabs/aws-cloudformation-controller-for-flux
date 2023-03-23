@@ -58,6 +58,9 @@ test: tidy generate gen-mocks fmt vet manifests
 	go test ./... -coverprofile cover.out
 	cd api; go test ./... -coverprofile cover.out
 
+view-test-coverage:
+	go tool cover -html=cover.out
+
 build: generate gen-mocks fmt vet manifests
 	go build -o bin/manager \
  		-ldflags "-X main.BuildSHA=$(BUILD_SHA) -X main.BuildVersion=$(BUILD_VERSION)" \
