@@ -16,7 +16,6 @@ type s3ManagerAPI interface {
 }
 
 type s3API interface {
-	HeadObject(ctx context.Context, params *s3.HeadObjectInput, optFns ...func(*s3.Options)) (*s3.HeadObjectOutput, error)
 }
 
 type stsAPI interface {

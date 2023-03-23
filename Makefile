@@ -8,9 +8,6 @@ SOURCE_VER ?= v0.31.0
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 GOBIN=$(shell pwd)/bin
 
-# Setting SHELL to bash allows bash commands to be executed by recipes.
-# This is a requirement for 'setup-envtest.sh' in the test target.
-# Options are set to exit when a recipe line exits non-zero or a piped command fails.
 SHELL = /usr/bin/env bash -o pipefail
 .SHELLFLAGS = -ec
 
@@ -51,10 +48,13 @@ clean:
 
 ##### Build and test #####
 
-KUBEBUILDER_ASSETS?="$(shell $(ENVTEST) --arch=$(ENVTEST_ARCH) use -i $(ENVTEST_KUBERNETES_VERSION) --bin-dir=$(ENVTEST_ASSETS_DIR) -p path)"
+PHONY: gen-mocks
+gen-mocks: mockgen
+	${MOCKGEN} -package=mocks -destination=./internal/clients/cloudformation/mocks/mock_cloudformation.go -source=./internal/clients/cloudformation/interfaces.go
+	${MOCKGEN} -package=mocks -destination=./internal/clients/s3/mocks/mock_s3.go -source=./internal/clients/s3/interfaces.go
 
-test: tidy generate fmt vet manifests envtest
-	KUBEBUILDER_ASSETS=$(KUBEBUILDER_ASSETS) go test ./... -coverprofile cover.out
+test: tidy generate gen-mocks fmt vet manifests
+	go test ./... -coverprofile cover.out
 	cd api; go test ./... -coverprofile cover.out
 
 build: generate fmt vet manifests
@@ -108,7 +108,7 @@ integ-test: generate fmt vet manifests
 ##### Install dev tools #####
 
 .PHONY: install-tools
-install-tools: kustomize controller-gen gen-crd-api-reference-docs install-envtest
+install-tools: kustomize controller-gen gen-crd-api-reference-docs
 
 KUSTOMIZE = $(shell pwd)/bin/kustomize
 .PHONY: kustomize
@@ -120,24 +120,15 @@ CONTROLLER_GEN = $(GOBIN)/controller-gen
 controller-gen: ## Download controller-gen locally if necessary.
 	$(call go-install-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.9.2)
 
+MOCKGEN = $(GOBIN)/mockgen
+.PHONY: mockgen
+mockgen: ## Download mockgen locally if necessary.
+	$(call go-install-tool,$(MOCKGEN),github.com/golang/mock/mockgen@v1.6.0)
+
 GEN_CRD_API_REFERENCE_DOCS = $(GOBIN)/gen-crd-api-reference-docs
 .PHONY: gen-crd-api-reference-docs
 gen-crd-api-reference-docs:
 	$(call go-install-tool,$(GEN_CRD_API_REFERENCE_DOCS),github.com/ahmetb/gen-crd-api-reference-docs@v0.3.0)
-
-ENVTEST_ARCH ?= amd64
-
-ENVTEST_ASSETS_DIR=$(shell pwd)/testbin
-ENVTEST_KUBERNETES_VERSION?=latest
-install-envtest: setup-envtest
-	mkdir -p ${ENVTEST_ASSETS_DIR}
-	$(ENVTEST) use $(ENVTEST_KUBERNETES_VERSION) --arch=$(ENVTEST_ARCH) --bin-dir=$(ENVTEST_ASSETS_DIR)
-
-# ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
-ENVTEST = $(shell pwd)/bin/setup-envtest
-.PHONY: envtest
-setup-envtest: ## Download envtest-setup locally if necessary.
-	$(call go-install-tool,$(ENVTEST),sigs.k8s.io/controller-runtime/tools/setup-envtest@latest)
 
 # go-install-tool will 'go install' any package $2 and install it to $1.
 PROJECT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
