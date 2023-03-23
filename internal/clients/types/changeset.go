@@ -5,7 +5,6 @@ package types
 
 import (
 	"strings"
-	"time"
 
 	sdktypes "github.com/aws/aws-sdk-go-v2/service/cloudformation/types"
 )
@@ -16,7 +15,6 @@ type ChangeSetDescription struct {
 	Status          sdktypes.ChangeSetStatus
 	ExecutionStatus sdktypes.ExecutionStatus
 	StatusReason    string
-	CreationTime    time.Time
 	Changes         []sdktypes.Change
 }
 

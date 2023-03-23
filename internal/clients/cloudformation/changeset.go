@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
-	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cloudformation"
@@ -65,7 +64,7 @@ func ExtractChangeSetName(arn string) string {
 	return arnParts[1]
 }
 
-func newCreateChangeSet(ctx context.Context, cfnClient changeSetAPI, region string, stackName string, generation int64, sourceRevision string) (*changeSet, error) {
+func newCreateChangeSet(ctx context.Context, cfnClient changeSetAPI, region string, stackName string, generation int64, sourceRevision string) *changeSet {
 	return &changeSet{
 		name:      GetChangeSetName(generation, sourceRevision),
 		stackName: stackName,
@@ -73,10 +72,10 @@ func newCreateChangeSet(ctx context.Context, cfnClient changeSetAPI, region stri
 		csType:    sdktypes.ChangeSetTypeCreate,
 		client:    cfnClient,
 		ctx:       ctx,
-	}, nil
+	}
 }
 
-func newUpdateChangeSet(ctx context.Context, cfnClient changeSetAPI, region string, stackName string, generation int64, sourceRevision string) (*changeSet, error) {
+func newUpdateChangeSet(ctx context.Context, cfnClient changeSetAPI, region string, stackName string, generation int64, sourceRevision string) *changeSet {
 	return &changeSet{
 		name:      GetChangeSetName(generation, sourceRevision),
 		stackName: stackName,
@@ -84,7 +83,7 @@ func newUpdateChangeSet(ctx context.Context, cfnClient changeSetAPI, region stri
 		csType:    sdktypes.ChangeSetTypeUpdate,
 		client:    cfnClient,
 		ctx:       ctx,
-	}, nil
+	}
 }
 
 func (cs *changeSet) String() string {
@@ -128,7 +127,6 @@ func (cs *changeSet) describe() (*types.ChangeSetDescription, error) {
 	var status sdktypes.ChangeSetStatus
 	var executionStatus sdktypes.ExecutionStatus
 	var statusReason string
-	var creationTime time.Time
 	var changes []sdktypes.Change
 	var nextToken *string
 	for {
@@ -150,7 +148,6 @@ func (cs *changeSet) describe() (*types.ChangeSetDescription, error) {
 		if out.StatusReason != nil {
 			statusReason = *out.StatusReason
 		}
-		creationTime = *out.CreationTime
 		changes = append(changes, out.Changes...)
 		nextToken = out.NextToken
 
@@ -163,7 +160,6 @@ func (cs *changeSet) describe() (*types.ChangeSetDescription, error) {
 		Status:          status,
 		ExecutionStatus: executionStatus,
 		StatusReason:    statusReason,
-		CreationTime:    creationTime,
 		Changes:         changes,
 	}, nil
 }

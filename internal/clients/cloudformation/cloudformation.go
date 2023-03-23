@@ -119,10 +119,7 @@ func (c *CloudFormation) DescribeChangeSet(stack *types.Stack) (*types.ChangeSet
 // CreateStack begins the process of deploying a new CloudFormation stack by creating a change set.
 // The change set must be executed when it is successfully created.
 func (c *CloudFormation) CreateStack(stack *types.Stack) (changeSetArn string, err error) {
-	cs, err := newCreateChangeSet(c.ctx, c.client, stack.Region, stack.Name, stack.Generation, stack.SourceRevision)
-	if err != nil {
-		return "", err
-	}
+	cs := newCreateChangeSet(c.ctx, c.client, stack.Region, stack.Name, stack.Generation, stack.SourceRevision)
 	arn, err := cs.create(stack.StackConfig)
 	if err != nil {
 		return "", err
@@ -135,10 +132,7 @@ func (c *CloudFormation) CreateStack(stack *types.Stack) (changeSetArn string, e
 // by creating a change set.
 // The change set must be executed when it is successfully created.
 func (c *CloudFormation) UpdateStack(stack *types.Stack) (changeSetArn string, err error) {
-	cs, err := newUpdateChangeSet(c.ctx, c.client, stack.Region, stack.Name, stack.Generation, stack.SourceRevision)
-	if err != nil {
-		return "", err
-	}
+	cs := newUpdateChangeSet(c.ctx, c.client, stack.Region, stack.Name, stack.Generation, stack.SourceRevision)
 	arn, err := cs.create(stack.StackConfig)
 	if err != nil {
 		return "", err
