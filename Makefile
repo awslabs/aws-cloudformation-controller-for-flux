@@ -53,6 +53,8 @@ gen-mocks: mockgen
 	${MOCKGEN} -package=mocks -destination=./internal/clients/cloudformation/mocks/mock_sdk.go -source=./internal/clients/cloudformation/sdk_interfaces.go
 	${MOCKGEN} -package=mocks -destination=./internal/clients/s3/mocks/mock_sdk.go -source=./internal/clients/s3/sdk_interfaces.go
 	${MOCKGEN} -package=mocks -destination=./internal/clients/mocks/mock_clients.go -source=./internal/clients/clients.go
+	${MOCKGEN} -package=mocks -destination=./internal/mocks/mock_event_recorder.go k8s.io/client-go/tools/record EventRecorder
+	${MOCKGEN} -package=mocks -destination=./internal/mocks/mock_kubernetes_client.go sigs.k8s.io/controller-runtime/pkg/client Client
 
 test: tidy generate gen-mocks fmt vet manifests
 	go test ./... -coverprofile cover.out
