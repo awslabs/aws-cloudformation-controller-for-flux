@@ -193,10 +193,11 @@ type ReadinessUpdate struct {
 // on the CloudFormation stack.
 func SetCloudFormationStackReadiness(cfnStack *CloudFormationStack, status metav1.ConditionStatus, update ReadinessUpdate) {
 	newCondition := metav1.Condition{
-		Type:    meta.ReadyCondition,
-		Status:  status,
-		Reason:  update.Reason,
-		Message: update.Message,
+		Type:               meta.ReadyCondition,
+		Status:             status,
+		Reason:             update.Reason,
+		Message:            update.Message,
+		ObservedGeneration: cfnStack.Generation,
 	}
 
 	apimeta.SetStatusCondition(cfnStack.GetStatusConditions(), newCondition)

@@ -53,7 +53,7 @@ const (
 	mockTemplateSourceFile       = "../examples/my-cloudformation-templates/template.yaml"
 	mockTemplateUploadBucket     = "mock-template-upload-bucket"
 	mockChangeSetName            = "flux-2-main-sha1-132f4e719209eb10b9485302f8593fc0e680f4fc"
-	mockChangeSetArn             = "arn:aws:cloudformation:us-west-2:111:changeSet/flux-2-main-sha1-132f4e719209eb10b9485302f8593fc0e680f4fc/9edc39b0-ee18-440d-823e-3dda74646b2"
+	mockChangeSetArn             = "arn:aws:cloudformation:us-west-2:111:changeSet/mock-change-set"
 	mockTemplateS3Url            = "https://mock-template-upload-bucket.s3.mock-region.amazonaws.com/mock-flux-template-file-object-key"
 )
 
@@ -169,6 +169,25 @@ func createTestArtifact() error {
 	mockTemplateSourceFileContents = string(templateBytes)
 
 	return nil
+}
+
+// Compare field by field instead of using Equals, to avoid comparing timestamps
+func compareCfnStackStatus(t *testing.T, expectedStackStatus *cfnv1.CloudFormationStackStatus, actualStackStatus *cfnv1.CloudFormationStackStatus) {
+	require.Equalf(t, expectedStackStatus.ObservedGeneration, actualStackStatus.ObservedGeneration, "ObservedGeneration in stack status not equal")
+	require.Equalf(t, expectedStackStatus.LastAppliedRevision, actualStackStatus.LastAppliedRevision, "LastAppliedRevision in stack status not equal")
+	require.Equalf(t, expectedStackStatus.LastAttemptedRevision, actualStackStatus.LastAttemptedRevision, "LastAttemptedRevision in stack status not equal")
+	require.Equalf(t, expectedStackStatus.LastAppliedChangeSet, actualStackStatus.LastAppliedChangeSet, "LastAppliedChangeSet in stack status not equal")
+	require.Equalf(t, expectedStackStatus.LastAttemptedChangeSet, actualStackStatus.LastAttemptedChangeSet, "LastAttemptedChangeSet in stack status not equal")
+	require.Equalf(t, expectedStackStatus.StackName, actualStackStatus.StackName, "StackName in stack status not equal")
+	require.Equalf(t, len(expectedStackStatus.Conditions), len(actualStackStatus.Conditions), "Wrong number of conditions in stack status")
+	for i, expectedCondition := range expectedStackStatus.Conditions {
+		actualCondition := actualStackStatus.Conditions[i]
+		require.Equalf(t, expectedCondition.Type, actualCondition.Type, "Type in stack status condition #%d not equal", i+1)
+		require.Equalf(t, expectedCondition.Status, actualCondition.Status, "Status in stack status condition #%d not equal", i+1)
+		require.Equalf(t, expectedCondition.ObservedGeneration, actualCondition.ObservedGeneration, "ObservedGeneration in stack status condition #%d not equal", i+1)
+		require.Equalf(t, expectedCondition.Reason, actualCondition.Reason, "Reason in stack status condition #%d not equal", i+1)
+		require.Equalf(t, expectedCondition.Message, actualCondition.Message, "Message in stack status condition #%d not equal", i+1)
+	}
 }
 
 func TestCfnController_Draft(t *testing.T) {
@@ -289,20 +308,84 @@ func TestCfnController_Draft(t *testing.T) {
 			gomock.Any(),
 			"Normal",
 			"info",
-			"Creation of stack 'mock-real-stack' in progress (change set arn:aws:cloudformation:us-west-2:111:changeSet/flux-2-main-sha1-132f4e719209eb10b9485302f8593fc0e680f4fc/9edc39b0-ee18-440d-823e-3dda74646b2)",
+			"Creation of stack 'mock-real-stack' in progress (change set arn:aws:cloudformation:us-west-2:111:changeSet/mock-change-set)",
 		)
 
-		// TODO fill in the patching calls we expect the controller to make
+		// Finalizer is added
 		k8sClient.EXPECT().Patch(
 			gomock.Any(),
 			gomock.Any(),
 			gomock.Any(),
-		).Return(nil).AnyTimes()
-		k8sStatusWriter.EXPECT().Patch(
+		).DoAndReturn(func(ctx context.Context, obj ctrlclient.Object, patch ctrlclient.Patch, opts ...ctrlclient.PatchOption) error {
+			cfnStack, ok := obj.(*cfnv1.CloudFormationStack)
+			if !ok {
+				return errors.New(fmt.Sprintf("Expected a CloudFormationStack object, but got a %T", obj))
+			}
+			finalizers := cfnStack.GetFinalizers()
+			require.Equal(t, 1, len(finalizers))
+			require.Equal(t, "finalizers.cloudformation.contrib.fluxcd.io", finalizers[0])
+			return nil
+		})
+
+		// Mark the stack as in progress, then update its conditions
+		first := k8sStatusWriter.EXPECT().Patch(
 			gomock.Any(),
 			gomock.Any(),
 			gomock.Any(),
-		).Return(nil).AnyTimes()
+		).DoAndReturn(func(ctx context.Context, obj ctrlclient.Object, patch ctrlclient.Patch, opts ...ctrlclient.PatchOption) error {
+			// Stack should be marked as reconciliation in progress
+			cfnStack, ok := obj.(*cfnv1.CloudFormationStack)
+			if !ok {
+				return errors.New(fmt.Sprintf("Expected a CloudFormationStack object, but got a %T", obj))
+			}
+			expectedStackStatus := cfnv1.CloudFormationStackStatus{
+				ObservedGeneration: mockGenerationId,
+				StackName:          mockRealStackName,
+				Conditions: []metav1.Condition{
+					{
+						Type:               "Ready",
+						Status:             "Unknown",
+						ObservedGeneration: mockGenerationId,
+						Reason:             "Progressing",
+						Message:            "Stack reconciliation in progress",
+					},
+				},
+			}
+			compareCfnStackStatus(t, &expectedStackStatus, &cfnStack.Status)
+			return nil
+		})
+		second := k8sStatusWriter.EXPECT().Patch(
+			gomock.Any(),
+			gomock.Any(),
+			gomock.Any(),
+		).DoAndReturn(func(ctx context.Context, obj ctrlclient.Object, patch ctrlclient.Patch, opts ...ctrlclient.PatchOption) error {
+			// Stack should be marked as creation in progress
+			cfnStack, ok := obj.(*cfnv1.CloudFormationStack)
+			if !ok {
+				return errors.New(fmt.Sprintf("Expected a CloudFormationStack object, but got a %T", obj))
+			}
+			expectedStackStatus := cfnv1.CloudFormationStackStatus{
+				ObservedGeneration:     mockGenerationId,
+				StackName:              mockRealStackName,
+				LastAttemptedRevision:  mockSourceRevision,
+				LastAttemptedChangeSet: mockChangeSetArn,
+				Conditions: []metav1.Condition{
+					{
+						Type:               "Ready",
+						Status:             "Unknown",
+						ObservedGeneration: mockGenerationId,
+						Reason:             "Progressing",
+						Message:            "Creation of stack 'mock-real-stack' in progress (change set arn:aws:cloudformation:us-west-2:111:changeSet/mock-change-set)",
+					},
+				},
+			}
+			compareCfnStackStatus(t, &expectedStackStatus, &cfnStack.Status)
+			return nil
+		})
+		gomock.InOrder(
+			first,
+			second,
+		)
 
 		reconciler := &CloudFormationStackReconciler{
 			Scheme:          scheme,
