@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -39,18 +40,21 @@ import (
 )
 
 const (
-	mockStackName            = "mock-stack"
-	mockNamespace            = "mock-namespace"
-	mockGenerationId         = 2
-	mockSourceNamespace      = "mock-source-namespace"
-	mockRealStackName        = "mock-real-stack"
-	mockTemplatePath         = "template.yaml"
-	mockTemplateGitRepoName  = "mock-cfn-template-git-repo"
-	mockTemplateOCIRepoName  = "mock-cfn-template-oci-repo"
-	mockTemplateBucketName   = "mock-cfn-template-bucket"
-	mockSourceRevision       = "main@sha1:132f4e719209eb10b9485302f8593fc0e680f4fc"
-	mockTemplateSourceFile   = "../examples/my-cloudformation-templates/template.yaml"
-	mockTemplateUploadBucket = "mock-template-upload-bucket"
+	mockStackName                = "mock-stack"
+	mockNamespace                = "mock-namespace"
+	mockGenerationId             = 2
+	mockSourceNamespace          = "mock-source-namespace"
+	mockRealStackName            = "mock-real-stack"
+	mockTemplatePath             = "template.yaml"
+	mockTemplateGitRepoName      = "mock-cfn-template-git-repo"
+	mockTemplateOCIRepoName      = "mock-cfn-template-oci-repo"
+	mockTemplateSourceBucketName = "mock-cfn-template-source-bucket"
+	mockSourceRevision           = "main@sha1:132f4e719209eb10b9485302f8593fc0e680f4fc"
+	mockTemplateSourceFile       = "../examples/my-cloudformation-templates/template.yaml"
+	mockTemplateUploadBucket     = "mock-template-upload-bucket"
+	mockChangeSetName            = "flux-2-main-sha1-132f4e719209eb10b9485302f8593fc0e680f4fc"
+	mockChangeSetArn             = "arn:aws:cloudformation:us-west-2:111:changeSet/flux-2-main-sha1-132f4e719209eb10b9485302f8593fc0e680f4fc/9edc39b0-ee18-440d-823e-3dda74646b2"
+	mockTemplateS3Url            = "https://mock-template-upload-bucket.s3.mock-region.amazonaws.com/mock-flux-template-file-object-key"
 )
 
 var (
@@ -81,13 +85,13 @@ var (
 		Namespace: mockSourceNamespace,
 	}
 
-	mockBucketRef = cfnv1.SourceReference{
+	mockBucketSourceRef = cfnv1.SourceReference{
 		Kind:      sourcev1.BucketKind,
-		Name:      mockTemplateBucketName,
+		Name:      mockTemplateSourceBucketName,
 		Namespace: mockSourceNamespace,
 	}
-	mockBucketReference = types.NamespacedName{
-		Name:      mockTemplateBucketName,
+	mockBucketSourceReference = types.NamespacedName{
+		Name:      mockTemplateSourceBucketName,
 		Namespace: mockSourceNamespace,
 	}
 
@@ -253,7 +257,40 @@ func TestCfnController_Draft(t *testing.T) {
 		}
 		cfnClient.EXPECT().DescribeStack(expectedDescribeStackIn).Return(nil, &cloudformation.ErrStackNotFound{})
 
-		k8sClient.EXPECT().Status().Return(k8sStatusWriter)
+		expectedDescribeChangeSetIn := &clienttypes.Stack{
+			Name:           mockRealStackName,
+			Generation:     mockGenerationId,
+			SourceRevision: mockSourceRevision,
+			StackConfig: &clienttypes.StackConfig{
+				TemplateBucket: mockTemplateUploadBucket,
+				TemplateBody:   mockTemplateSourceFileContents,
+			},
+		}
+		cfnClient.EXPECT().DescribeChangeSet(expectedDescribeChangeSetIn).Return(nil, &cloudformation.ErrChangeSetNotFound{})
+
+		expectedCreateStackIn := &clienttypes.Stack{
+			Name:           mockRealStackName,
+			Generation:     mockGenerationId,
+			SourceRevision: mockSourceRevision,
+			StackConfig: &clienttypes.StackConfig{
+				TemplateBucket: mockTemplateUploadBucket,
+				TemplateBody:   mockTemplateSourceFileContents,
+				TemplateURL:    mockTemplateS3Url,
+			},
+		}
+		cfnClient.EXPECT().CreateStack(expectedCreateStackIn).Return(mockChangeSetArn, nil)
+
+		s3Client.EXPECT().UploadTemplate(mockTemplateUploadBucket, "", gomock.Any(), strings.NewReader(mockTemplateSourceFileContents)).Return(mockTemplateS3Url, nil)
+
+		k8sClient.EXPECT().Status().Return(k8sStatusWriter).AnyTimes()
+
+		eventRecorder.EXPECT().AnnotatedEventf(
+			gomock.Any(),
+			gomock.Any(),
+			"Normal",
+			"info",
+			"Creation of stack 'mock-real-stack' in progress (change set arn:aws:cloudformation:us-west-2:111:changeSet/flux-2-main-sha1-132f4e719209eb10b9485302f8593fc0e680f4fc/9edc39b0-ee18-440d-823e-3dda74646b2)",
+		)
 
 		// TODO fill in the patching calls we expect the controller to make
 		k8sClient.EXPECT().Patch(
@@ -272,6 +309,7 @@ func TestCfnController_Draft(t *testing.T) {
 			Client:          k8sClient,
 			CfnClient:       cfnClient,
 			S3Client:        s3Client,
+			TemplateBucket:  mockTemplateUploadBucket,
 			EventRecorder:   eventRecorder,
 			MetricsRecorder: metricsRecorder,
 			httpClient:      httpClient,
@@ -284,8 +322,7 @@ func TestCfnController_Draft(t *testing.T) {
 
 		// THEN
 		require.NoError(t, err)
-		require.True(t, result.Requeue)
-		expectedRequeueDelay, _ := time.ParseDuration("5s")
-		require.Equal(t, expectedRequeueDelay, result.RequeueAfter)
+		require.False(t, result.Requeue)
+		require.Equal(t, mockPollIntervalDuration, result.RequeueAfter)
 	})
 }
