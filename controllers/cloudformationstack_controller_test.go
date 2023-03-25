@@ -4,17 +4,24 @@
 package controllers
 
 import (
+	"archive/tar"
+	"bytes"
+	"compress/gzip"
 	"context"
 	"crypto/sha256"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 	"time"
 
 	cfnv1 "github.com/awslabs/aws-cloudformation-controller-for-flux/api/v1alpha1"
+	"github.com/awslabs/aws-cloudformation-controller-for-flux/internal/clients/cloudformation"
 	clientmocks "github.com/awslabs/aws-cloudformation-controller-for-flux/internal/clients/mocks"
+	clienttypes "github.com/awslabs/aws-cloudformation-controller-for-flux/internal/clients/types"
 	"github.com/awslabs/aws-cloudformation-controller-for-flux/internal/mocks"
 	"github.com/fluxcd/pkg/runtime/metrics"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
@@ -32,15 +39,18 @@ import (
 )
 
 const (
-	mockStackName           = "mock-stack"
-	mockNamespace           = "mock-namespace"
-	mockSourceNamespace     = "mock-source-namespace"
-	mockRealStackName       = "mock-real-stack"
-	mockTemplatePath        = "template.yaml"
-	mockTemplateGitRepoName = "mock-cfn-template-git-repo"
-	mockTemplateOCIRepoName = "mock-cfn-template-oci-repo"
-	mockTemplateBucketName  = "mock-cfn-template-bucket"
-	mockSourceRevision      = "main@sha1:132f4e719209eb10b9485302f8593fc0e680f4fc"
+	mockStackName            = "mock-stack"
+	mockNamespace            = "mock-namespace"
+	mockGenerationId         = 2
+	mockSourceNamespace      = "mock-source-namespace"
+	mockRealStackName        = "mock-real-stack"
+	mockTemplatePath         = "template.yaml"
+	mockTemplateGitRepoName  = "mock-cfn-template-git-repo"
+	mockTemplateOCIRepoName  = "mock-cfn-template-oci-repo"
+	mockTemplateBucketName   = "mock-cfn-template-bucket"
+	mockSourceRevision       = "main@sha1:132f4e719209eb10b9485302f8593fc0e680f4fc"
+	mockTemplateSourceFile   = "../examples/my-cloudformation-templates/template.yaml"
+	mockTemplateUploadBucket = "mock-template-upload-bucket"
 )
 
 var (
@@ -88,15 +98,73 @@ var (
 	mockRetryInterval            = metav1.Duration{Duration: mockRetryIntervalDuration}
 	mockPollInterval             = metav1.Duration{Duration: mockPollIntervalDuration}
 
-	mockTemplateContents         = []byte("hello world")
-	mockTemplateContentsChecksum = fmt.Sprintf("%x", sha256.New().Sum(mockTemplateContents))
+	mockTemplateSourceFileContents string
+	mockTestArtifactBytes          []byte
+	mockTemplateContentsChecksum   string
 )
 
 func init() {
+	utilruntime.Must(createTestArtifact())
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 	utilruntime.Must(sourcev1.AddToScheme(scheme))
 	utilruntime.Must(cfnv1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
+}
+
+func createTestArtifact() error {
+	var buf bytes.Buffer
+	gw := gzip.NewWriter(&buf)
+	tw := tar.NewWriter(gw)
+
+	file, err := os.Open(mockTemplateSourceFile)
+	if err != nil {
+		return err
+	}
+
+	info, err := file.Stat()
+	if err != nil {
+		return err
+	}
+	header, err := tar.FileInfoHeader(info, info.Name())
+	if err != nil {
+		return err
+	}
+	header.Name = mockTemplatePath
+	if err = tw.WriteHeader(header); err != nil {
+		return err
+	}
+
+	if _, err = io.Copy(tw, file); err != nil {
+		return err
+	}
+
+	if err = file.Close(); err != nil {
+		return err
+	}
+
+	if err = tw.Close(); err != nil {
+		return err
+	}
+
+	if err = gw.Close(); err != nil {
+		return err
+	}
+
+	mockTestArtifactBytes = buf.Bytes()
+
+	h := sha256.New()
+	if _, err = h.Write(mockTestArtifactBytes); err != nil {
+		return err
+	}
+	mockTemplateContentsChecksum = fmt.Sprintf("%x", h.Sum(nil))
+
+	templateBytes, err := os.ReadFile(mockTemplateSourceFile)
+	if err != nil {
+		return err
+	}
+	mockTemplateSourceFileContents = string(templateBytes)
+
+	return nil
 }
 
 func TestCfnController_Draft(t *testing.T) {
@@ -120,7 +188,7 @@ func TestCfnController_Draft(t *testing.T) {
 				t.Errorf("Expected to do a GET request, got: %s", r.Method)
 			}
 			w.WriteHeader(http.StatusOK)
-			w.Write(mockTemplateContents)
+			w.Write(mockTestArtifactBytes)
 		}))
 		defer server.Close()
 		mockSourceArtifactURL := server.URL + "/path.tar.gz"
@@ -137,6 +205,7 @@ func TestCfnController_Draft(t *testing.T) {
 			}
 			cfnStack.Name = mockStackName
 			cfnStack.Namespace = mockNamespace
+			cfnStack.Generation = mockGenerationId
 			cfnStack.Spec = cfnv1.CloudFormationStackSpec{
 				StackName:              mockRealStackName,
 				TemplatePath:           mockTemplatePath,
@@ -172,6 +241,18 @@ func TestCfnController_Draft(t *testing.T) {
 			return nil
 		}).AnyTimes()
 
+		// Describe the real CFN stack
+		expectedDescribeStackIn := &clienttypes.Stack{
+			Name:           mockRealStackName,
+			Generation:     mockGenerationId,
+			SourceRevision: mockSourceRevision,
+			StackConfig: &clienttypes.StackConfig{
+				TemplateBucket: mockTemplateUploadBucket,
+				TemplateBody:   mockTemplateSourceFileContents,
+			},
+		}
+		cfnClient.EXPECT().DescribeStack(expectedDescribeStackIn).Return(nil, &cloudformation.ErrStackNotFound{})
+
 		k8sClient.EXPECT().Status().Return(k8sStatusWriter)
 
 		// TODO fill in the patching calls we expect the controller to make
@@ -179,12 +260,12 @@ func TestCfnController_Draft(t *testing.T) {
 			gomock.Any(),
 			gomock.Any(),
 			gomock.Any(),
-		).Return(nil)
+		).Return(nil).AnyTimes()
 		k8sStatusWriter.EXPECT().Patch(
 			gomock.Any(),
 			gomock.Any(),
 			gomock.Any(),
-		).Return(nil)
+		).Return(nil).AnyTimes()
 
 		reconciler := &CloudFormationStackReconciler{
 			Scheme:          scheme,
