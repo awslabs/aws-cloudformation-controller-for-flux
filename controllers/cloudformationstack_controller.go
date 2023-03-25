@@ -8,7 +8,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"strings"
 	"time"
 
@@ -56,6 +55,7 @@ type CloudFormationStackReconciler struct {
 
 	CfnClient       clients.CloudFormationClient
 	S3Client        clients.S3Client
+	TemplateBucket  string
 	EventRecorder   kuberecorder.EventRecorder
 	MetricsRecorder *metrics.Recorder
 	Scheme          *runtime.Scheme
@@ -292,8 +292,7 @@ func (r *CloudFormationStackReconciler) reconcileStack(ctx context.Context, cfnS
 		Generation:     cfnStack.Generation,
 		SourceRevision: revision,
 		StackConfig: &types.StackConfig{
-			// TODO get bucket from annotations, controller flags, etc
-			TemplateBucket: os.Getenv("TEMPLATE_BUCKET"),
+			TemplateBucket: r.TemplateBucket,
 			TemplateBody:   templateContents.String(),
 		},
 	}

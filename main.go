@@ -134,6 +134,9 @@ func main() {
 		os.Exit(1)
 	}
 
+	// TODO get bucket from annotations, controller flags, etc
+	templateBucket := os.Getenv("TEMPLATE_BUCKET")
+
 	reconciler := &controllers.CloudFormationStackReconciler{
 		Client:          mgr.GetClient(),
 		Scheme:          mgr.GetScheme(),
@@ -141,6 +144,7 @@ func main() {
 		MetricsRecorder: metricsRecorder,
 		CfnClient:       cfnClient,
 		S3Client:        s3Client,
+		TemplateBucket:  templateBucket,
 	}
 
 	reconcilerOpts := controllers.CloudFormationStackReconcilerOptions{
