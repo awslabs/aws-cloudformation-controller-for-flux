@@ -190,181 +190,65 @@ func compareCfnStackStatus(t *testing.T, expectedStackStatus *cfnv1.CloudFormati
 	}
 }
 
-func TestCfnController_Draft(t *testing.T) {
-	t.Run("first draft", func(t *testing.T) {
-		// GIVEN
-		mockCtrl, ctx := gomock.WithContext(context.Background(), t)
-
-		cfnClient := clientmocks.NewMockCloudFormationClient(mockCtrl)
-		s3Client := clientmocks.NewMockS3Client(mockCtrl)
-		k8sClient := mocks.NewMockClient(mockCtrl)
-		k8sStatusWriter := mocks.NewMockStatusWriter(mockCtrl)
-		eventRecorder := mocks.NewMockEventRecorder(mockCtrl)
-		metricsRecorder := metrics.NewRecorder()
-
-		httpClient := retryablehttp.NewClient()
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if r.URL.Path != "/path.tar.gz" {
-				t.Errorf("Expected to request '/path.tar.gz', got: %s", r.URL.Path)
-			}
-			if r.Method != "GET" {
-				t.Errorf("Expected to do a GET request, got: %s", r.Method)
-			}
-			w.WriteHeader(http.StatusOK)
-			w.Write(mockTestArtifactBytes)
-		}))
-		defer server.Close()
-		mockSourceArtifactURL := server.URL + "/path.tar.gz"
-
-		// Get the initial CFNStack object that the controller will work off of
-		k8sClient.EXPECT().Get(
-			gomock.Any(),
-			mockStackNamespacedName,
-			gomock.Any(),
-		).DoAndReturn(func(ctx context.Context, key ctrlclient.ObjectKey, obj ctrlclient.Object, opts ...ctrlclient.GetOption) error {
-			cfnStack, ok := obj.(*cfnv1.CloudFormationStack)
-			if !ok {
-				return errors.New(fmt.Sprintf("Expected a CloudFormationStack object, but got a %T", obj))
-			}
-			cfnStack.Name = mockStackName
-			cfnStack.Namespace = mockNamespace
-			cfnStack.Generation = mockGenerationId
-			cfnStack.Spec = cfnv1.CloudFormationStackSpec{
-				StackName:              mockRealStackName,
-				TemplatePath:           mockTemplatePath,
-				SourceRef:              mockGitRef,
-				Interval:               mockInterval,
-				RetryInterval:          &mockRetryInterval,
-				PollInterval:           mockPollInterval,
-				Suspend:                false,
-				DestroyStackOnDeletion: false,
-			}
-			return nil
-		}).AnyTimes()
-
-		// Get the source reference
-		k8sClient.EXPECT().Get(
-			gomock.Any(),
-			mockGitSourceReference,
-			gomock.Any(),
-		).DoAndReturn(func(ctx context.Context, key ctrlclient.ObjectKey, obj ctrlclient.Object, opts ...ctrlclient.GetOption) error {
-			gitRepo, ok := obj.(*sourcev1.GitRepository)
-			if !ok {
-				return errors.New(fmt.Sprintf("Expected a GitRepository object, but got a %T", obj))
-			}
-			gitRepo.Name = mockTemplateGitRepoName
-			gitRepo.Namespace = mockSourceNamespace
-			gitRepo.Status = sourcev1.GitRepositoryStatus{
-				Artifact: &sourcev1.Artifact{
-					URL:      mockSourceArtifactURL,
-					Revision: mockSourceRevision,
-					Checksum: mockTemplateContentsChecksum,
-				},
-			}
-			return nil
-		}).AnyTimes()
-
-		// Describe the real CFN stack
-		expectedDescribeStackIn := &clienttypes.Stack{
-			Name:           mockRealStackName,
-			Generation:     mockGenerationId,
-			SourceRevision: mockSourceRevision,
-			StackConfig: &clienttypes.StackConfig{
-				TemplateBucket: mockTemplateUploadBucket,
-				TemplateBody:   mockTemplateSourceFileContents,
-			},
+func generateMockArtifactServer(t *testing.T) *httptest.Server {
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/path.tar.gz" {
+			t.Errorf("Expected to request '/path.tar.gz', got: %s", r.URL.Path)
 		}
-		cfnClient.EXPECT().DescribeStack(expectedDescribeStackIn).Return(nil, &cloudformation.ErrStackNotFound{})
-
-		expectedDescribeChangeSetIn := &clienttypes.Stack{
-			Name:           mockRealStackName,
-			Generation:     mockGenerationId,
-			SourceRevision: mockSourceRevision,
-			StackConfig: &clienttypes.StackConfig{
-				TemplateBucket: mockTemplateUploadBucket,
-				TemplateBody:   mockTemplateSourceFileContents,
-			},
+		if r.Method != "GET" {
+			t.Errorf("Expected to do a GET request, got: %s", r.Method)
 		}
-		cfnClient.EXPECT().DescribeChangeSet(expectedDescribeChangeSetIn).Return(nil, &cloudformation.ErrChangeSetNotFound{})
+		w.WriteHeader(http.StatusOK)
+		w.Write(mockTestArtifactBytes)
+	}))
+}
 
-		expectedCreateStackIn := &clienttypes.Stack{
-			Name:           mockRealStackName,
-			Generation:     mockGenerationId,
-			SourceRevision: mockSourceRevision,
-			StackConfig: &clienttypes.StackConfig{
-				TemplateBucket: mockTemplateUploadBucket,
-				TemplateBody:   mockTemplateSourceFileContents,
-				TemplateURL:    mockTemplateS3Url,
+func generateMockGitRepoSource(gitRepo *sourcev1.GitRepository, mockSourceArtifactURL string) {
+	gitRepo.Name = mockTemplateGitRepoName
+	gitRepo.Namespace = mockSourceNamespace
+	gitRepo.Status = sourcev1.GitRepositoryStatus{
+		Artifact: &sourcev1.Artifact{
+			URL:      mockSourceArtifactURL,
+			Revision: mockSourceRevision,
+			Checksum: mockTemplateContentsChecksum,
+		},
+	}
+}
+
+func mockS3ClientUpload(s3Client *clientmocks.MockS3Client) {
+	s3Client.EXPECT().UploadTemplate(
+		mockTemplateUploadBucket,
+		"",
+		gomock.Any(),
+		strings.NewReader(mockTemplateSourceFileContents),
+	).Return(mockTemplateS3Url, nil)
+}
+
+type expectedEvent struct {
+	eventType string
+	severity  string
+	message   string
+}
+
+func TestCfnController_StackManagement(t *testing.T) {
+	testCases := map[string]struct {
+		fillInInitialCfnStack func(cfnStack *cfnv1.CloudFormationStack)
+		fillInSource          func(gitRepo *sourcev1.GitRepository, mockSourceArtifactURL string)
+		mockCfnClientCalls    func(cfnClient *clientmocks.MockCloudFormationClient)
+		mockS3ClientCalls     func(s3Client *clientmocks.MockS3Client)
+		markStackAsInProgress bool
+		wantedStackStatus     *cfnv1.CloudFormationStackStatus
+		wantedEvent           expectedEvent
+		wantedRequeueDelay    time.Duration
+	}{
+		"create stack if neither stack nor changeset exist": {
+			wantedEvent: expectedEvent{
+				eventType: "Normal",
+				severity:  "info",
+				message:   "Creation of stack 'mock-real-stack' in progress (change set arn:aws:cloudformation:us-west-2:111:changeSet/mock-change-set)",
 			},
-		}
-		cfnClient.EXPECT().CreateStack(expectedCreateStackIn).Return(mockChangeSetArn, nil)
-
-		s3Client.EXPECT().UploadTemplate(mockTemplateUploadBucket, "", gomock.Any(), strings.NewReader(mockTemplateSourceFileContents)).Return(mockTemplateS3Url, nil)
-
-		k8sClient.EXPECT().Status().Return(k8sStatusWriter).AnyTimes()
-
-		eventRecorder.EXPECT().AnnotatedEventf(
-			gomock.Any(),
-			gomock.Any(),
-			"Normal",
-			"info",
-			"Creation of stack 'mock-real-stack' in progress (change set arn:aws:cloudformation:us-west-2:111:changeSet/mock-change-set)",
-		)
-
-		// Finalizer is added
-		k8sClient.EXPECT().Patch(
-			gomock.Any(),
-			gomock.Any(),
-			gomock.Any(),
-		).DoAndReturn(func(ctx context.Context, obj ctrlclient.Object, patch ctrlclient.Patch, opts ...ctrlclient.PatchOption) error {
-			cfnStack, ok := obj.(*cfnv1.CloudFormationStack)
-			if !ok {
-				return errors.New(fmt.Sprintf("Expected a CloudFormationStack object, but got a %T", obj))
-			}
-			finalizers := cfnStack.GetFinalizers()
-			require.Equal(t, 1, len(finalizers))
-			require.Equal(t, "finalizers.cloudformation.contrib.fluxcd.io", finalizers[0])
-			return nil
-		})
-
-		// Mark the stack as in progress, then update its conditions
-		first := k8sStatusWriter.EXPECT().Patch(
-			gomock.Any(),
-			gomock.Any(),
-			gomock.Any(),
-		).DoAndReturn(func(ctx context.Context, obj ctrlclient.Object, patch ctrlclient.Patch, opts ...ctrlclient.PatchOption) error {
-			// Stack should be marked as reconciliation in progress
-			cfnStack, ok := obj.(*cfnv1.CloudFormationStack)
-			if !ok {
-				return errors.New(fmt.Sprintf("Expected a CloudFormationStack object, but got a %T", obj))
-			}
-			expectedStackStatus := cfnv1.CloudFormationStackStatus{
-				ObservedGeneration: mockGenerationId,
-				StackName:          mockRealStackName,
-				Conditions: []metav1.Condition{
-					{
-						Type:               "Ready",
-						Status:             "Unknown",
-						ObservedGeneration: mockGenerationId,
-						Reason:             "Progressing",
-						Message:            "Stack reconciliation in progress",
-					},
-				},
-			}
-			compareCfnStackStatus(t, &expectedStackStatus, &cfnStack.Status)
-			return nil
-		})
-		second := k8sStatusWriter.EXPECT().Patch(
-			gomock.Any(),
-			gomock.Any(),
-			gomock.Any(),
-		).DoAndReturn(func(ctx context.Context, obj ctrlclient.Object, patch ctrlclient.Patch, opts ...ctrlclient.PatchOption) error {
-			// Stack should be marked as creation in progress
-			cfnStack, ok := obj.(*cfnv1.CloudFormationStack)
-			if !ok {
-				return errors.New(fmt.Sprintf("Expected a CloudFormationStack object, but got a %T", obj))
-			}
-			expectedStackStatus := cfnv1.CloudFormationStackStatus{
+			wantedRequeueDelay: mockPollIntervalDuration,
+			wantedStackStatus: &cfnv1.CloudFormationStackStatus{
 				ObservedGeneration:     mockGenerationId,
 				StackName:              mockRealStackName,
 				LastAttemptedRevision:  mockSourceRevision,
@@ -378,34 +262,210 @@ func TestCfnController_Draft(t *testing.T) {
 						Message:            "Creation of stack 'mock-real-stack' in progress (change set arn:aws:cloudformation:us-west-2:111:changeSet/mock-change-set)",
 					},
 				},
+			},
+			markStackAsInProgress: true,
+			fillInSource:          generateMockGitRepoSource,
+			mockS3ClientCalls:     mockS3ClientUpload,
+			fillInInitialCfnStack: func(cfnStack *cfnv1.CloudFormationStack) {
+				cfnStack.Name = mockStackName
+				cfnStack.Namespace = mockNamespace
+				cfnStack.Generation = mockGenerationId
+				cfnStack.Spec = cfnv1.CloudFormationStackSpec{
+					StackName:              mockRealStackName,
+					TemplatePath:           mockTemplatePath,
+					SourceRef:              mockGitRef,
+					Interval:               mockInterval,
+					RetryInterval:          &mockRetryInterval,
+					PollInterval:           mockPollInterval,
+					Suspend:                false,
+					DestroyStackOnDeletion: false,
+				}
+			},
+			mockCfnClientCalls: func(cfnClient *clientmocks.MockCloudFormationClient) {
+				expectedDescribeStackIn := &clienttypes.Stack{
+					Name:           mockRealStackName,
+					Generation:     mockGenerationId,
+					SourceRevision: mockSourceRevision,
+					StackConfig: &clienttypes.StackConfig{
+						TemplateBucket: mockTemplateUploadBucket,
+						TemplateBody:   mockTemplateSourceFileContents,
+					},
+				}
+				cfnClient.EXPECT().DescribeStack(expectedDescribeStackIn).Return(nil, &cloudformation.ErrStackNotFound{})
+
+				expectedDescribeChangeSetIn := &clienttypes.Stack{
+					Name:           mockRealStackName,
+					Generation:     mockGenerationId,
+					SourceRevision: mockSourceRevision,
+					StackConfig: &clienttypes.StackConfig{
+						TemplateBucket: mockTemplateUploadBucket,
+						TemplateBody:   mockTemplateSourceFileContents,
+					},
+				}
+				cfnClient.EXPECT().DescribeChangeSet(expectedDescribeChangeSetIn).Return(nil, &cloudformation.ErrChangeSetNotFound{})
+
+				expectedCreateStackIn := &clienttypes.Stack{
+					Name:           mockRealStackName,
+					Generation:     mockGenerationId,
+					SourceRevision: mockSourceRevision,
+					StackConfig: &clienttypes.StackConfig{
+						TemplateBucket: mockTemplateUploadBucket,
+						TemplateBody:   mockTemplateSourceFileContents,
+						TemplateURL:    mockTemplateS3Url,
+					},
+				}
+				cfnClient.EXPECT().CreateStack(expectedCreateStackIn).Return(mockChangeSetArn, nil)
+			},
+		},
+	}
+
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			// GIVEN
+			mockCtrl, ctx := gomock.WithContext(context.Background(), t)
+			defer mockCtrl.Finish()
+
+			cfnClient := clientmocks.NewMockCloudFormationClient(mockCtrl)
+			s3Client := clientmocks.NewMockS3Client(mockCtrl)
+			k8sClient := mocks.NewMockClient(mockCtrl)
+			k8sStatusWriter := mocks.NewMockStatusWriter(mockCtrl)
+			eventRecorder := mocks.NewMockEventRecorder(mockCtrl)
+			metricsRecorder := metrics.NewRecorder()
+			httpClient := retryablehttp.NewClient()
+
+			server := generateMockArtifactServer(t)
+			defer server.Close()
+			mockSourceArtifactURL := server.URL + "/path.tar.gz"
+
+			// Mock the initial CFNStack object that the controller will work off of
+			k8sClient.EXPECT().Get(
+				gomock.Any(),
+				mockStackNamespacedName,
+				gomock.Any(),
+			).DoAndReturn(func(ctx context.Context, key ctrlclient.ObjectKey, obj ctrlclient.Object, opts ...ctrlclient.GetOption) error {
+				cfnStack, ok := obj.(*cfnv1.CloudFormationStack)
+				if !ok {
+					return errors.New(fmt.Sprintf("Expected a CloudFormationStack object, but got a %T", obj))
+				}
+				tc.fillInInitialCfnStack(cfnStack)
+				return nil
+			}).AnyTimes()
+
+			// Mock the source reference
+			k8sClient.EXPECT().Get(
+				gomock.Any(),
+				mockGitSourceReference,
+				gomock.Any(),
+			).DoAndReturn(func(ctx context.Context, key ctrlclient.ObjectKey, obj ctrlclient.Object, opts ...ctrlclient.GetOption) error {
+				gitRepo, ok := obj.(*sourcev1.GitRepository)
+				if !ok {
+					return errors.New(fmt.Sprintf("Expected a GitRepository object, but got a %T", obj))
+				}
+				tc.fillInSource(gitRepo, mockSourceArtifactURL)
+				return nil
+			})
+
+			// Mock finalizer
+			k8sClient.EXPECT().Status().Return(k8sStatusWriter).AnyTimes()
+			k8sClient.EXPECT().Patch(
+				gomock.Any(),
+				gomock.Any(),
+				gomock.Any(),
+			).DoAndReturn(func(ctx context.Context, obj ctrlclient.Object, patch ctrlclient.Patch, opts ...ctrlclient.PatchOption) error {
+				cfnStack, ok := obj.(*cfnv1.CloudFormationStack)
+				if !ok {
+					return errors.New(fmt.Sprintf("Expected a CloudFormationStack object, but got a %T", obj))
+				}
+				finalizers := cfnStack.GetFinalizers()
+				require.Equal(t, 1, len(finalizers))
+				require.Equal(t, "finalizers.cloudformation.contrib.fluxcd.io", finalizers[0])
+				return nil
+			})
+
+			// Mock AWS clients
+			if tc.mockCfnClientCalls != nil {
+				tc.mockCfnClientCalls(cfnClient)
 			}
-			compareCfnStackStatus(t, &expectedStackStatus, &cfnStack.Status)
-			return nil
+			if tc.mockS3ClientCalls != nil {
+				tc.mockS3ClientCalls(s3Client)
+			}
+
+			// Validate event recorded
+			eventRecorder.EXPECT().AnnotatedEventf(
+				gomock.Any(),
+				gomock.Any(),
+				tc.wantedEvent.eventType,
+				tc.wantedEvent.severity,
+				tc.wantedEvent.message,
+			)
+
+			// Validate the CFN stack object is patched correctly
+			finalPatch := k8sStatusWriter.EXPECT().Patch(
+				gomock.Any(),
+				gomock.Any(),
+				gomock.Any(),
+			).DoAndReturn(func(ctx context.Context, obj ctrlclient.Object, patch ctrlclient.Patch, opts ...ctrlclient.PatchOption) error {
+				// Stack should be marked as creation in progress
+				cfnStack, ok := obj.(*cfnv1.CloudFormationStack)
+				if !ok {
+					return errors.New(fmt.Sprintf("Expected a CloudFormationStack object, but got a %T", obj))
+				}
+				compareCfnStackStatus(t, tc.wantedStackStatus, &cfnStack.Status)
+				return nil
+			})
+			if tc.markStackAsInProgress {
+				firstPatch := k8sStatusWriter.EXPECT().Patch(
+					gomock.Any(),
+					gomock.Any(),
+					gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, obj ctrlclient.Object, patch ctrlclient.Patch, opts ...ctrlclient.PatchOption) error {
+					// Stack should be marked as reconciliation in progress
+					cfnStack, ok := obj.(*cfnv1.CloudFormationStack)
+					if !ok {
+						return errors.New(fmt.Sprintf("Expected a CloudFormationStack object, but got a %T", obj))
+					}
+					expectedStackStatus := cfnv1.CloudFormationStackStatus{
+						ObservedGeneration: mockGenerationId,
+						StackName:          mockRealStackName,
+						Conditions: []metav1.Condition{
+							{
+								Type:               "Ready",
+								Status:             "Unknown",
+								ObservedGeneration: mockGenerationId,
+								Reason:             "Progressing",
+								Message:            "Stack reconciliation in progress",
+							},
+						},
+					}
+					compareCfnStackStatus(t, &expectedStackStatus, &cfnStack.Status)
+					return nil
+				})
+				gomock.InOrder(
+					firstPatch,
+					finalPatch,
+				)
+			}
+
+			reconciler := &CloudFormationStackReconciler{
+				Scheme:          scheme,
+				Client:          k8sClient,
+				CfnClient:       cfnClient,
+				S3Client:        s3Client,
+				TemplateBucket:  mockTemplateUploadBucket,
+				EventRecorder:   eventRecorder,
+				MetricsRecorder: metricsRecorder,
+				httpClient:      httpClient,
+			}
+
+			request := ctrl.Request{NamespacedName: mockStackNamespacedName}
+
+			// WHEN
+			result, err := reconciler.Reconcile(ctx, request)
+
+			// THEN
+			require.NoError(t, err)
+			require.False(t, result.Requeue)
+			require.Equal(t, tc.wantedRequeueDelay, result.RequeueAfter)
 		})
-		gomock.InOrder(
-			first,
-			second,
-		)
-
-		reconciler := &CloudFormationStackReconciler{
-			Scheme:          scheme,
-			Client:          k8sClient,
-			CfnClient:       cfnClient,
-			S3Client:        s3Client,
-			TemplateBucket:  mockTemplateUploadBucket,
-			EventRecorder:   eventRecorder,
-			MetricsRecorder: metricsRecorder,
-			httpClient:      httpClient,
-		}
-
-		request := ctrl.Request{NamespacedName: mockStackNamespacedName}
-
-		// WHEN
-		result, err := reconciler.Reconcile(ctx, request)
-
-		// THEN
-		require.NoError(t, err)
-		require.False(t, result.Requeue)
-		require.Equal(t, mockPollIntervalDuration, result.RequeueAfter)
-	})
+	}
 }
