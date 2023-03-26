@@ -42,21 +42,27 @@ import (
 )
 
 const (
-	mockStackName                = "mock-stack"
-	mockNamespace                = "mock-namespace"
-	mockGenerationId             = 2
-	mockSourceNamespace          = "mock-source-namespace"
-	mockRealStackName            = "mock-real-stack"
-	mockTemplatePath             = "template.yaml"
-	mockTemplateGitRepoName      = "mock-cfn-template-git-repo"
-	mockTemplateOCIRepoName      = "mock-cfn-template-oci-repo"
-	mockTemplateSourceBucketName = "mock-cfn-template-source-bucket"
-	mockSourceRevision           = "main@sha1:132f4e719209eb10b9485302f8593fc0e680f4fc"
-	mockTemplateSourceFile       = "../examples/my-cloudformation-templates/template.yaml"
-	mockTemplateUploadBucket     = "mock-template-upload-bucket"
-	mockChangeSetName            = "flux-2-main-sha1-132f4e719209eb10b9485302f8593fc0e680f4fc"
-	mockChangeSetArn             = "arn:aws:cloudformation:us-west-2:111:changeSet/mock-change-set"
-	mockTemplateS3Url            = "https://mock-template-upload-bucket.s3.mock-region.amazonaws.com/mock-flux-template-file-object-key"
+	mockStackName                      = "mock-stack"
+	mockNamespace                      = "mock-namespace"
+	mockGenerationId                   = 1
+	mockGenerationId2                  = 2
+	mockSourceNamespace                = "mock-source-namespace"
+	mockRealStackName                  = "mock-real-stack"
+	mockTemplatePath                   = "template.yaml"
+	mockTemplateGitRepoName            = "mock-cfn-template-git-repo"
+	mockTemplateOCIRepoName            = "mock-cfn-template-oci-repo"
+	mockTemplateSourceBucketName       = "mock-cfn-template-source-bucket"
+	mockSourceRevision                 = "main@sha1:132f4e719209eb10b9485302f8593fc0e680f4fc"
+	mockSourceRevision2                = "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+	mockTemplateSourceFile             = "../examples/my-cloudformation-templates/template.yaml"
+	mockTemplateUploadBucket           = "mock-template-upload-bucket"
+	mockChangeSetName                  = "flux-1-main-sha1-132f4e719209eb10b9485302f8593fc0e680f4fc"
+	mockChangeSetNameNewGeneration     = "flux-2-main-sha1-132f4e719209eb10b9485302f8593fc0e680f4fc"
+	mockChangeSetNameNewSourceRevision = "flux-1-sha256-e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+	mockChangeSetArn                   = "arn:aws:cloudformation:us-west-2:123456789012:changeSet/flux-1-main-sha1-132f4e719209eb10b9485302f8593fc0e680f4fc/uuid"
+	mockChangeSetArnNewGeneration      = "arn:aws:cloudformation:us-west-2:123456789012:changeSet/flux-2-main-sha1-132f4e719209eb10b9485302f8593fc0e680f4fc/uuid"
+	mockChangeSetArnNewSourceRevision  = "arn:aws:cloudformation:us-west-2:123456789012:changeSet/flux-1-sha256-e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855/uuid"
+	mockTemplateS3Url                  = "https://mock-template-upload-bucket.s3.mock-region.amazonaws.com/mock-flux-template-file-object-key"
 )
 
 var (
@@ -239,7 +245,7 @@ type successfulReconciliationLoopTestCase struct {
 	mockS3ClientCalls     func(s3Client *clientmocks.MockS3Client)
 	markStackAsInProgress bool
 	wantedStackStatus     *cfnv1.CloudFormationStackStatus
-	wantedEvent           *expectedEvent
+	wantedEvents          []*expectedEvent
 	wantedRequeueDelay    time.Duration
 }
 
@@ -314,14 +320,16 @@ func runSuccessfulReconciliationLoopTestCase(t *testing.T, tc *successfulReconci
 	}
 
 	// Validate event recorded
-	if tc.wantedEvent != nil {
-		eventRecorder.EXPECT().AnnotatedEventf(
-			gomock.Any(),
-			gomock.Any(),
-			tc.wantedEvent.eventType,
-			tc.wantedEvent.severity,
-			tc.wantedEvent.message,
-		)
+	if tc.wantedEvents != nil {
+		for _, event := range tc.wantedEvents {
+			eventRecorder.EXPECT().AnnotatedEventf(
+				gomock.Any(),
+				gomock.Any(),
+				event.eventType,
+				event.severity,
+				event.message,
+			)
+		}
 	}
 
 	// Validate the CFN stack object is patched correctly
@@ -349,20 +357,20 @@ func runSuccessfulReconciliationLoopTestCase(t *testing.T, tc *successfulReconci
 			if !ok {
 				return errors.New(fmt.Sprintf("Expected a CloudFormationStack object, but got a %T", obj))
 			}
-			expectedStackStatus := cfnv1.CloudFormationStackStatus{
-				ObservedGeneration: mockGenerationId,
-				StackName:          mockRealStackName,
-				Conditions: []metav1.Condition{
-					{
-						Type:               "Ready",
-						Status:             "Unknown",
-						ObservedGeneration: mockGenerationId,
-						Reason:             "Progressing",
-						Message:            "Stack reconciliation in progress",
-					},
+			expectedStack := cfnv1.CloudFormationStack{}
+			tc.fillInInitialCfnStack(&expectedStack)
+			expectedStack.Status.ObservedGeneration = expectedStack.Generation
+			expectedStack.Status.StackName = mockRealStackName
+			expectedStack.Status.Conditions = []metav1.Condition{
+				{
+					Type:               "Ready",
+					Status:             "Unknown",
+					ObservedGeneration: expectedStack.Generation,
+					Reason:             "Progressing",
+					Message:            "Stack reconciliation in progress",
 				},
 			}
-			compareCfnStackStatus(t, &expectedStackStatus, &cfnStack.Status)
+			compareCfnStackStatus(t, &expectedStack.Status, &cfnStack.Status)
 			return nil
 		})
 		gomock.InOrder(
@@ -396,11 +404,11 @@ func runSuccessfulReconciliationLoopTestCase(t *testing.T, tc *successfulReconci
 func TestCfnController_StackManagement(t *testing.T) {
 	testCases := map[string]*successfulReconciliationLoopTestCase{
 		"create stack if neither stack nor changeset exist": {
-			wantedEvent: &expectedEvent{
+			wantedEvents: []*expectedEvent{{
 				eventType: "Normal",
 				severity:  "info",
-				message:   "Creation of stack 'mock-real-stack' in progress (change set arn:aws:cloudformation:us-west-2:111:changeSet/mock-change-set)",
-			},
+				message:   fmt.Sprintf("Creation of stack 'mock-real-stack' in progress (change set %s)", mockChangeSetArn),
+			}},
 			wantedRequeueDelay: mockPollIntervalDuration,
 			wantedStackStatus: &cfnv1.CloudFormationStackStatus{
 				ObservedGeneration:     mockGenerationId,
@@ -413,7 +421,7 @@ func TestCfnController_StackManagement(t *testing.T) {
 						Status:             "Unknown",
 						ObservedGeneration: mockGenerationId,
 						Reason:             "Progressing",
-						Message:            "Creation of stack 'mock-real-stack' in progress (change set arn:aws:cloudformation:us-west-2:111:changeSet/mock-change-set)",
+						Message:            fmt.Sprintf("Creation of stack 'mock-real-stack' in progress (change set %s)", mockChangeSetArn),
 					},
 				},
 			},
@@ -472,11 +480,11 @@ func TestCfnController_StackManagement(t *testing.T) {
 			},
 		},
 		"continue stack rollback if the real stack has UPDATE_ROLLBACK_FAILED status": {
-			wantedEvent: &expectedEvent{
+			wantedEvents: []*expectedEvent{{
 				eventType: "Warning",
 				severity:  "error",
 				message:   "Stack 'mock-real-stack' has a previously failed rollback (status 'UPDATE_ROLLBACK_FAILED'), continuing rollback",
-			},
+			}},
 			wantedRequeueDelay: mockRetryIntervalDuration,
 			wantedStackStatus: &cfnv1.CloudFormationStackStatus{
 				ObservedGeneration:    mockGenerationId,
@@ -597,6 +605,7 @@ func TestCfnController_StackManagement(t *testing.T) {
 						Name:           mockRealStackName,
 						Generation:     mockGenerationId,
 						SourceRevision: mockSourceRevision,
+						ChangeSetArn:   mockChangeSetArn,
 						StackConfig: &clienttypes.StackConfig{
 							TemplateBucket: mockTemplateUploadBucket,
 							TemplateBody:   mockTemplateSourceFileContents,
@@ -622,11 +631,11 @@ func TestCfnController_StackManagement(t *testing.T) {
 
 		testCases[fmt.Sprintf("delete the real stack if the real stack has %s status", expectedStackStatus)] =
 			&successfulReconciliationLoopTestCase{
-				wantedEvent: &expectedEvent{
+				wantedEvents: []*expectedEvent{{
 					eventType: "Warning",
 					severity:  "error",
 					message:   expectedStatusMessage,
-				},
+				}},
 				wantedRequeueDelay: mockRetryIntervalDuration,
 				wantedStackStatus: &cfnv1.CloudFormationStackStatus{
 					ObservedGeneration:    mockGenerationId,
@@ -680,14 +689,138 @@ func TestCfnController_StackManagement(t *testing.T) {
 			}
 	}
 
-	// TODO Stack statuses to test
-	// StackStatusCreateComplete                          StackStatus = "CREATE_COMPLETE"
-	// StackStatusUpdateComplete                          StackStatus = "UPDATE_COMPLETE"
-	// StackStatusUpdateFailed                            StackStatus = "UPDATE_FAILED"
-	// StackStatusUpdateRollbackComplete                  StackStatus = "UPDATE_ROLLBACK_COMPLETE"
-	// StackStatusImportComplete                          StackStatus = "IMPORT_COMPLETE"
-	// StackStatusImportRollbackFailed                    StackStatus = "IMPORT_ROLLBACK_FAILED"
-	// StackStatusImportRollbackComplete                  StackStatus = "IMPORT_ROLLBACK_COMPLETE"
+	successfulDeploymentStackStatuses := []sdktypes.StackStatus{
+		sdktypes.StackStatusCreateComplete,
+		sdktypes.StackStatusUpdateComplete,
+		sdktypes.StackStatusImportComplete,
+	}
+	recoverableFailureStackStatuses := []sdktypes.StackStatus{
+		sdktypes.StackStatusUpdateFailed,
+		sdktypes.StackStatusUpdateRollbackComplete,
+		sdktypes.StackStatusImportRollbackComplete,
+		sdktypes.StackStatusImportRollbackFailed,
+	}
+	idleStackStatuses := append(successfulDeploymentStackStatuses, recoverableFailureStackStatuses...)
+	for _, stackStatus := range idleStackStatuses {
+		expectedStackStatus := stackStatus
+
+		expectedStatusMsgNewGeneration := fmt.Sprintf("Update of stack 'mock-real-stack' in progress (change set %s)", mockChangeSetArnNewGeneration)
+		changeSetDoesNotExistNewGenerationTC := &successfulReconciliationLoopTestCase{
+			wantedEvents:       []*expectedEvent{},
+			wantedRequeueDelay: mockPollIntervalDuration,
+			wantedStackStatus: &cfnv1.CloudFormationStackStatus{
+				ObservedGeneration:     mockGenerationId2,
+				StackName:              mockRealStackName,
+				LastAttemptedRevision:  mockSourceRevision,
+				LastAppliedRevision:    mockSourceRevision,
+				LastAttemptedChangeSet: mockChangeSetArnNewGeneration,
+				LastAppliedChangeSet:   mockChangeSetArn,
+				Conditions: []metav1.Condition{
+					{
+						Type:               "Ready",
+						Status:             "Unknown",
+						ObservedGeneration: mockGenerationId2,
+						Reason:             "Progressing",
+						Message:            expectedStatusMsgNewGeneration,
+					},
+				},
+			},
+			fillInSource: generateMockGitRepoSource,
+			fillInInitialCfnStack: func(cfnStack *cfnv1.CloudFormationStack) {
+				cfnStack.Name = mockStackName
+				cfnStack.Namespace = mockNamespace
+				cfnStack.Generation = mockGenerationId2
+				cfnStack.Spec = cfnv1.CloudFormationStackSpec{
+					StackName:              mockRealStackName,
+					TemplatePath:           mockTemplatePath,
+					SourceRef:              mockGitRef,
+					Interval:               mockInterval,
+					RetryInterval:          &mockRetryInterval,
+					PollInterval:           mockPollInterval,
+					Suspend:                false,
+					DestroyStackOnDeletion: false,
+				}
+				cfnStack.Status = cfnv1.CloudFormationStackStatus{
+					ObservedGeneration:     mockGenerationId,
+					StackName:              mockRealStackName,
+					LastAttemptedRevision:  mockSourceRevision,
+					LastAppliedRevision:    mockSourceRevision,
+					LastAttemptedChangeSet: mockChangeSetArn,
+					LastAppliedChangeSet:   mockChangeSetArn,
+					Conditions: []metav1.Condition{
+						{
+							Type:               "Ready",
+							Status:             "True",
+							ObservedGeneration: mockGenerationId,
+							Reason:             "Hello",
+							Message:            "World",
+						},
+					},
+				}
+			},
+			markStackAsInProgress: true,
+			mockS3ClientCalls:     mockS3ClientUpload,
+			mockCfnClientCalls: func(cfnClient *clientmocks.MockCloudFormationClient) {
+				expectedDescribeStackIn := &clienttypes.Stack{
+					Name:           mockRealStackName,
+					Generation:     mockGenerationId2,
+					SourceRevision: mockSourceRevision,
+					StackConfig: &clienttypes.StackConfig{
+						TemplateBucket: mockTemplateUploadBucket,
+						TemplateBody:   mockTemplateSourceFileContents,
+					},
+				}
+				cfnClient.EXPECT().DescribeStack(expectedDescribeStackIn).Return(&clienttypes.StackDescription{
+					StackName:         aws.String(mockRealStackName),
+					StackStatus:       expectedStackStatus,
+					StackStatusReason: aws.String("hello world"),
+				}, nil)
+
+				expectedDescribeChangeSetIn := &clienttypes.Stack{
+					Name:           mockRealStackName,
+					Generation:     mockGenerationId2,
+					SourceRevision: mockSourceRevision,
+					StackConfig: &clienttypes.StackConfig{
+						TemplateBucket: mockTemplateUploadBucket,
+						TemplateBody:   mockTemplateSourceFileContents,
+					},
+				}
+				cfnClient.EXPECT().DescribeChangeSet(expectedDescribeChangeSetIn).Return(nil, &cloudformation.ErrChangeSetNotFound{})
+
+				expectedUpdateStackIn := &clienttypes.Stack{
+					Name:           mockRealStackName,
+					Generation:     mockGenerationId2,
+					SourceRevision: mockSourceRevision,
+					StackConfig: &clienttypes.StackConfig{
+						TemplateBucket: mockTemplateUploadBucket,
+						TemplateBody:   mockTemplateSourceFileContents,
+						TemplateURL:    mockTemplateS3Url,
+					},
+				}
+
+				cfnClient.EXPECT().UpdateStack(expectedUpdateStackIn).Return(mockChangeSetArnNewGeneration, nil)
+			},
+		}
+
+		for _, status := range recoverableFailureStackStatuses {
+			if expectedStackStatus == status {
+				msg := fmt.Sprintf("Stack 'mock-real-stack' is in a failed state (status '%s', reason '%s'), creating a new change set", expectedStackStatus, "hello world")
+				changeSetDoesNotExistNewGenerationTC.wantedEvents = append(changeSetDoesNotExistNewGenerationTC.wantedEvents, &expectedEvent{
+					eventType: "Warning",
+					severity:  "error",
+					message:   msg,
+				})
+				break
+			}
+		}
+		changeSetDoesNotExistNewGenerationTC.wantedEvents = append(changeSetDoesNotExistNewGenerationTC.wantedEvents, &expectedEvent{
+			eventType: "Normal",
+			severity:  "info",
+			message:   fmt.Sprintf("Update of stack 'mock-real-stack' in progress (change set %s)", mockChangeSetArnNewGeneration),
+		})
+
+		testCases[fmt.Sprintf("update the real stack if the real stack has %s status and the desired change set does not exist due to a new generation", expectedStackStatus)] = changeSetDoesNotExistNewGenerationTC
+	}
 
 	// TODO change set statuses to test
 	// ChangeSetStatusCreatePending    ChangeSetStatus = "CREATE_PENDING"
