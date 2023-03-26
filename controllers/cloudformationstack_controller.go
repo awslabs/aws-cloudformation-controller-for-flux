@@ -340,11 +340,11 @@ func (r *CloudFormationStackReconciler) reconcileStack(ctx context.Context, cfnS
 			return cfnStack, cfnStack.GetRetryInterval(), err
 		}
 
-		msg := fmt.Sprintf("Stack '%s' has a previously failed update rollback (status '%s'), continuing rollback", clientStack.Name, desc.StackStatus)
+		msg := fmt.Sprintf("Stack '%s' has a previously failed rollback (status '%s'), continuing rollback", clientStack.Name, desc.StackStatus)
 		log.Info(msg)
 		r.event(ctx, cfnStack, revision, eventv1.EventSeverityError, msg)
-		cfnStack = cfnv1.CloudFormationStackProgressing(cfnStack, cfnv1.ReadinessUpdate{SourceRevision: revision, Message: msg})
-		return cfnStack, cfnStack.Spec.PollInterval.Duration, nil
+		cfnStack = cfnv1.CloudFormationStackNotReady(cfnStack, cfnv1.ReadinessUpdate{SourceRevision: revision, Message: msg, Reason: cfnv1.StackRollbackFailureReason})
+		return cfnStack, cfnStack.Spec.RetryInterval.Duration, nil
 	}
 
 	// Delete the stack if it has failed to create or delete

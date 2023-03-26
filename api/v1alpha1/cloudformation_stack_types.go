@@ -178,6 +178,7 @@ const (
 	TemplateUploadFailedReason        = "TemplateUploadFailed"
 	CloudFormationApiCallFailedReason = "CloudFormationApiCallFailed"
 	UnrecoverableStackFailureReason   = "UnrecoverableStackFailure"
+	StackRollbackFailureReason        = "StackRollbackFailed"
 	DependencyNotReadyReason          = "DependencyNotReady"
 	UnexpectedStatusReason            = "UnexpectedStatus"
 )
