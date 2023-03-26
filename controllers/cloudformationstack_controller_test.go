@@ -180,21 +180,21 @@ func createTestArtifact() error {
 }
 
 // Compare field by field instead of using Equals, to avoid comparing timestamps
-func compareCfnStackStatus(t *testing.T, expectedStackStatus *cfnv1.CloudFormationStackStatus, actualStackStatus *cfnv1.CloudFormationStackStatus) {
-	require.Equalf(t, expectedStackStatus.ObservedGeneration, actualStackStatus.ObservedGeneration, "ObservedGeneration in stack status not equal")
-	require.Equalf(t, expectedStackStatus.LastAppliedRevision, actualStackStatus.LastAppliedRevision, "LastAppliedRevision in stack status not equal")
-	require.Equalf(t, expectedStackStatus.LastAttemptedRevision, actualStackStatus.LastAttemptedRevision, "LastAttemptedRevision in stack status not equal")
-	require.Equalf(t, expectedStackStatus.LastAppliedChangeSet, actualStackStatus.LastAppliedChangeSet, "LastAppliedChangeSet in stack status not equal")
-	require.Equalf(t, expectedStackStatus.LastAttemptedChangeSet, actualStackStatus.LastAttemptedChangeSet, "LastAttemptedChangeSet in stack status not equal")
-	require.Equalf(t, expectedStackStatus.StackName, actualStackStatus.StackName, "StackName in stack status not equal")
-	require.Equalf(t, len(expectedStackStatus.Conditions), len(actualStackStatus.Conditions), "Wrong number of conditions in stack status")
+func compareCfnStackStatus(t *testing.T, kind string, expectedStackStatus *cfnv1.CloudFormationStackStatus, actualStackStatus *cfnv1.CloudFormationStackStatus) {
+	require.Equalf(t, expectedStackStatus.ObservedGeneration, actualStackStatus.ObservedGeneration, "ObservedGeneration in %s stack status not equal", kind)
+	require.Equalf(t, expectedStackStatus.LastAppliedRevision, actualStackStatus.LastAppliedRevision, "LastAppliedRevision in %s stack status not equal", kind)
+	require.Equalf(t, expectedStackStatus.LastAttemptedRevision, actualStackStatus.LastAttemptedRevision, "LastAttemptedRevision in %s stack status not equal", kind)
+	require.Equalf(t, expectedStackStatus.LastAppliedChangeSet, actualStackStatus.LastAppliedChangeSet, "LastAppliedChangeSet in %s stack status not equal", kind)
+	require.Equalf(t, expectedStackStatus.LastAttemptedChangeSet, actualStackStatus.LastAttemptedChangeSet, "LastAttemptedChangeSet in %s stack status not equal", kind)
+	require.Equalf(t, expectedStackStatus.StackName, actualStackStatus.StackName, "StackName in %s stack status not equal", kind)
+	require.Equalf(t, len(expectedStackStatus.Conditions), len(actualStackStatus.Conditions), "Wrong number of conditions in %s stack status", kind)
 	for i, expectedCondition := range expectedStackStatus.Conditions {
 		actualCondition := actualStackStatus.Conditions[i]
-		require.Equalf(t, expectedCondition.Type, actualCondition.Type, "Type in stack status condition #%d not equal", i+1)
-		require.Equalf(t, expectedCondition.Status, actualCondition.Status, "Status in stack status condition #%d not equal", i+1)
-		require.Equalf(t, expectedCondition.ObservedGeneration, actualCondition.ObservedGeneration, "ObservedGeneration in stack status condition #%d not equal", i+1)
-		require.Equalf(t, expectedCondition.Reason, actualCondition.Reason, "Reason in stack status condition #%d not equal", i+1)
-		require.Equalf(t, expectedCondition.Message, actualCondition.Message, "Message in stack status condition #%d not equal", i+1)
+		require.Equalf(t, expectedCondition.Type, actualCondition.Type, "Type in %s stack status condition #%d not equal", kind, i+1)
+		require.Equalf(t, expectedCondition.Status, actualCondition.Status, "Status in %s stack status condition #%d not equal", kind, i+1)
+		require.Equalf(t, expectedCondition.ObservedGeneration, actualCondition.ObservedGeneration, "ObservedGeneration in %s stack status condition #%d not equal", kind, i+1)
+		require.Equalf(t, expectedCondition.Reason, actualCondition.Reason, "Reason in %s stack status condition #%d not equal", kind, i+1)
+		require.Equalf(t, expectedCondition.Message, actualCondition.Message, "Message in %s stack status condition #%d not equal", kind, i+1)
 	}
 }
 
@@ -218,6 +218,18 @@ func generateMockGitRepoSource(gitRepo *sourcev1.GitRepository, mockSourceArtifa
 		Artifact: &sourcev1.Artifact{
 			URL:      mockSourceArtifactURL,
 			Revision: mockSourceRevision,
+			Checksum: mockTemplateContentsChecksum,
+		},
+	}
+}
+
+func generateMockGitRepoSource2(gitRepo *sourcev1.GitRepository, mockSourceArtifactURL string) {
+	gitRepo.Name = mockTemplateGitRepoName
+	gitRepo.Namespace = mockSourceNamespace
+	gitRepo.Status = sourcev1.GitRepositoryStatus{
+		Artifact: &sourcev1.Artifact{
+			URL:      mockSourceArtifactURL,
+			Revision: mockSourceRevision2,
 			Checksum: mockTemplateContentsChecksum,
 		},
 	}
@@ -343,7 +355,7 @@ func runSuccessfulReconciliationLoopTestCase(t *testing.T, tc *successfulReconci
 		if !ok {
 			return errors.New(fmt.Sprintf("Expected a CloudFormationStack object, but got a %T", obj))
 		}
-		compareCfnStackStatus(t, tc.wantedStackStatus, &cfnStack.Status)
+		compareCfnStackStatus(t, "final", tc.wantedStackStatus, &cfnStack.Status)
 		return nil
 	})
 	if tc.markStackAsInProgress {
@@ -357,6 +369,7 @@ func runSuccessfulReconciliationLoopTestCase(t *testing.T, tc *successfulReconci
 			if !ok {
 				return errors.New(fmt.Sprintf("Expected a CloudFormationStack object, but got a %T", obj))
 			}
+
 			expectedStack := cfnv1.CloudFormationStack{}
 			tc.fillInInitialCfnStack(&expectedStack)
 			expectedStack.Status.ObservedGeneration = expectedStack.Generation
@@ -370,7 +383,7 @@ func runSuccessfulReconciliationLoopTestCase(t *testing.T, tc *successfulReconci
 					Message:            "Stack reconciliation in progress",
 				},
 			}
-			compareCfnStackStatus(t, &expectedStack.Status, &cfnStack.Status)
+			compareCfnStackStatus(t, "initial", &expectedStack.Status, &cfnStack.Status)
 			return nil
 		})
 		gomock.InOrder(
@@ -820,6 +833,123 @@ func TestCfnController_StackManagement(t *testing.T) {
 		})
 
 		testCases[fmt.Sprintf("update the real stack if the real stack has %s status and the desired change set does not exist due to a new generation", expectedStackStatus)] = changeSetDoesNotExistNewGenerationTC
+
+		expectedStatusMsgNewSourceRevision := fmt.Sprintf("Update of stack 'mock-real-stack' in progress (change set %s)", mockChangeSetArnNewSourceRevision)
+		changeSetDoesNotExistNewSourceRevisionTC := &successfulReconciliationLoopTestCase{
+			wantedEvents:       []*expectedEvent{},
+			wantedRequeueDelay: mockPollIntervalDuration,
+			wantedStackStatus: &cfnv1.CloudFormationStackStatus{
+				ObservedGeneration:     mockGenerationId,
+				StackName:              mockRealStackName,
+				LastAttemptedRevision:  mockSourceRevision2,
+				LastAppliedRevision:    mockSourceRevision,
+				LastAttemptedChangeSet: mockChangeSetArnNewSourceRevision,
+				LastAppliedChangeSet:   mockChangeSetArn,
+				Conditions: []metav1.Condition{
+					{
+						Type:               "Ready",
+						Status:             "Unknown",
+						ObservedGeneration: mockGenerationId,
+						Reason:             "Progressing",
+						Message:            expectedStatusMsgNewSourceRevision,
+					},
+				},
+			},
+			fillInSource: generateMockGitRepoSource2,
+			fillInInitialCfnStack: func(cfnStack *cfnv1.CloudFormationStack) {
+				cfnStack.Name = mockStackName
+				cfnStack.Namespace = mockNamespace
+				cfnStack.Generation = mockGenerationId
+				cfnStack.Spec = cfnv1.CloudFormationStackSpec{
+					StackName:              mockRealStackName,
+					TemplatePath:           mockTemplatePath,
+					SourceRef:              mockGitRef,
+					Interval:               mockInterval,
+					RetryInterval:          &mockRetryInterval,
+					PollInterval:           mockPollInterval,
+					Suspend:                false,
+					DestroyStackOnDeletion: false,
+				}
+				cfnStack.Status = cfnv1.CloudFormationStackStatus{
+					ObservedGeneration:     mockGenerationId,
+					StackName:              mockRealStackName,
+					LastAttemptedRevision:  mockSourceRevision,
+					LastAppliedRevision:    mockSourceRevision,
+					LastAttemptedChangeSet: mockChangeSetArn,
+					LastAppliedChangeSet:   mockChangeSetArn,
+					Conditions: []metav1.Condition{
+						{
+							Type:               "Ready",
+							Status:             "True",
+							ObservedGeneration: mockGenerationId,
+							Reason:             "Hello",
+							Message:            "World",
+						},
+					},
+				}
+			},
+			markStackAsInProgress: false,
+			mockS3ClientCalls:     mockS3ClientUpload,
+			mockCfnClientCalls: func(cfnClient *clientmocks.MockCloudFormationClient) {
+				expectedDescribeStackIn := &clienttypes.Stack{
+					Name:           mockRealStackName,
+					Generation:     mockGenerationId,
+					SourceRevision: mockSourceRevision2,
+					StackConfig: &clienttypes.StackConfig{
+						TemplateBucket: mockTemplateUploadBucket,
+						TemplateBody:   mockTemplateSourceFileContents,
+					},
+				}
+				cfnClient.EXPECT().DescribeStack(expectedDescribeStackIn).Return(&clienttypes.StackDescription{
+					StackName:         aws.String(mockRealStackName),
+					StackStatus:       expectedStackStatus,
+					StackStatusReason: aws.String("hello world"),
+				}, nil)
+
+				expectedDescribeChangeSetIn := &clienttypes.Stack{
+					Name:           mockRealStackName,
+					Generation:     mockGenerationId,
+					SourceRevision: mockSourceRevision2,
+					StackConfig: &clienttypes.StackConfig{
+						TemplateBucket: mockTemplateUploadBucket,
+						TemplateBody:   mockTemplateSourceFileContents,
+					},
+				}
+				cfnClient.EXPECT().DescribeChangeSet(expectedDescribeChangeSetIn).Return(nil, &cloudformation.ErrChangeSetNotFound{})
+
+				expectedUpdateStackIn := &clienttypes.Stack{
+					Name:           mockRealStackName,
+					Generation:     mockGenerationId,
+					SourceRevision: mockSourceRevision2,
+					StackConfig: &clienttypes.StackConfig{
+						TemplateBucket: mockTemplateUploadBucket,
+						TemplateBody:   mockTemplateSourceFileContents,
+						TemplateURL:    mockTemplateS3Url,
+					},
+				}
+
+				cfnClient.EXPECT().UpdateStack(expectedUpdateStackIn).Return(mockChangeSetArnNewSourceRevision, nil)
+			},
+		}
+
+		for _, status := range recoverableFailureStackStatuses {
+			if expectedStackStatus == status {
+				msg := fmt.Sprintf("Stack 'mock-real-stack' is in a failed state (status '%s', reason '%s'), creating a new change set", expectedStackStatus, "hello world")
+				changeSetDoesNotExistNewSourceRevisionTC.wantedEvents = append(changeSetDoesNotExistNewSourceRevisionTC.wantedEvents, &expectedEvent{
+					eventType: "Warning",
+					severity:  "error",
+					message:   msg,
+				})
+				break
+			}
+		}
+		changeSetDoesNotExistNewSourceRevisionTC.wantedEvents = append(changeSetDoesNotExistNewSourceRevisionTC.wantedEvents, &expectedEvent{
+			eventType: "Normal",
+			severity:  "info",
+			message:   fmt.Sprintf("Update of stack 'mock-real-stack' in progress (change set %s)", mockChangeSetArnNewSourceRevision),
+		})
+
+		testCases[fmt.Sprintf("update the real stack if the real stack has %s status and the desired change set does not exist due to a new source revision", expectedStackStatus)] = changeSetDoesNotExistNewSourceRevisionTC
 	}
 
 	// TODO change set statuses to test
@@ -828,7 +958,6 @@ func TestCfnController_StackManagement(t *testing.T) {
 	// ChangeSetStatusCreateComplete   ChangeSetStatus = "CREATE_COMPLETE"
 	// ChangeSetStatusDeletePending    ChangeSetStatus = "DELETE_PENDING"
 	// ChangeSetStatusDeleteInProgress ChangeSetStatus = "DELETE_IN_PROGRESS"
-	// ChangeSetStatusDeleteComplete   ChangeSetStatus = "DELETE_COMPLETE"
 	// ChangeSetStatusDeleteFailed     ChangeSetStatus = "DELETE_FAILED"
 	// ChangeSetStatusFailed           ChangeSetStatus = "FAILED"
 
