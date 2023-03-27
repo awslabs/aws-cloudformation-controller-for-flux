@@ -402,7 +402,7 @@ func runReconciliationLoopTestCase(t *testing.T, tc *reconciliationLoopTestCase)
 			compareCfnStackStatus(t, "final", tc.wantedStackStatus, &cfnStack.Status)
 			return nil
 		})
-	} else {
+	} else if tc.wantedStackStatus != nil {
 		// Validate the CFN stack object is patched correctly
 		finalPatch := k8sStatusWriter.EXPECT().Patch(
 			gomock.Any(),
@@ -476,6 +476,15 @@ func runReconciliationLoopTestCase(t *testing.T, tc *reconciliationLoopTestCase)
 
 func TestCfnController_ReconcileStack(t *testing.T) {
 	testCases := map[string]*reconciliationLoopTestCase{
+		"no reconciliation if stack is suspended": {
+			fillInInitialCfnStack: func(cfnStack *cfnv1.CloudFormationStack) {
+				cfnStack.Name = mockStackName
+				cfnStack.Namespace = mockNamespace
+				cfnStack.Generation = mockGenerationId
+				cfnStack.Spec = generateMockCfnStackSpec()
+				cfnStack.Spec.Suspend = true
+			},
+		},
 		"create stack if neither stack nor changeset exist": {
 			wantedEvents: []*expectedEvent{{
 				eventType: "Normal",
