@@ -31,6 +31,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/hashicorp/go-retryablehttp"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -236,6 +237,30 @@ func generateMockGitRepoSource2(gitRepo *sourcev1.GitRepository, mockSourceArtif
 	}
 }
 
+func generateMockBucketSource(bucket *sourcev1.Bucket, mockSourceArtifactURL string) {
+	bucket.Name = mockTemplateGitRepoName
+	bucket.Namespace = mockSourceNamespace
+	bucket.Status = sourcev1.BucketStatus{
+		Artifact: &sourcev1.Artifact{
+			URL:      mockSourceArtifactURL,
+			Revision: mockSourceRevision,
+			Checksum: mockTemplateContentsChecksum,
+		},
+	}
+}
+
+func generateMockOCIRepoSource(ociRepo *sourcev1.OCIRepository, mockSourceArtifactURL string) {
+	ociRepo.Name = mockTemplateGitRepoName
+	ociRepo.Namespace = mockSourceNamespace
+	ociRepo.Status = sourcev1.OCIRepositoryStatus{
+		Artifact: &sourcev1.Artifact{
+			URL:      mockSourceArtifactURL,
+			Revision: mockSourceRevision,
+			Checksum: mockTemplateContentsChecksum,
+		},
+	}
+}
+
 func generateStackInput(generation int64, sourceRevision string, changeSetArn string) *clienttypes.Stack {
 	return &clienttypes.Stack{
 		Name:           mockRealStackName,
@@ -289,16 +314,21 @@ type changeSetStatusPair struct {
 }
 
 type reconciliationLoopTestCase struct {
-	fillInInitialCfnStack func(cfnStack *cfnv1.CloudFormationStack)
-	fillInSource          func(gitRepo *sourcev1.GitRepository, mockSourceArtifactURL string)
-	mockCfnClientCalls    func(cfnClient *clientmocks.MockCloudFormationClient)
-	mockS3ClientCalls     func(s3Client *clientmocks.MockS3Client)
-	markStackAsInProgress bool
-	removeFinalizers      bool
-	wantedStackStatus     *cfnv1.CloudFormationStackStatus
-	wantedEvents          []*expectedEvent
-	wantedRequeueDelay    time.Duration
-	wantedErr             error
+	cfnStackObjectDoesNotExist bool
+	fillInInitialCfnStack      func(cfnStack *cfnv1.CloudFormationStack)
+	fillInSource               func(gitRepo *sourcev1.GitRepository, mockSourceArtifactURL string)
+	fillInBucket               func(bucket *sourcev1.Bucket, mockSourceArtifactURL string)
+	fillInOCIRepository        func(ociRepo *sourcev1.OCIRepository, mockSourceArtifactURL string)
+	mockSourceRetrieval        func(k8sClient *mocks.MockClient)
+	mockArtifactServer         func(t *testing.T) *httptest.Server
+	mockCfnClientCalls         func(cfnClient *clientmocks.MockCloudFormationClient)
+	mockS3ClientCalls          func(s3Client *clientmocks.MockS3Client)
+	markStackAsInProgress      bool
+	removeFinalizers           bool
+	wantedStackStatus          *cfnv1.CloudFormationStackStatus
+	wantedEvents               []*expectedEvent
+	wantedRequeueDelay         time.Duration
+	wantedErr                  error
 }
 
 func runReconciliationLoopTestCase(t *testing.T, tc *reconciliationLoopTestCase) {
@@ -314,25 +344,48 @@ func runReconciliationLoopTestCase(t *testing.T, tc *reconciliationLoopTestCase)
 	metricsRecorder := metrics.NewRecorder()
 	httpClient := retryablehttp.NewClient()
 
-	server := generateMockArtifactServer(t)
+	var server *httptest.Server
+	if tc.mockArtifactServer != nil {
+		server = tc.mockArtifactServer(t)
+	} else {
+		server = generateMockArtifactServer(t)
+	}
 	defer server.Close()
 	mockSourceArtifactURL := server.URL + "/path.tar.gz"
 
 	// Mock the initial CFNStack object that the controller will work off of
-	k8sClient.EXPECT().Get(
-		gomock.Any(),
-		mockStackNamespacedName,
-		gomock.Any(),
-	).DoAndReturn(func(ctx context.Context, key ctrlclient.ObjectKey, obj ctrlclient.Object, opts ...ctrlclient.GetOption) error {
-		cfnStack, ok := obj.(*cfnv1.CloudFormationStack)
-		if !ok {
-			return errors.New(fmt.Sprintf("Expected a CloudFormationStack object, but got a %T", obj))
-		}
-		tc.fillInInitialCfnStack(cfnStack)
-		return nil
-	}).AnyTimes()
+	if tc.cfnStackObjectDoesNotExist {
+		k8sClient.EXPECT().Get(
+			gomock.Any(),
+			mockStackNamespacedName,
+			gomock.Any(),
+		).Return(
+			&apierrors.StatusError{
+				ErrStatus: metav1.Status{
+					Status:  metav1.StatusFailure,
+					Reason:  metav1.StatusReasonNotFound,
+					Message: "hello world",
+				}},
+		)
+	} else {
+		k8sClient.EXPECT().Get(
+			gomock.Any(),
+			mockStackNamespacedName,
+			gomock.Any(),
+		).DoAndReturn(func(ctx context.Context, key ctrlclient.ObjectKey, obj ctrlclient.Object, opts ...ctrlclient.GetOption) error {
+			cfnStack, ok := obj.(*cfnv1.CloudFormationStack)
+			if !ok {
+				return errors.New(fmt.Sprintf("Expected a CloudFormationStack object, but got a %T", obj))
+			}
+			tc.fillInInitialCfnStack(cfnStack)
+			return nil
+		}).AnyTimes()
+	}
 
 	// Mock the source reference
+	if tc.mockSourceRetrieval != nil {
+		tc.mockSourceRetrieval(k8sClient)
+	}
 	if tc.fillInSource != nil {
 		k8sClient.EXPECT().Get(
 			gomock.Any(),
@@ -347,23 +400,53 @@ func runReconciliationLoopTestCase(t *testing.T, tc *reconciliationLoopTestCase)
 			return nil
 		})
 	}
+	if tc.fillInBucket != nil {
+		k8sClient.EXPECT().Get(
+			gomock.Any(),
+			mockBucketSourceReference,
+			gomock.Any(),
+		).DoAndReturn(func(ctx context.Context, key ctrlclient.ObjectKey, obj ctrlclient.Object, opts ...ctrlclient.GetOption) error {
+			bucket, ok := obj.(*sourcev1.Bucket)
+			if !ok {
+				return errors.New(fmt.Sprintf("Expected a Bucket object, but got a %T", obj))
+			}
+			tc.fillInBucket(bucket, mockSourceArtifactURL)
+			return nil
+		})
+	}
+	if tc.fillInOCIRepository != nil {
+		k8sClient.EXPECT().Get(
+			gomock.Any(),
+			mockOCISourceReference,
+			gomock.Any(),
+		).DoAndReturn(func(ctx context.Context, key ctrlclient.ObjectKey, obj ctrlclient.Object, opts ...ctrlclient.GetOption) error {
+			ociRepo, ok := obj.(*sourcev1.OCIRepository)
+			if !ok {
+				return errors.New(fmt.Sprintf("Expected an OCIRepository object, but got a %T", obj))
+			}
+			tc.fillInOCIRepository(ociRepo, mockSourceArtifactURL)
+			return nil
+		})
+	}
 
 	// Mock adding the finalizer
-	k8sClient.EXPECT().Status().Return(k8sStatusWriter).AnyTimes()
-	k8sClient.EXPECT().Patch(
-		gomock.Any(),
-		gomock.Any(),
-		gomock.Any(),
-	).DoAndReturn(func(ctx context.Context, obj ctrlclient.Object, patch ctrlclient.Patch, opts ...ctrlclient.PatchOption) error {
-		cfnStack, ok := obj.(*cfnv1.CloudFormationStack)
-		if !ok {
-			return errors.New(fmt.Sprintf("Expected a CloudFormationStack object, but got a %T", obj))
-		}
-		finalizers := cfnStack.GetFinalizers()
-		require.Equal(t, 1, len(finalizers))
-		require.Equal(t, "finalizers.cloudformation.contrib.fluxcd.io", finalizers[0])
-		return nil
-	})
+	if !tc.cfnStackObjectDoesNotExist {
+		k8sClient.EXPECT().Status().Return(k8sStatusWriter).AnyTimes()
+		k8sClient.EXPECT().Patch(
+			gomock.Any(),
+			gomock.Any(),
+			gomock.Any(),
+		).DoAndReturn(func(ctx context.Context, obj ctrlclient.Object, patch ctrlclient.Patch, opts ...ctrlclient.PatchOption) error {
+			cfnStack, ok := obj.(*cfnv1.CloudFormationStack)
+			if !ok {
+				return errors.New(fmt.Sprintf("Expected a CloudFormationStack object, but got a %T", obj))
+			}
+			finalizers := cfnStack.GetFinalizers()
+			require.Equal(t, 1, len(finalizers))
+			require.Equal(t, "finalizers.cloudformation.contrib.fluxcd.io", finalizers[0])
+			return nil
+		})
+	}
 
 	// Mock AWS clients
 	if tc.mockCfnClientCalls != nil {
@@ -863,6 +946,442 @@ func TestCfnController_ReconcileStack(t *testing.T) {
 		})
 
 		testCases[fmt.Sprintf("update the real stack if the real stack has %s status and the desired change set does not exist due to a new source revision", expectedStackStatus)] = changeSetDoesNotExistNewSourceRevisionTC
+	}
+
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			runReconciliationLoopTestCase(t, tc)
+		})
+	}
+}
+
+func TestCfnController_ReconcileSource(t *testing.T) {
+	testCases := map[string]*reconciliationLoopTestCase{
+		"use an S3 bucket source": {
+			wantedEvents: []*expectedEvent{{
+				eventType: "Normal",
+				severity:  "info",
+				message:   fmt.Sprintf("Creation of stack 'mock-real-stack' in progress (change set %s)", mockChangeSetArn),
+			}},
+			wantedRequeueDelay: mockPollIntervalDuration,
+			wantedStackStatus: &cfnv1.CloudFormationStackStatus{
+				ObservedGeneration:     mockGenerationId,
+				StackName:              mockRealStackName,
+				LastAttemptedRevision:  mockSourceRevision,
+				LastAttemptedChangeSet: mockChangeSetArn,
+				Conditions: []metav1.Condition{
+					{
+						Type:               "Ready",
+						Status:             "Unknown",
+						ObservedGeneration: mockGenerationId,
+						Reason:             "Progressing",
+						Message:            fmt.Sprintf("Creation of stack 'mock-real-stack' in progress (change set %s)", mockChangeSetArn),
+					},
+				},
+			},
+			markStackAsInProgress: true,
+			fillInBucket:          generateMockBucketSource,
+			mockS3ClientCalls:     mockS3ClientUpload,
+			fillInInitialCfnStack: func(cfnStack *cfnv1.CloudFormationStack) {
+				cfnStack.Name = mockStackName
+				cfnStack.Namespace = mockNamespace
+				cfnStack.Generation = mockGenerationId
+				cfnStack.Spec = generateMockCfnStackSpec()
+				cfnStack.Spec.SourceRef = mockBucketSourceRef
+			},
+			mockCfnClientCalls: func(cfnClient *clientmocks.MockCloudFormationClient) {
+				expectedDescribeStackIn := generateStackInput(mockGenerationId, mockSourceRevision, "")
+				cfnClient.EXPECT().DescribeStack(expectedDescribeStackIn).Return(nil, &cloudformation.ErrStackNotFound{})
+
+				expectedDescribeChangeSetIn := generateStackInput(mockGenerationId, mockSourceRevision, "")
+				cfnClient.EXPECT().DescribeChangeSet(expectedDescribeChangeSetIn).Return(nil, &cloudformation.ErrChangeSetNotFound{})
+
+				expectedCreateStackIn := generateStackInputWithTemplateUrl(mockGenerationId, mockSourceRevision)
+				cfnClient.EXPECT().CreateStack(expectedCreateStackIn).Return(mockChangeSetArn, nil)
+			},
+		},
+		"use an OCI Repository source": {
+			wantedEvents: []*expectedEvent{{
+				eventType: "Normal",
+				severity:  "info",
+				message:   fmt.Sprintf("Creation of stack 'mock-real-stack' in progress (change set %s)", mockChangeSetArn),
+			}},
+			wantedRequeueDelay: mockPollIntervalDuration,
+			wantedStackStatus: &cfnv1.CloudFormationStackStatus{
+				ObservedGeneration:     mockGenerationId,
+				StackName:              mockRealStackName,
+				LastAttemptedRevision:  mockSourceRevision,
+				LastAttemptedChangeSet: mockChangeSetArn,
+				Conditions: []metav1.Condition{
+					{
+						Type:               "Ready",
+						Status:             "Unknown",
+						ObservedGeneration: mockGenerationId,
+						Reason:             "Progressing",
+						Message:            fmt.Sprintf("Creation of stack 'mock-real-stack' in progress (change set %s)", mockChangeSetArn),
+					},
+				},
+			},
+			markStackAsInProgress: true,
+			fillInOCIRepository:   generateMockOCIRepoSource,
+			mockS3ClientCalls:     mockS3ClientUpload,
+			fillInInitialCfnStack: func(cfnStack *cfnv1.CloudFormationStack) {
+				cfnStack.Name = mockStackName
+				cfnStack.Namespace = mockNamespace
+				cfnStack.Generation = mockGenerationId
+				cfnStack.Spec = generateMockCfnStackSpec()
+				cfnStack.Spec.SourceRef = mockOCIRef
+			},
+			mockCfnClientCalls: func(cfnClient *clientmocks.MockCloudFormationClient) {
+				expectedDescribeStackIn := generateStackInput(mockGenerationId, mockSourceRevision, "")
+				cfnClient.EXPECT().DescribeStack(expectedDescribeStackIn).Return(nil, &cloudformation.ErrStackNotFound{})
+
+				expectedDescribeChangeSetIn := generateStackInput(mockGenerationId, mockSourceRevision, "")
+				cfnClient.EXPECT().DescribeChangeSet(expectedDescribeChangeSetIn).Return(nil, &cloudformation.ErrChangeSetNotFound{})
+
+				expectedCreateStackIn := generateStackInputWithTemplateUrl(mockGenerationId, mockSourceRevision)
+				cfnClient.EXPECT().CreateStack(expectedCreateStackIn).Return(mockChangeSetArn, nil)
+			},
+		},
+		"git source cannot be found": {
+			wantedRequeueDelay: mockRetryIntervalDuration,
+			wantedStackStatus: &cfnv1.CloudFormationStackStatus{
+				ObservedGeneration: mockGenerationId,
+				StackName:          mockRealStackName,
+				Conditions: []metav1.Condition{
+					{
+						Type:               "Ready",
+						Status:             "False",
+						ObservedGeneration: mockGenerationId,
+						Reason:             "ArtifactFailed",
+						Message:            fmt.Sprintf("Source 'GitRepository/%s/%s' not found", mockSourceNamespace, mockTemplateGitRepoName),
+					},
+				},
+			},
+			markStackAsInProgress: true,
+			mockSourceRetrieval: func(k8sClient *mocks.MockClient) {
+				k8sClient.EXPECT().Get(
+					gomock.Any(),
+					mockGitSourceReference,
+					gomock.Any(),
+				).Return(
+					&apierrors.StatusError{
+						ErrStatus: metav1.Status{
+							Status:  metav1.StatusFailure,
+							Reason:  metav1.StatusReasonNotFound,
+							Message: "hello world",
+						}},
+				)
+			},
+			fillInInitialCfnStack: func(cfnStack *cfnv1.CloudFormationStack) {
+				cfnStack.Name = mockStackName
+				cfnStack.Namespace = mockNamespace
+				cfnStack.Generation = mockGenerationId
+				cfnStack.Spec = generateMockCfnStackSpec()
+			},
+		},
+		"bucket source cannot be found": {
+			wantedRequeueDelay: mockRetryIntervalDuration,
+			wantedStackStatus: &cfnv1.CloudFormationStackStatus{
+				ObservedGeneration: mockGenerationId,
+				StackName:          mockRealStackName,
+				Conditions: []metav1.Condition{
+					{
+						Type:               "Ready",
+						Status:             "False",
+						ObservedGeneration: mockGenerationId,
+						Reason:             "ArtifactFailed",
+						Message:            fmt.Sprintf("Source 'Bucket/%s/%s' not found", mockSourceNamespace, mockTemplateSourceBucketName),
+					},
+				},
+			},
+			markStackAsInProgress: true,
+			mockSourceRetrieval: func(k8sClient *mocks.MockClient) {
+				k8sClient.EXPECT().Get(
+					gomock.Any(),
+					mockBucketSourceReference,
+					gomock.Any(),
+				).Return(
+					&apierrors.StatusError{
+						ErrStatus: metav1.Status{
+							Status:  metav1.StatusFailure,
+							Reason:  metav1.StatusReasonNotFound,
+							Message: "hello world",
+						}},
+				)
+			},
+			fillInInitialCfnStack: func(cfnStack *cfnv1.CloudFormationStack) {
+				cfnStack.Name = mockStackName
+				cfnStack.Namespace = mockNamespace
+				cfnStack.Generation = mockGenerationId
+				cfnStack.Spec = generateMockCfnStackSpec()
+				cfnStack.Spec.SourceRef = mockBucketSourceRef
+			},
+		},
+		"OCI repository source cannot be found": {
+			wantedRequeueDelay: mockRetryIntervalDuration,
+			wantedStackStatus: &cfnv1.CloudFormationStackStatus{
+				ObservedGeneration: mockGenerationId,
+				StackName:          mockRealStackName,
+				Conditions: []metav1.Condition{
+					{
+						Type:               "Ready",
+						Status:             "False",
+						ObservedGeneration: mockGenerationId,
+						Reason:             "ArtifactFailed",
+						Message:            fmt.Sprintf("Source 'OCIRepository/%s/%s' not found", mockSourceNamespace, mockTemplateOCIRepoName),
+					},
+				},
+			},
+			markStackAsInProgress: true,
+			mockSourceRetrieval: func(k8sClient *mocks.MockClient) {
+				k8sClient.EXPECT().Get(
+					gomock.Any(),
+					mockOCISourceReference,
+					gomock.Any(),
+				).Return(
+					&apierrors.StatusError{
+						ErrStatus: metav1.Status{
+							Status:  metav1.StatusFailure,
+							Reason:  metav1.StatusReasonNotFound,
+							Message: "hello world",
+						}},
+				)
+			},
+			fillInInitialCfnStack: func(cfnStack *cfnv1.CloudFormationStack) {
+				cfnStack.Name = mockStackName
+				cfnStack.Namespace = mockNamespace
+				cfnStack.Generation = mockGenerationId
+				cfnStack.Spec = generateMockCfnStackSpec()
+				cfnStack.Spec.SourceRef = mockOCIRef
+			},
+		},
+		"unsupported source type": {
+			wantedErr:          fmt.Errorf("source `%s` kind 'HelmRepository' not supported", mockTemplateOCIRepoName),
+			wantedRequeueDelay: mockRetryIntervalDuration,
+			wantedStackStatus: &cfnv1.CloudFormationStackStatus{
+				ObservedGeneration: mockGenerationId,
+				StackName:          mockRealStackName,
+				Conditions: []metav1.Condition{
+					{
+						Type:               "Ready",
+						Status:             "False",
+						ObservedGeneration: mockGenerationId,
+						Reason:             "ArtifactFailed",
+						Message:            fmt.Sprintf("Failed to resolve source 'HelmRepository/%s/%s'", mockSourceNamespace, mockTemplateOCIRepoName),
+					},
+				},
+			},
+			markStackAsInProgress: true,
+			fillInInitialCfnStack: func(cfnStack *cfnv1.CloudFormationStack) {
+				cfnStack.Name = mockStackName
+				cfnStack.Namespace = mockNamespace
+				cfnStack.Generation = mockGenerationId
+				cfnStack.Spec = generateMockCfnStackSpec()
+				cfnStack.Spec.SourceRef = cfnv1.SourceReference{
+					Kind:      sourcev1.HelmRepositoryKind,
+					Name:      mockTemplateOCIRepoName,
+					Namespace: mockSourceNamespace,
+				}
+			},
+		},
+		"source artifact is not yet ready": {
+			wantedRequeueDelay: mockRetryIntervalDuration,
+			wantedStackStatus: &cfnv1.CloudFormationStackStatus{
+				ObservedGeneration: mockGenerationId,
+				StackName:          mockRealStackName,
+				Conditions: []metav1.Condition{
+					{
+						Type:               "Ready",
+						Status:             "False",
+						ObservedGeneration: mockGenerationId,
+						Reason:             "ArtifactFailed",
+						Message:            "Source 'GitRepository/mock-source-namespace/mock-cfn-template-git-repo' is not ready, artifact not found",
+					},
+				},
+			},
+			markStackAsInProgress: true,
+			fillInSource: func(gitRepo *sourcev1.GitRepository, mockSourceArtifactURL string) {
+				gitRepo.Name = mockTemplateGitRepoName
+				gitRepo.Namespace = mockSourceNamespace
+				gitRepo.Status = sourcev1.GitRepositoryStatus{}
+			},
+			fillInInitialCfnStack: func(cfnStack *cfnv1.CloudFormationStack) {
+				cfnStack.Name = mockStackName
+				cfnStack.Namespace = mockNamespace
+				cfnStack.Generation = mockGenerationId
+				cfnStack.Spec = generateMockCfnStackSpec()
+			},
+		},
+		"fail to download artifact from the source controller": {
+			wantedErr:          fmt.Errorf("failed to download artifact, status code: 404 Not Found"),
+			wantedRequeueDelay: mockRetryIntervalDuration,
+			wantedStackStatus: &cfnv1.CloudFormationStackStatus{
+				ObservedGeneration: mockGenerationId,
+				StackName:          mockRealStackName,
+				Conditions: []metav1.Condition{
+					{
+						Type:               "Ready",
+						Status:             "False",
+						ObservedGeneration: mockGenerationId,
+						Reason:             "ArtifactFailed",
+						Message:            "Failed to load template 'template.yaml' from source 'GitRepository/mock-source-namespace/mock-cfn-template-git-repo'",
+					},
+				},
+			},
+			markStackAsInProgress: true,
+			mockArtifactServer: func(t *testing.T) *httptest.Server {
+				return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(http.StatusNotFound)
+				}))
+			},
+			fillInSource: generateMockGitRepoSource,
+			fillInInitialCfnStack: func(cfnStack *cfnv1.CloudFormationStack) {
+				cfnStack.Name = mockStackName
+				cfnStack.Namespace = mockNamespace
+				cfnStack.Generation = mockGenerationId
+				cfnStack.Spec = generateMockCfnStackSpec()
+			},
+		},
+		"downloaded artifact does not match its checksum": {
+			wantedErr:          fmt.Errorf("failed to verify artifact: computed checksum '%s' doesn't match advertised 'hello world'", mockTemplateContentsChecksum),
+			wantedRequeueDelay: mockRetryIntervalDuration,
+			wantedStackStatus: &cfnv1.CloudFormationStackStatus{
+				ObservedGeneration: mockGenerationId,
+				StackName:          mockRealStackName,
+				Conditions: []metav1.Condition{
+					{
+						Type:               "Ready",
+						Status:             "False",
+						ObservedGeneration: mockGenerationId,
+						Reason:             "ArtifactFailed",
+						Message:            "Failed to load template 'template.yaml' from source 'GitRepository/mock-source-namespace/mock-cfn-template-git-repo'",
+					},
+				},
+			},
+			markStackAsInProgress: true,
+			fillInSource: func(gitRepo *sourcev1.GitRepository, mockSourceArtifactURL string) {
+				gitRepo.Name = mockTemplateGitRepoName
+				gitRepo.Namespace = mockSourceNamespace
+				gitRepo.Status = sourcev1.GitRepositoryStatus{
+					Artifact: &sourcev1.Artifact{
+						URL:      mockSourceArtifactURL,
+						Revision: mockSourceRevision,
+						Checksum: "hello world",
+					},
+				}
+			},
+			fillInInitialCfnStack: func(cfnStack *cfnv1.CloudFormationStack) {
+				cfnStack.Name = mockStackName
+				cfnStack.Namespace = mockNamespace
+				cfnStack.Generation = mockGenerationId
+				cfnStack.Spec = generateMockCfnStackSpec()
+			},
+		},
+		"specified template file path cannot be found in the artifact": {
+			wantedErr:          fmt.Errorf("unable to read template file 'does-not-exist.yaml' in the artifact temp directory"),
+			wantedRequeueDelay: mockRetryIntervalDuration,
+			wantedStackStatus: &cfnv1.CloudFormationStackStatus{
+				ObservedGeneration: mockGenerationId,
+				StackName:          mockRealStackName,
+				Conditions: []metav1.Condition{
+					{
+						Type:               "Ready",
+						Status:             "False",
+						ObservedGeneration: mockGenerationId,
+						Reason:             "ArtifactFailed",
+						Message:            "Failed to load template 'does-not-exist.yaml' from source 'GitRepository/mock-source-namespace/mock-cfn-template-git-repo'",
+					},
+				},
+			},
+			markStackAsInProgress: true,
+			fillInSource:          generateMockGitRepoSource,
+			fillInInitialCfnStack: func(cfnStack *cfnv1.CloudFormationStack) {
+				cfnStack.Name = mockStackName
+				cfnStack.Namespace = mockNamespace
+				cfnStack.Generation = mockGenerationId
+				cfnStack.Spec = generateMockCfnStackSpec()
+				cfnStack.Spec.TemplatePath = "does-not-exist.yaml"
+			},
+		},
+		"cannot traverse paths outside of the artifact": {
+			wantedErr:          fmt.Errorf("unable to read template file '../../usr/bin/ls' in the artifact temp directory"),
+			wantedRequeueDelay: mockRetryIntervalDuration,
+			wantedStackStatus: &cfnv1.CloudFormationStackStatus{
+				ObservedGeneration: mockGenerationId,
+				StackName:          mockRealStackName,
+				Conditions: []metav1.Condition{
+					{
+						Type:               "Ready",
+						Status:             "False",
+						ObservedGeneration: mockGenerationId,
+						Reason:             "ArtifactFailed",
+						Message:            "Failed to load template '../../usr/bin/ls' from source 'GitRepository/mock-source-namespace/mock-cfn-template-git-repo'",
+					},
+				},
+			},
+			markStackAsInProgress: true,
+			fillInSource:          generateMockGitRepoSource,
+			fillInInitialCfnStack: func(cfnStack *cfnv1.CloudFormationStack) {
+				cfnStack.Name = mockStackName
+				cfnStack.Namespace = mockNamespace
+				cfnStack.Generation = mockGenerationId
+				cfnStack.Spec = generateMockCfnStackSpec()
+				cfnStack.Spec.TemplatePath = "../../usr/bin/ls"
+			},
+		},
+		"cannot provide absolute file paths for the template": {
+			wantedErr:          fmt.Errorf("unable to read template file '/usr/bin/ls' in the artifact temp directory"),
+			wantedRequeueDelay: mockRetryIntervalDuration,
+			wantedStackStatus: &cfnv1.CloudFormationStackStatus{
+				ObservedGeneration: mockGenerationId,
+				StackName:          mockRealStackName,
+				Conditions: []metav1.Condition{
+					{
+						Type:               "Ready",
+						Status:             "False",
+						ObservedGeneration: mockGenerationId,
+						Reason:             "ArtifactFailed",
+						Message:            "Failed to load template '/usr/bin/ls' from source 'GitRepository/mock-source-namespace/mock-cfn-template-git-repo'",
+					},
+				},
+			},
+			markStackAsInProgress: true,
+			fillInSource:          generateMockGitRepoSource,
+			fillInInitialCfnStack: func(cfnStack *cfnv1.CloudFormationStack) {
+				cfnStack.Name = mockStackName
+				cfnStack.Namespace = mockNamespace
+				cfnStack.Generation = mockGenerationId
+				cfnStack.Spec = generateMockCfnStackSpec()
+				cfnStack.Spec.TemplatePath = "/usr/bin/ls"
+			},
+		},
+		"cannot provide directories for the template": {
+			wantedErr:          fmt.Errorf("unable to read template file './' in the artifact temp directory"),
+			wantedRequeueDelay: mockRetryIntervalDuration,
+			wantedStackStatus: &cfnv1.CloudFormationStackStatus{
+				ObservedGeneration: mockGenerationId,
+				StackName:          mockRealStackName,
+				Conditions: []metav1.Condition{
+					{
+						Type:               "Ready",
+						Status:             "False",
+						ObservedGeneration: mockGenerationId,
+						Reason:             "ArtifactFailed",
+						Message:            "Failed to load template './' from source 'GitRepository/mock-source-namespace/mock-cfn-template-git-repo'",
+					},
+				},
+			},
+			markStackAsInProgress: true,
+			fillInSource:          generateMockGitRepoSource,
+			fillInInitialCfnStack: func(cfnStack *cfnv1.CloudFormationStack) {
+				cfnStack.Name = mockStackName
+				cfnStack.Namespace = mockNamespace
+				cfnStack.Generation = mockGenerationId
+				cfnStack.Spec = generateMockCfnStackSpec()
+				cfnStack.Spec.TemplatePath = "./"
+			},
+		},
 	}
 
 	for name, tc := range testCases {
@@ -1376,6 +1895,9 @@ func TestCfnController_ReconcileDelete(t *testing.T) {
 					},
 				}
 			},
+		},
+		"handle the stack object being not found": {
+			cfnStackObjectDoesNotExist: true,
 		},
 	}
 

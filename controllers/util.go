@@ -211,7 +211,9 @@ limitations under the License.
 // loadCloudFormationTemplate attempts to download the artifact from the provided source,
 // loads the CloudFormation template file into memory, then removes the downloaded artifact.
 // It returns the loaded template on success, or returns an error.
-func (r *CloudFormationStackReconciler) loadCloudFormationTemplate(cfnStack cfnv1.CloudFormationStack, artifact *sourcev1.Artifact) (*bytes.Buffer, error) {
+func (r *CloudFormationStackReconciler) loadCloudFormationTemplate(ctx context.Context, cfnStack cfnv1.CloudFormationStack, artifact *sourcev1.Artifact) (*bytes.Buffer, error) {
+	log := ctrl.LoggerFrom(ctx)
+
 	// download the artifact targz file
 	artifactURL := artifact.URL
 	if hostname := os.Getenv("SOURCE_CONTROLLER_LOCALHOST"); hostname != "" {
@@ -235,7 +237,7 @@ func (r *CloudFormationStackReconciler) loadCloudFormationTemplate(cfnStack cfnv
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("artifact '%s' download failed (status code: %s)", artifact.URL, resp.Status)
+		return nil, fmt.Errorf("failed to download artifact, status code: %s", resp.Status)
 	}
 
 	// verify checksum matches origin
@@ -247,23 +249,31 @@ func (r *CloudFormationStackReconciler) loadCloudFormationTemplate(cfnStack cfnv
 	// extract artifact into temp dir
 	tmpDir, err := os.MkdirTemp("", fmt.Sprintf("%s-%s", cfnStack.GetNamespace(), cfnStack.GetName()))
 	if err != nil {
-		return nil, fmt.Errorf("unable to create temp dir for namespace %s, name %s, error: %w", cfnStack.GetNamespace(), cfnStack.GetName(), err)
+		msg := fmt.Sprintf("unable to create temp dir for namespace %s, name %s", cfnStack.GetNamespace(), cfnStack.GetName())
+		log.Error(err, msg)
+		return nil, fmt.Errorf(msg)
 	}
 	defer os.RemoveAll(tmpDir)
 
 	if _, err = untar.Untar(&buf, tmpDir); err != nil {
-		return nil, fmt.Errorf("failed to untar artifact, namespace %s, name %s, error: %w", cfnStack.GetNamespace(), cfnStack.GetName(), err)
+		msg := fmt.Sprintf("failed to untar artifact, namespace %s, name %s", cfnStack.GetNamespace(), cfnStack.GetName())
+		log.Error(err, msg)
+		return nil, fmt.Errorf(msg)
 	}
 
 	// load the template file
 	templateFilePath, err := securejoin.SecureJoin(tmpDir, cfnStack.Spec.TemplatePath)
 	if err != nil {
-		return nil, fmt.Errorf("unable to join securely tmpDir %s, path %s, error: %w", tmpDir, cfnStack.Spec.TemplatePath, err)
+		msg := fmt.Sprintf("unable to join securely the artifact temp directory with template path '%s'", cfnStack.Spec.TemplatePath)
+		log.Error(err, msg)
+		return nil, fmt.Errorf(msg)
 	}
 
 	templateBytes, err := os.ReadFile(templateFilePath)
 	if err != nil {
-		return nil, fmt.Errorf("unable to read template file %s, error: %w", templateFilePath, err)
+		msg := fmt.Sprintf("unable to read template file '%s' in the artifact temp directory", cfnStack.Spec.TemplatePath)
+		log.Error(err, msg)
+		return nil, fmt.Errorf(msg)
 	}
 
 	return bytes.NewBuffer(templateBytes), nil
