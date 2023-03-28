@@ -8,4 +8,5 @@ resources:
 - leader_election_role_binding.yaml
 - cluster_role.yaml
 - cluster_role_binding.yaml
+- service_account.yaml
 namePrefix: cfn-
