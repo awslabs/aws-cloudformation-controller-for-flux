@@ -1,0 +1,13 @@
+version: 2
+
+updates:
+  - package-ecosystem: gomod
+    directory: "/"
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 20
+  - package-ecosystem: gomod
+    directory: "/api"
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 20
