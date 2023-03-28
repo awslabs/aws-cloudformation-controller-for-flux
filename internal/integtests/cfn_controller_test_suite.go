@@ -61,7 +61,7 @@ func (t *cfnControllerTestSuite) InitializeTestSuite(ctx *godog.TestSuiteContext
 			t.testingT.Log("Bootstrapping the local Kubernetes cluster")
 			t.cmdRunner.runExitOnFail("make", "bootstrap-local-cluster")
 			t.testingT.Log("Deploying the CloudFormation controller to the local Kubernetes cluster")
-			t.cmdRunner.runExitOnFail("make", "deploy")
+			t.cmdRunner.runExitOnFail("make", "deploy-local")
 		}
 
 		resp, err := t.secretsManagerClient.GetSecretValue(context.TODO(), &secretsmanager.GetSecretValueInput{
