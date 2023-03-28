@@ -95,10 +95,12 @@ install: manifests
 uninstall: manifests
 	$(KUSTOMIZE) build config/crd | kubectl delete -f -
 
-# Deploy into cluster - the cluster must already have Flux installed
-deploy: manifests build-docker-image push-docker-image-to-ecr
+# Deploy into a local kind cluster - the cluster must already be bootstrapped
+deploy-local: install build-docker-image
+	docker tag aws-cloudformation-controller-for-flux:latest aws-cloudformation-controller-for-flux:local
+	kind load docker-image aws-cloudformation-controller-for-flux:local
 	mkdir -p config/dev && cp -r config/default config/crd config/manager config/rbac config/dev/
-	cd config/dev/default && $(KUSTOMIZE) edit set image public.ecr.aws/aws-cloudformation/aws-cloudformation-controller-for-flux=$(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com/aws-cloudformation-controller-for-flux:latest
+	cd config/dev/default && $(KUSTOMIZE) edit set image public.ecr.aws/aws-cloudformation/aws-cloudformation-controller-for-flux=aws-cloudformation-controller-for-flux:local
 	cat config/manager/dev.yaml | AWS_REGION=$(AWS_REGION) TEMPLATE_BUCKET=flux-cfn-templates-$(AWS_ACCOUNT_ID)-$(AWS_REGION) envsubst > config/dev/manager/env.yaml
 	$(KUSTOMIZE) build config/dev/default | kubectl apply -f -
 	kubectl rollout restart deployment cfn-controller --namespace=flux-system

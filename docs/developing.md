@@ -26,6 +26,7 @@ $ curl -s https://fluxcd.io/install.sh | sudo bash
 | Generate CRDs | `make generate` |
 | Build | `make build` |
 | Test | `make test` |
+| Integration Test | `make integ-test` |
 | See CloudFormation stacks | `kubectl describe cfnstack -A` |
 | View logs | `kubectl logs -l app=cfn-controller --namespace flux-system` |
 | Clean up | `make clean` |
@@ -36,8 +37,6 @@ $ curl -s https://fluxcd.io/install.sh | sudo bash
 ```
 $ make bootstrap-local-cluster
 ```
-Note that the local kind cluster will have temporary ECR credentials that expire after 12 hours,
-so this step must be repeated at least every 12 hours.
 
 2. Clone your git repository created by the previous step:
 ```
@@ -76,19 +75,19 @@ $ flux reconcile source git flux-system
 $ kubectl describe cfnstack -A
 ```
 
-7. Build and push the CloudFormation controller to ECR, then deploy it to your local cluster:
+7. Build the CloudFormation controller into a Docker image, then deploy it to your local cluster:
 ```
-$ make deploy
+$ make deploy-local
 ```
 
 ## Run the CloudFormation controller outside of your local kind cluster
 
-For development purposes, it can be slow to build your controller source code into a Docker image,
-push it to ECR, and deploy the new image to your cluster.  Instead, you can run the controller outside
+For development purposes, it can be slow to build your controller source code into a Docker image
+and deploy the new image to your cluster.  Instead, you can run the controller outside
 of a container and have it connect to your local cluster.
 
 Follow the previous section's steps to set up Flux on a local kind cluster.
-Instead of running `make deploy` at the end, run:
+Instead of running `make deploy-local` at the end, run:
 ```
 make run
 ```

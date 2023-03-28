@@ -7,7 +7,6 @@ spec:
     spec:
       containers:
       - name: manager
-        imagePullPolicy: Always
         env:
           - name: AWS_REGION
             value: "${AWS_REGION}"

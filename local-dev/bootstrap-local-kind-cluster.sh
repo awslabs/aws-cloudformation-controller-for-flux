@@ -103,9 +103,9 @@ flux get all
 echo Installing credentials into the kind cluster
 
 # Note that this ECR token will expire, so this is only for development use
-kubectl delete secret docker-registry ecr-cred -n flux-system --ignore-not-found
-kubectl create secret docker-registry ecr-cred --docker-server=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com --docker-username=AWS --docker-password=`aws ecr get-login-password --region $AWS_REGION` -n flux-system
-kubectl patch serviceaccount default -p "{\"imagePullSecrets\": [{\"name\": \"ecr-cred\"}]}" -n flux-system
+#kubectl delete secret docker-registry ecr-cred -n flux-system --ignore-not-found
+#kubectl create secret docker-registry ecr-cred --docker-server=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com --docker-username=AWS --docker-password=`aws ecr get-login-password --region $AWS_REGION` -n flux-system
+#kubectl patch serviceaccount default -p "{\"imagePullSecrets\": [{\"name\": \"ecr-cred\"}]}" -n flux-system
 
 kubectl delete secret aws-creds -n flux-system --ignore-not-found
 kubectl create secret generic aws-creds -n flux-system --from-file ~/.aws/credentials
