@@ -49,6 +49,74 @@ Resources:
               StringLike:
                 token.actions.githubusercontent.com:sub: !Sub repo:${GitHubOrg}/${RepositoryName}:*
 
+  ClusterBootstrapPolicy:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyName: flux-cfn-local-cluster-bootstrap
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - 'secretsmanager:GetSecretValue'
+            Resource:
+              - !Sub 'arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:flux-git-credentials-*'
+          - Effect: Allow
+            Action:
+              - 'codecommit:GetRepository'
+            Resource:
+              - !Sub 'arn:aws:codecommit:${AWS::Region}:${AWS::AccountId}:my-cloudformation-templates'
+      Roles:
+        - !Ref Role
+
+  IntegrationTestPolicy:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyName: flux-cfn-integration-test-runner
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - 'secretsmanager:GetSecretValue'
+            Resource:
+              - !Sub 'arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:flux-git-credentials-*'
+          - Effect: Allow
+            Action:
+              - 'cloudformation:DescribeStacks'
+              - 'cloudformation:DeleteStack'
+            Resource:
+              - !Sub 'arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/cfn-flux-controller-integ-test-*'
+      Roles:
+        - !Ref Role
+
+  CfnControllerPolicy:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyName: flux-cfn-controller
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - 'cloudformation:ContinueUpdateRollback'
+              - 'cloudformation:CreateChangeSet'
+              - 'cloudformation:DeleteChangeSet'
+              - 'cloudformation:DeleteStack'
+              - 'cloudformation:DescribeChangeSet'
+              - 'cloudformation:DescribeStacks'
+              - 'cloudformation:ExecuteChangeSet'
+            Resource:
+              - !Sub 'arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/cfn-flux-controller-integ-test-*'
+          - Effect: Allow
+            Action:
+              - 's3:PutObject'
+              - 's3:AbortMultipartUpload'
+            Resource:
+              - !Sub 'arn:aws:s3:::flux-cfn-templates-${AWS::AccountId}-${AWS::Region}/flux-*.template'
+      Roles:
+        - !Ref Role
+
   GithubOidc:
     Type: AWS::IAM::OIDCProvider
     Condition: CreateOIDCProvider
