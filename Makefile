@@ -104,7 +104,7 @@ deploy-local: install build-docker-image
 	cat config/manager/dev.yaml | AWS_REGION=$(AWS_REGION) TEMPLATE_BUCKET=flux-cfn-templates-$(AWS_ACCOUNT_ID)-$(AWS_REGION) envsubst > config/dev/manager/env.yaml
 	$(KUSTOMIZE) build config/dev/default | kubectl apply -f -
 	kubectl rollout restart deployment cfn-controller --namespace=flux-system
-	kubectl rollout status deployment/cfn-controller --namespace=flux-system --timeout=10s
+	kubectl rollout status deployment/cfn-controller --namespace=flux-system --timeout=1m
 	rm -rf config/dev
 
 bootstrap-local-cluster:

@@ -49,3 +49,8 @@ jobs:
           aws-region: us-west-2
       - name: Run tests
         run: make integ-test
+      - name: Debug failure
+        if: failure()
+        run: |
+          kubectl describe cfnstack -n flux-system -oyaml || true
+          kubectl logs -l app=cfn-controller -n flux-system || true
