@@ -11,6 +11,8 @@ jobs:
   unit_tests:
     name: Run Unit Tests
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v3
       - name: Restore Go cache
@@ -30,6 +32,9 @@ jobs:
     name: Run Integration Tests
     needs: unit_tests
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     steps:
       - uses: actions/checkout@v3
       - name: Restore Go cache
