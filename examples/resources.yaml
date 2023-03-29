@@ -1,6 +1,19 @@
 AWSTemplateFormatVersion: 2010-09-09
 
-Description: AWS resources needed to develop, run, and test the CloudFormation controller for Flux
+Description: AWS resources needed to use the CloudFormation controller for Flux
+
+Parameters:
+  EnableTemplateBucketAccessLogging:
+    Description: Enable or disable configuring bucket access logging on the S3 bucket that stores your CloudFormation templates.
+    Default: "false"
+    Type: String
+    AllowedValues: [true, false]
+
+Conditions:
+  TemplateBucketAccessLoggingCondition:
+    !Equals
+      - "true"
+      - !Ref EnableTemplateBucketAccessLogging
 
 Resources:
 
@@ -20,6 +33,16 @@ Resources:
             Status: Enabled
       VersioningConfiguration:
         Status: Enabled
+      LoggingConfiguration:
+        !If
+          - TemplateBucketAccessLoggingCondition
+          - { DestinationBucketName: !Ref TemplateAccessLoggingBucket }
+          - !Ref "AWS::NoValue"
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
     DeletionPolicy: Delete
 
   # Enforce HTTPS only on the template bucket
@@ -32,13 +55,63 @@ Resources:
         Statement:
           - Action: 's3:*'
             Effect: Deny
-            Principal: '*'
+            Principal:
+              AWS: '*'
             Resource:
               - !Sub arn:aws:s3:::${TemplateBucket}/*
               - !Sub arn:aws:s3:::${TemplateBucket}
             Condition:
               Bool:
                 'aws:SecureTransport': false
+
+  # Send access logs from the template bucket to this bucket
+  TemplateAccessLoggingBucket:
+    Type: AWS::S3::Bucket
+    Condition: TemplateBucketAccessLoggingCondition
+    Properties:
+      AccessControl: LogDeliveryWrite
+      LifecycleConfiguration:
+        Rules:
+          - ExpirationInDays : 365
+            NoncurrentVersionExpiration:
+              NewerNoncurrentVersions: 5
+              NoncurrentDays: 365
+            AbortIncompleteMultipartUpload:
+              DaysAfterInitiation: 1
+            Status: Enabled
+      VersioningConfiguration:
+        Status: Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+    DeletionPolicy: Delete
+
+  TemplateAccessLoggingBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Condition: TemplateBucketAccessLoggingCondition
+    Properties:
+      Bucket: !Ref TemplateAccessLoggingBucket
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Action: 's3:*'
+            Effect: Deny
+            Principal:
+              AWS: '*'
+            Resource:
+              - !Sub arn:aws:s3:::${TemplateAccessLoggingBucket}/*
+              - !Sub arn:aws:s3:::${TemplateAccessLoggingBucket}
+            Condition:
+              Bool:
+                'aws:SecureTransport': false
+          - Action: 's3:PutObject'
+            Effect: Allow
+            Principal:
+              Service: 'logging.s3.amazonaws.com'
+            Resource:
+              - !Sub arn:aws:s3:::${TemplateAccessLoggingBucket}/*
 
   # Repository for storing CloudFormation templates
   TemplateRepo:
@@ -71,9 +144,3 @@ Resources:
           "ServiceUserName":"TO-FILL-IN",
           "ServicePassword":"TO-FILL-IN"
         }
-
-  # ECR repo for storing development images of the CFN controller
-  MyRepository:
-    Type: AWS::ECR::Repository
-    Properties:
-      RepositoryName: aws-cloudformation-controller-for-flux
