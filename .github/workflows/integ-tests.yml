@@ -40,9 +40,12 @@ jobs:
         uses: fluxcd/pkg/actions/kubectl@main
       - name: Setup Flux CLI
         uses: fluxcd/flux2/action@main
+      - name: Install tools
+        run: make install-tools
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
           role-to-assume: ${{ secrets.INTEG_TEST_ROLE_ARN }}
           aws-region: us-west-2
-      - run: make integ-test
+      - name: Run tests
+        run: make integ-test
