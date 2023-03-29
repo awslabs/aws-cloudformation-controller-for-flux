@@ -104,11 +104,33 @@ kubectl get all --namespace flux-system
 
 flux get all
 
-# Install secrets into the cluster
+# Install secrets into the local cluster
 
 echo Installing credentials into the kind cluster
 
 kubectl delete secret aws-creds -n flux-system --ignore-not-found
-if [[ ! -v CI ]]; then
+if [[ -v AWS_ACCESS_KEY_ID ]]; then
+    cat <<EOT > /tmp/aws-creds.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: aws-creds
+type: Opaque
+data:
+EOT
+
+    accessKeyId=`echo -n $AWS_ACCESS_KEY_ID | base64 -w 0`
+    secretAccessKey=`echo -n $AWS_SECRET_ACCESS_KEY | base64 -w 0`
+    echo "  AWS_ACCESS_KEY_ID: $accessKeyId" >> /tmp/aws-creds.yaml
+    echo "  AWS_SECRET_ACCESS_KEY: $secretAccessKey" >> /tmp/aws-creds.yaml
+
+    if [[ -v AWS_SESSION_TOKEN ]]; then
+        sessionToken=`echo -n $AWS_SESSION_TOKEN | base64 -w 0`
+        echo "  AWS_SESSION_TOKEN: $sessionToken" >> /tmp/aws-creds.yaml
+    fi
+
+    kubectl -n flux-system apply -f /tmp/aws-creds.yaml
+    rm /tmp/aws-creds.yaml
+elif [[ ! -v CI ]]; then
     kubectl create secret generic aws-creds -n flux-system --from-file ~/.aws/credentials
 fi
