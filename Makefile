@@ -101,7 +101,7 @@ deploy-local: install build-docker-image
 	kind load docker-image aws-cloudformation-controller-for-flux:local
 	mkdir -p config/dev && cp -r config/default config/crd config/manager config/rbac config/dev/
 	cd config/dev/default && $(KUSTOMIZE) edit set image public.ecr.aws/aws-cloudformation/aws-cloudformation-controller-for-flux=aws-cloudformation-controller-for-flux:local
-ifeq $(AWS_ACCESS_KEY_ID)
+ifdef $(AWS_ACCESS_KEY_ID)
 	cat config/manager/aws-creds-from-env-vars.yaml | AWS_REGION=$(AWS_REGION) TEMPLATE_BUCKET=flux-cfn-templates-$(AWS_ACCOUNT_ID)-$(AWS_REGION) envsubst > config/dev/manager/env.yaml
 else
 	cat config/manager/aws-creds-from-mounted-file.yaml | AWS_REGION=$(AWS_REGION) TEMPLATE_BUCKET=flux-cfn-templates-$(AWS_ACCOUNT_ID)-$(AWS_REGION) envsubst > config/dev/manager/env.yaml
