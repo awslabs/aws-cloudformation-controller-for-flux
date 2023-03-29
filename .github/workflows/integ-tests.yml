@@ -52,5 +52,6 @@ jobs:
       - name: Debug failure
         if: failure()
         run: |
-          kubectl describe cfnstack -n flux-system -oyaml || true
+          kubectl get all -n flux-system
+          kubectl describe cfnstack -n flux-system || true
           kubectl logs -l app=cfn-controller -n flux-system || true
