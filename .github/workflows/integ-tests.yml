@@ -1,33 +1,11 @@
-name: CI
+name: Integ Tests
 
 on:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
   workflow_dispatch: {}
 
 jobs:
-  unit_tests:
-    name: Run Unit Tests
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@v3
-      - name: Restore Go cache
-        uses: actions/cache@v3
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
-      - name: Setup Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: 1.19.x
-      - run: make test
-
   integ_tests:
     name: Run Integration Tests
     needs: unit_tests
@@ -37,6 +15,10 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v3
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
       - name: Restore Go cache
         uses: actions/cache@v3
         with:
