@@ -44,7 +44,6 @@ import (
 //+kubebuilder:rbac:groups=cloudformation.contrib.fluxcd.io,resources=cloudformationstacks/finalizers,verbs=get;create;update;patch;delete
 //+kubebuilder:rbac:groups=source.toolkit.fluxcd.io,resources=buckets;gitrepositories;ocirepositories,verbs=get;list;watch
 //+kubebuilder:rbac:groups=source.toolkit.fluxcd.io,resources=buckets/status;gitrepositories/status;ocirepositories/status,verbs=get
-//+kubebuilder:rbac:groups="",resources=configmaps;secrets;serviceaccounts,verbs=get;list;watch
 //+kubebuilder:rbac:groups="",resources=events,verbs=create;patch
 
 // CloudFormationStackReconciler reconciles a CloudFormationStack object
