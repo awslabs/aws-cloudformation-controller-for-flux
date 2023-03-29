@@ -27,3 +27,10 @@ jobs:
         with:
           go-version: 1.19.x
       - run: make test
+      - name: Check if working tree is dirty
+        run: |
+          if [[ $(git diff --stat) != '' ]]; then
+            git --no-pager diff
+            echo 'run make test and commit changes'
+            exit 1
+          fi
