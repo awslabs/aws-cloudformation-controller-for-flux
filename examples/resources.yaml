@@ -12,8 +12,33 @@ Resources:
       LifecycleConfiguration:
         Rules:
           - ExpirationInDays : 1
+            NoncurrentVersionExpiration:
+              NewerNoncurrentVersions: 5
+              NoncurrentDays: 1
+            AbortIncompleteMultipartUpload:
+              DaysAfterInitiation: 1
             Status: Enabled
+      VersioningConfiguration:
+        Status: Enabled
     DeletionPolicy: Delete
+
+  # Enforce HTTPS only on the template bucket
+  TemplateBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref TemplateBucket
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Action: 's3:*'
+            Effect: Deny
+            Principal: '*'
+            Resource:
+              - !Sub arn:aws:s3:::${TemplateBucket}/*
+              - !Sub arn:aws:s3:::${TemplateBucket}
+            Condition:
+              Bool:
+                'aws:SecureTransport': false
 
   # Repository for storing CloudFormation templates
   TemplateRepo:
@@ -27,7 +52,7 @@ Resources:
     Properties:
       RepositoryName: my-flux-configuration
 
-  # User for interacting with CodeCommit repos
+  # User for Flux to use when interacting with CodeCommit repos
   GitUser:
     Type: AWS::IAM::User
     Properties:
