@@ -48,7 +48,7 @@ jobs:
           role-to-assume: ${{ secrets.INTEG_TEST_ROLE_ARN }}
           aws-region: us-west-2
       - name: Run tests
-        run: make integ-test
+        run: go test -v -tags=integration ./internal/integtests/ -skip-cluster-teardown
       - name: Debug failure
         if: failure()
         run: |

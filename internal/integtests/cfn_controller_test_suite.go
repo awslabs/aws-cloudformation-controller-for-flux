@@ -34,6 +34,7 @@ const (
 
 type cfnControllerTestSuite struct {
 	skipClusterBootstrap bool
+	skipClusterTearDown  bool
 	testingT             *testing.T
 	cmdRunner            *cfnControllerTestCommandRunner
 	secretsManagerClient *secretsmanager.Client
@@ -98,7 +99,7 @@ func (t *cfnControllerTestSuite) InitializeTestSuite(ctx *godog.TestSuiteContext
 	// 2. Tear down the local Kubernetes cluster
 	ctx.AfterSuite(func() {
 		t.cleanup()
-		if !t.skipClusterBootstrap {
+		if !t.skipClusterBootstrap && !t.skipClusterTearDown {
 			// Tear down the local cluster
 			t.testingT.Log("Tearing down the local Kubernetes cluster")
 			t.cmdRunner.run("kind", "delete", "cluster")
