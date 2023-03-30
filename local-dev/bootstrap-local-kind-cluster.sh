@@ -110,6 +110,8 @@ echo Installing credentials into the kind cluster
 
 kubectl delete secret aws-creds -n flux-system --ignore-not-found
 if [[ -v AWS_ACCESS_KEY_ID ]]; then
+    echo Creating Kubernetes secret from AWS credentials in environment variables
+
     cat <<EOT > /tmp/aws-creds.yaml
 apiVersion: v1
 kind: Secret
@@ -132,5 +134,6 @@ EOT
     kubectl -n flux-system apply -f /tmp/aws-creds.yaml
     rm /tmp/aws-creds.yaml
 elif [[ ! -v CI ]]; then
+    echo Creating Kubernetes secret from AWS credentials in credentials file
     kubectl create secret generic aws-creds -n flux-system --from-file ~/.aws/credentials
 fi

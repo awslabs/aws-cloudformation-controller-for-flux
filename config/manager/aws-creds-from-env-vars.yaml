@@ -27,4 +27,4 @@ spec:
               secretKeyRef:
                 name: aws-creds
                 key: AWS_SESSION_TOKEN
-            optional: true
+                optional: true
