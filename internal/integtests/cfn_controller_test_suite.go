@@ -101,7 +101,7 @@ func (t *cfnControllerTestSuite) InitializeTestSuite(ctx *godog.TestSuiteContext
 		if !t.skipClusterBootstrap {
 			// Tear down the local cluster
 			t.testingT.Log("Tearing down the local Kubernetes cluster")
-			t.cmdRunner.runExitOnFail("kind", "delete", "cluster")
+			t.cmdRunner.run("kind", "delete", "cluster")
 		}
 	})
 }
