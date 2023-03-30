@@ -2,7 +2,7 @@
 # enabling GitHub Actions to run the controller integration tests against the AWS account
 # where this template is deployed.
 #   aws cloudformation deploy \
-#       --template-file github-identity-provider-template.yaml \
+#       --template-file .github/github-identity-provider-template.yaml \
 #       --stack-name github-identity-provider \
 #       --parameter-overrides GitHubOrg=awslabs RepositoryName=aws-cloudformation-controller-for-flux \
 #       --capabilities CAPABILITY_IAM \
@@ -97,6 +97,7 @@ Resources:
       PolicyDocument:
         Version: "2012-10-17"
         Statement:
+          # Allow controller to manage CloudFormation stacks
           - Effect: Allow
             Action:
               - 'cloudformation:ContinueUpdateRollback'
@@ -108,12 +109,37 @@ Resources:
               - 'cloudformation:ExecuteChangeSet'
             Resource:
               - !Sub 'arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/cfn-flux-controller-integ-test-*'
+          # Allow controller to upload templates to the template bucket
           - Effect: Allow
             Action:
               - 's3:PutObject'
               - 's3:AbortMultipartUpload'
             Resource:
               - !Sub 'arn:aws:s3:::flux-cfn-templates-${AWS::AccountId}-${AWS::Region}/flux-*.template'
+          # Allow CloudFormation to provision the resources defined in the sample CloudFormation templates
+          - Effect: Allow
+            Action:
+              - 'ssm:PutParameter'
+              - 'ssm:GetParameters'
+              - 'ssm:DeleteParameter'
+              - 'ssm:DescribeParameters'
+              - 'ssm:AddTagsToResource'
+              - 'ssm:RemoveTagsFromResource'
+            Resource: '*'
+            Condition:
+              "ForAnyValue:StringEquals":
+                "aws:CalledVia":
+                  - cloudformation.amazonaws.com
+          # Allow CloudFormation to download templates from the template bucket
+          - Effect: Allow
+            Action:
+              - 's3:GetObject'
+            Resource:
+              - !Sub 'arn:aws:s3:::flux-cfn-templates-${AWS::AccountId}-${AWS::Region}/flux-*.template'
+            Condition:
+              "ForAnyValue:StringEquals":
+                "aws:CalledVia":
+                  - cloudformation.amazonaws.com
       Roles:
         - !Ref Role
 
