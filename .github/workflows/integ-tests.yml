@@ -47,8 +47,12 @@ jobs:
         with:
           role-to-assume: ${{ secrets.INTEG_TEST_ROLE_ARN }}
           aws-region: us-west-2
+      - name: Bootstrap local test cluster
+        run: make bootstrap-local-cluster
+      - name: Deploy into local test cluster
+        run: make deploy-local
       - name: Run tests
-        run: go test -v -tags=integration ./internal/integtests/ -skip-cluster-teardown
+        run: go test -v -tags=integration ./internal/integtests/ -skip-cluster-bootstrap
       - name: Debug failure
         if: failure()
         run: |
