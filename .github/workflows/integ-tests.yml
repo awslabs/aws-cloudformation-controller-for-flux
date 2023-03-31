@@ -52,7 +52,7 @@ jobs:
       - name: Deploy into local test cluster
         run: make deploy-local
       - name: Run tests
-        run: go test -v -tags=integration ./internal/integtests/ -skip-cluster-bootstrap
+        run: make integ-test
       - name: Debug failure
         if: failure()
         run: |

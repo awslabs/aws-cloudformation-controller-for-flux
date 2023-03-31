@@ -23,8 +23,6 @@ const (
 )
 
 var opts = godog.Options{Output: colors.Colored(os.Stdout)}
-var skipClusterBootstrap = flag.Bool("skip-cluster-bootstrap", false, "run integration tests against an existing cluster (do not bootstrap a new cluster)")
-var skipClusterTearDown = flag.Bool("skip-cluster-teardown", false, "keep the test cluster running after the integration tests have completed")
 
 func init() {
 	godog.BindFlags("godog.", flag.CommandLine, &opts)
@@ -38,9 +36,7 @@ func TestCloudFormationController(t *testing.T) {
 	}
 
 	testSuite := &cfnControllerTestSuite{
-		skipClusterBootstrap: *skipClusterBootstrap,
-		skipClusterTearDown:  *skipClusterTearDown,
-		testingT:             t,
+		testingT: t,
 		cmdRunner: &cfnControllerTestCommandRunner{
 			testingT:  t,
 			stdLogger: &cfnControllerTestStdLogger{testingT: t},

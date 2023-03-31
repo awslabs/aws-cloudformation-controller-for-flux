@@ -33,8 +33,6 @@ const (
 )
 
 type cfnControllerTestSuite struct {
-	skipClusterBootstrap bool
-	skipClusterTearDown  bool
 	testingT             *testing.T
 	cmdRunner            *cfnControllerTestCommandRunner
 	secretsManagerClient *secretsmanager.Client
@@ -57,14 +55,6 @@ func (t *cfnControllerTestSuite) InitializeTestSuite(ctx *godog.TestSuiteContext
 	// 2. Clone the Flux config git repo and CloudFormation template git repo locally
 	// 3. Register the CFN template git repo with Flux
 	ctx.BeforeSuite(func() {
-		if !t.skipClusterBootstrap {
-			// Bootstrap the local cluster
-			t.testingT.Log("Bootstrapping the local Kubernetes cluster")
-			t.cmdRunner.runExitOnFail("make", "bootstrap-local-cluster")
-			t.testingT.Log("Deploying the CloudFormation controller to the local Kubernetes cluster")
-			t.cmdRunner.runExitOnFail("make", "deploy-local")
-		}
-
 		resp, err := t.secretsManagerClient.GetSecretValue(context.TODO(), &secretsmanager.GetSecretValueInput{
 			SecretId: aws.String(GitCredentialsSecretName),
 		})
@@ -99,11 +89,6 @@ func (t *cfnControllerTestSuite) InitializeTestSuite(ctx *godog.TestSuiteContext
 	// 2. Tear down the local Kubernetes cluster
 	ctx.AfterSuite(func() {
 		t.cleanup()
-		if !t.skipClusterBootstrap && !t.skipClusterTearDown {
-			// Tear down the local cluster
-			t.testingT.Log("Tearing down the local Kubernetes cluster")
-			t.cmdRunner.run("kind", "delete", "cluster")
-		}
 	})
 }
 
