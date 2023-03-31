@@ -1,5 +1,8 @@
 # AWS CloudFormation Template Sync Controller for Flux
 
+[![Unit tests](https://github.com/awslabs/aws-cloudformation-controller-for-flux/actions/workflows/unit-tests.yml/badge.svg?branch=main)](https://github.com/awslabs/aws-cloudformation-controller-for-flux/actions/workflows/unit-tests.yml)
+[![Integration tests](https://github.com/awslabs/aws-cloudformation-controller-for-flux/actions/workflows/integ-tests.yml/badge.svg?branch=main)](https://github.com/awslabs/aws-cloudformation-controller-for-flux/actions/workflows/integ-tests.yml)
+
 The AWS CloudFormation Template Sync Controller for Flux helps you to store CloudFormation templates in a git repository
 and automatically sync template changes to CloudFormation stacks in your AWS account with Flux.
 
