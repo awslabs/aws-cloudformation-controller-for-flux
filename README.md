@@ -85,6 +85,10 @@ Status:
     Type:                  Ready
 ```
 
+## Installation
+
+See the [AWS CloudFormation Template Sync Controller for Flux installation guide](./docs/install.md).
+
 ## Development
 
 For information about developing the CloudFormation controller locally, see [Developing the AWS CloudFormation Template Sync Controller for Flux](./docs/developing.md).
