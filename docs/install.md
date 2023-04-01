@@ -9,17 +9,35 @@ see the [development guide](./developing.md#run-the-cloudformation-controller-on
 
 1. [Prerequisites](#prerequisites)
 1. [AWS credentials](#aws-credentials)
-1. [IAM permissions](#iam-permissions)
 1. [TODO](#todo)
 1. [Security recommendations](#security-recommendations)
+   1. [Kubernetes cluster security][#kubernetes-cluster-security]
+   1. [IAM permissions](#iam-permissions)
 <!-- tocstop -->
 
 ## Prerequisites
 
 These instructions assume you already have a Kubernetes cluster with Flux installed. For instructions on installing Flux into your Kubernetes cluster, see the [Flux documentation](https://fluxcd.io/flux/get-started/).
 
-TODO: S3 bucket for temporarily storing templates while CloudFormation stacks are provisioned
-TODO: At least one repository to be the source of CloudFormation templates (git, bucket, or OCI)
+These instructions also assume that you already created the following prerequisite resources.
+You can use the [sample CloudFormation template](../examples/resources.yaml) for creating these resources.
+
+* **Flux configuration Git repository**:
+These instructions for installing the CloudFormation controller assume that Flux is configured to
+manage itself from a Git repository, for example using the `flux bootstrap` command.
+* At least one **CloudFormation template repository**:
+Through the Flux source controller, the CloudFormation controller can deploy CloudFormation templates
+stored in [a Git repository](https://fluxcd.io/flux/components/source/gitrepositories/) such as an AWS CodeCommit repository,
+in [a bucket](https://fluxcd.io/flux/components/source/buckets/) such as an Amazon S3 bucket,
+or in [an OCI repository](https://fluxcd.io/flux/components/source/ocirepositories/) such as an Amazon ECR repository.
+See [the Flux documentation](https://fluxcd.io/flux/guides/repository-structure/)
+for a guide to various approaches for organizing the repositories that store your CloudFormation templates.
+* **Amazon S3 bucket**:
+The CloudFormation controller requires an S3 bucket.
+When the controller syncs a CloudFormation template into a CloudFormation stack in your AWS account,
+it will first upload the template to S3 and then provide a link to the S3 object to CloudFormation.
+To minimize storage costs, you can safely enable a lifecycle rule on the S3 bucket to expire
+objects after one day.
 
 ## AWS credentials
 
@@ -35,7 +53,31 @@ The CloudFormation controller searches for credentials in the following order:
 
 As a best practice, we recommend that you use short lived AWS credentials for the CloudFormation controller, for example using [IAM roles for service accounts on an EKS cluster](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html).
 
-## IAM permissions
+
+
+## TODO instructions
+
+TODO
+
+## Security recommendations
+
+### Kubernetes cluster security
+
+We recommend following all [security best practices defined by the Flux project](https://fluxcd.io/flux/security/best-practices/)
+when configuring your Flux components and the CloudFormation controller.  We also recommend following the
+[Flux project's additional security best practices for shared cluster multi-tenancy](https://fluxcd.io/flux/security/best-practices/#additional-best-practices-for-shared-cluster-multi-tenancy),
+including node isolation and network isolation for your Flux components and the CloudFormation controller.
+
+For information on how to achieve node isolation and network isolation for your Flux components and the CloudFormation
+controller on Amazon EKS clusters, see the following EKS Best Practices Guides:will
+* [Isolating tenant workloads to specific nodes](https://aws.github.io/aws-eks-best-practices/security/docs/multitenancy/#isolating-tenant-workloads-to-specific-nodes)
+* [Network security using Kubernetes network policies](https://aws.github.io/aws-eks-best-practices/security/docs/network/#network-policy)
+* [Network security using AWS VPC Security Groups](https://aws.github.io/aws-eks-best-practices/security/docs/network/#security-groups)
+
+### IAM permissions
+
+We recommend that the AWS credentials used by the CloudFormation controller have the least-privileged permissions needed
+to deploy your CloudFormation stacks in your AWS account.
 
 The CloudFormation controller requires the following IAM permissions for managing CloudFormation stacks in your AWS account:
 
@@ -86,7 +128,7 @@ The CloudFormation controller also requires permissions on behalf of CloudFormat
 templates from your S3 bucket and to provision the resources defined in your CloudFormation templates.
 
 For example, if your CloudFormation templates define `AWS::DynamoDB::Table` resources, the CloudFormation controller
-will need the following permissions.
+may need the following permissions.
 
 ```json
 {
@@ -140,20 +182,3 @@ will need the following permissions.
   ]
 }
 ```
-
-## TODO instructions
-
-TODO
-
-## Security recommendations
-
-We recommend following all [security best practices defined by the Flux project](https://fluxcd.io/flux/security/best-practices/)
-when configuring your Flux components and the CloudFormation controller.  We also recommend following the
-[Flux project's additional security best practices for shared cluster multi-tenancy](https://fluxcd.io/flux/security/best-practices/#additional-best-practices-for-shared-cluster-multi-tenancy),
-including node isolation and network isolation for your Flux components and the CloudFormation controller.
-
-For information on how to achieve node isolation and network isolation for your Flux components and the CloudFormation
-controller on Amazon EKS clusters, see the following EKS Best Practices Guides:
-* [Isolating tenant workloads to specific nodes](https://aws.github.io/aws-eks-best-practices/security/docs/multitenancy/#isolating-tenant-workloads-to-specific-nodes)
-* [Network security using Kubernetes network policies](https://aws.github.io/aws-eks-best-practices/security/docs/network/#network-policy)
-* [Network security using AWS VPC Security Groups](https://aws.github.io/aws-eks-best-practices/security/docs/network/#security-groups)

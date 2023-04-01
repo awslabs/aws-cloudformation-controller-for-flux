@@ -95,7 +95,7 @@ For information about developing the CloudFormation controller locally, see [Dev
 
 ## Security
 
-See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more information.
+See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more information on reporting security issues.
 
 ## License
 
