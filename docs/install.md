@@ -2,29 +2,32 @@
 
 This document covers the installation of the AWS CloudFormation Template Sync Controller for Flux into your Kubernetes cluster.
 
-For instructions for running the CloudFormation controller on a local Kubernetes cluster,
-see the [development guide](./developing.md#run-the-cloudformation-controller-on-a-local-kind-cluster).
+You can find instructions for running the CloudFormation controller on a local Kubernetes cluster in the
+[development guide](./developing.md#run-the-cloudformation-controller-on-a-local-kind-cluster).
 
 <!-- toc -->
 
 1. [Prerequisites](#prerequisites)
 1. [AWS credentials](#aws-credentials)
 1. [TODO](#todo)
-1. [Security recommendations](#security-recommendations)
-   1. [Kubernetes cluster security][#kubernetes-cluster-security]
-   1. [IAM permissions](#iam-permissions)
+1. [Security recommendations](#secu(ity-recommendations)
+   1. [Kubernetes cluster security][#kubernetes-cluster-security)
+   1. [Kubernetes user permissions][#kubernetes-user-permissions)
+   1. [AWS IAM permissions](#aws-iam-permissions)
 <!-- tocstop -->
 
 ## Prerequisites
 
-These instructions assume you already have a Kubernetes cluster with Flux installed. For instructions on installing Flux into your Kubernetes cluster, see the [Flux documentation](https://fluxcd.io/flux/get-started/).
+These instructions assume you already have a Kubernetes cluster with Flux installed.
+See the [Flux documentation](https://fluxcd.io/flux/get-started/) for instructions
+on installing Flux into your Kubernetes cluster.
 
 These instructions also assume that you already created the following prerequisite resources.
 You can use the [sample CloudFormation template](../examples/resources.yaml) for creating these resources.
 
-* **Flux configuration Git repository**:
-These instructions for installing the CloudFormation controller assume that Flux is configured to
-manage itself from a Git repository, for example using the `flux bootstrap` command.
+* **Flux configuration repository**:
+These instructions assume that Flux is configured to manage itself from a Git repository,
+for example using the `flux bootstrap` command.
 * At least one **CloudFormation template repository**:
 Through the Flux source controller, the CloudFormation controller can deploy CloudFormation templates
 stored in [a Git repository](https://fluxcd.io/flux/components/source/gitrepositories/) such as an AWS CodeCommit repository,
@@ -74,7 +77,14 @@ controller on Amazon EKS clusters, see the following EKS Best Practices Guides:w
 * [Network security using Kubernetes network policies](https://aws.github.io/aws-eks-best-practices/security/docs/network/#network-policy)
 * [Network security using AWS VPC Security Groups](https://aws.github.io/aws-eks-best-practices/security/docs/network/#security-groups)
 
-### IAM permissions
+### Kubernetes user permissions
+
+We recommend that users with access to your Kubernetes cluster have the least-privileged permissions needed for interacting
+with the CloudFormation controller.  We have provided two sample Kubernetes roles that can be used to grant permissions to your users.
+* [Sample CloudFormationStack editor role](../config/rbac/cfnstack_editor_role.yaml)
+* [Sample CloudFormationStack viewer role](../config/rbac/cfnstack_viewer_role.yaml)
+
+### AWS IAM permissions
 
 We recommend that the AWS credentials used by the CloudFormation controller have the least-privileged permissions needed
 to deploy your CloudFormation stacks in your AWS account.
