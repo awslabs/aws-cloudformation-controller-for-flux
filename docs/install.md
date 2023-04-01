@@ -10,9 +10,9 @@ You can find instructions for running the CloudFormation controller on a local K
 1. [Prerequisites](#prerequisites)
 1. [AWS credentials](#aws-credentials)
 1. [TODO](#todo)
-1. [Security recommendations](#secu(ity-recommendations)
-   1. [Kubernetes cluster security][#kubernetes-cluster-security)
-   1. [Kubernetes user permissions][#kubernetes-user-permissions)
+1. [Security recommendations](#security-recommendations)
+   1. [Kubernetes cluster security](#kubernetes-cluster-security)
+   1. [Kubernetes user permissions](#kubernetes-user-permissions)
    1. [AWS IAM permissions](#aws-iam-permissions)
 <!-- tocstop -->
 
@@ -56,8 +56,6 @@ The CloudFormation controller searches for credentials in the following order:
 
 As a best practice, we recommend that you use short lived AWS credentials for the CloudFormation controller, for example using [IAM roles for service accounts on an EKS cluster](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html).
 
-
-
 ## TODO instructions
 
 TODO
@@ -72,21 +70,21 @@ when configuring your Flux components and the CloudFormation controller.  We als
 including node isolation and network isolation for your Flux components and the CloudFormation controller.
 
 For information on how to achieve node isolation and network isolation for your Flux components and the CloudFormation
-controller on Amazon EKS clusters, see the following EKS Best Practices Guides:will
+controller on Amazon EKS clusters, see the following EKS Best Practices Guides:
 * [Isolating tenant workloads to specific nodes](https://aws.github.io/aws-eks-best-practices/security/docs/multitenancy/#isolating-tenant-workloads-to-specific-nodes)
 * [Network security using Kubernetes network policies](https://aws.github.io/aws-eks-best-practices/security/docs/network/#network-policy)
 * [Network security using AWS VPC Security Groups](https://aws.github.io/aws-eks-best-practices/security/docs/network/#security-groups)
 
 ### Kubernetes user permissions
 
-We recommend that users with access to your Kubernetes cluster have the least-privileged permissions needed for interacting
+We recommend that users with access to your Kubernetes cluster have the least privileged permissions needed for interacting
 with the CloudFormation controller.  We have provided two sample Kubernetes roles that can be used to grant permissions to your users.
 * [Sample CloudFormationStack editor role](../config/rbac/cfnstack_editor_role.yaml)
 * [Sample CloudFormationStack viewer role](../config/rbac/cfnstack_viewer_role.yaml)
 
 ### AWS IAM permissions
 
-We recommend that the AWS credentials used by the CloudFormation controller have the least-privileged permissions needed
+We recommend that the AWS credentials used by the CloudFormation controller have the least privileged permissions needed
 to deploy your CloudFormation stacks in your AWS account.
 
 The CloudFormation controller requires the following IAM permissions for managing CloudFormation stacks in your AWS account:
