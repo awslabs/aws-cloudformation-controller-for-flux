@@ -11,13 +11,15 @@ see the [development guide](./developing.md#run-the-cloudformation-controller-on
 1. [AWS credentials](#aws-credentials)
 1. [IAM permissions](#iam-permissions)
 1. [TODO](#todo)
+1. [Security recommendations](#security-recommendations)
 <!-- tocstop -->
 
 ## Prerequisites
 
 These instructions assume you already have a Kubernetes cluster with Flux installed. For instructions on installing Flux into your Kubernetes cluster, see the [Flux documentation](https://fluxcd.io/flux/get-started/).
 
-TODO: S3 bucket
+TODO: S3 bucket for temporarily storing templates while CloudFormation stacks are provisioned
+TODO: At least one repository to be the source of CloudFormation templates (git, bucket, or OCI)
 
 ## AWS credentials
 
@@ -138,3 +140,20 @@ will need the following permissions.
   ]
 }
 ```
+
+## TODO instructions
+
+TODO
+
+## Security recommendations
+
+We recommend following all [security best practices defined by the Flux project](https://fluxcd.io/flux/security/best-practices/)
+when configuring your Flux components and the CloudFormation controller.  We also recommend following the
+[Flux project's additional security best practices for shared cluster multi-tenancy](https://fluxcd.io/flux/security/best-practices/#additional-best-practices-for-shared-cluster-multi-tenancy),
+including node isolation and network isolation for your Flux components and the CloudFormation controller.
+
+For information on how to achieve node isolation and network isolation for your Flux components and the CloudFormation
+controller on Amazon EKS clusters, see the following EKS Best Practices Guides:
+* [Isolating tenant workloads to specific nodes](https://aws.github.io/aws-eks-best-practices/security/docs/multitenancy/#isolating-tenant-workloads-to-specific-nodes)
+* [Network security using Kubernetes network policies](https://aws.github.io/aws-eks-best-practices/security/docs/network/#network-policy)
+* [Network security using AWS VPC Security Groups](https://aws.github.io/aws-eks-best-practices/security/docs/network/#security-groups)
