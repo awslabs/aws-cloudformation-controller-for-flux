@@ -42,7 +42,7 @@ it will first upload the template to S3 and then provide a link to the S3 object
 To minimize storage costs, you can safely enable a lifecycle rule on the S3 bucket to expire
 objects after one day.
 
-## AWS credentials
+## Create AWS credentials
 
 The CloudFormation controller relies on the [default behavior of the AWS SDK for Go V2](https://aws.github.io/aws-sdk-go-v2/docs/configuring-sdk/#specifying-credentials) to determine the AWS credentials that it uses to authenticate with AWS APIs.
 
@@ -55,6 +55,29 @@ The CloudFormation controller searches for credentials in the following order:
 1. Amazon Elastic Compute Cloud (Amazon EC2) instance metadata service
 
 As a best practice, we recommend that you use short lived AWS credentials for the CloudFormation controller, for example using [IAM roles for service accounts on an EKS cluster](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html).
+
+We also recommend that the AWS credentials used by the CloudFormation controller have the least privileged permissions needed
+to deploy your CloudFormation stacks in your AWS account.  See the [AWS IAM permissions](#aws-iam-permissions) section below
+for example policies to attach to your IAM user or role.
+
+For example, the following commands use eksctl and the AWS CLI to create an IAM OIDC identity provider for your EKS cluster,
+create an IAM policy and IAM role, and associate the IAM role with a Kubernetes service account for the CloudFormation controller
+in your EKS cluster's flux-system namespace.
+
+```bash
+$ eksctl utils associate-iam-oidc-provider --cluster my-cluster --approve
+
+$ aws iam create-policy --policy-name my-policy --policy-document file://my-policy.json
+
+$ eksctl create iamserviceaccount \
+    --cluster my-cluster \
+    --namespace flux-system \
+    --name cfn-controller \
+    --role-only \
+    --role-name "AWSCloudFormationControllerFluxIRSARole" \
+    --attach-policy-arn arn:aws:iam::111122223333:policy/my-policy \
+    --approve
+```
 
 ## TODO instructions
 
