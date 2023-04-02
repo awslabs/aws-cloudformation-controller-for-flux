@@ -8,7 +8,7 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.17.7
 	github.com/aws/aws-sdk-go-v2/config v1.18.19
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.11.60
-	github.com/aws/aws-sdk-go-v2/service/cloudformation v1.26.5
+	github.com/aws/aws-sdk-go-v2/service/cloudformation v1.26.6
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.31.1
 	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.19.1
 	github.com/aws/aws-sdk-go-v2/service/sts v1.18.7
