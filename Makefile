@@ -100,12 +100,13 @@ deploy-local: install build-docker-image
 	docker tag aws-cloudformation-controller-for-flux:latest aws-cloudformation-controller-for-flux:local
 	kind load docker-image aws-cloudformation-controller-for-flux:local
 	mkdir -p config/dev && cp -r config/default config/crd config/manager config/rbac config/dev/
-	cd config/dev/default && $(KUSTOMIZE) edit set image public.ecr.aws/aws-cloudformation/aws-cloudformation-controller-for-flux=aws-cloudformation-controller-for-flux:local
+	cp config/manager/overlays/dev/kustomization.yaml config/dev/manager
 ifdef AWS_ACCESS_KEY_ID
-	cat config/manager/aws-creds-from-env-vars.yaml | AWS_REGION=$(AWS_REGION) TEMPLATE_BUCKET=flux-cfn-templates-$(AWS_ACCOUNT_ID)-$(AWS_REGION) envsubst > config/dev/manager/env.yaml
+	cat config/manager/overlays/aws-creds-from-env-vars/env-patch.yaml | AWS_REGION=$(AWS_REGION) TEMPLATE_BUCKET=flux-cfn-templates-$(AWS_ACCOUNT_ID)-$(AWS_REGION) envsubst > config/dev/manager/env-patch.yaml
 else
-	cat config/manager/aws-creds-from-mounted-file.yaml | AWS_REGION=$(AWS_REGION) TEMPLATE_BUCKET=flux-cfn-templates-$(AWS_ACCOUNT_ID)-$(AWS_REGION) envsubst > config/dev/manager/env.yaml
+	cat config/manager/overlays/aws-creds-from-mounted-file/env-patch.yaml | AWS_REGION=$(AWS_REGION) TEMPLATE_BUCKET=flux-cfn-templates-$(AWS_ACCOUNT_ID)-$(AWS_REGION) envsubst > config/dev/manager/env-patch.yaml
 endif
+	cd config/dev/default && $(KUSTOMIZE) edit set image public.ecr.aws/aws-cloudformation/aws-cloudformation-controller-for-flux=aws-cloudformation-controller-for-flux:local
 	$(KUSTOMIZE) build config/dev/default | kubectl apply -f -
 	kubectl rollout restart deployment cfn-controller --namespace=flux-system
 	kubectl rollout status deployment/cfn-controller --namespace=flux-system --timeout=30s
