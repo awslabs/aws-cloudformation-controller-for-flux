@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/fluxcd/pkg/apis/meta v0.19.1
-	k8s.io/apimachinery v0.26.2
+	k8s.io/apimachinery v0.26.3
 	sigs.k8s.io/controller-runtime v0.14.6
 )
 
