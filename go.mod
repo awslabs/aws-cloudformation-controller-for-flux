@@ -11,7 +11,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/cloudformation v1.26.5
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.31.1
 	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.19.1
-	github.com/aws/aws-sdk-go-v2/service/sts v1.18.6
+	github.com/aws/aws-sdk-go-v2/service/sts v1.18.7
 	github.com/aws/smithy-go v1.13.5
 	github.com/awslabs/aws-cloudformation-controller-for-flux/api v0.0.0-00010101000000-000000000000
 	github.com/cucumber/godog v0.12.6
