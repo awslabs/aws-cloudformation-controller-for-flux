@@ -20,7 +20,7 @@ require (
 	github.com/fluxcd/pkg/apis/meta v1.0.0
 	github.com/fluxcd/pkg/runtime v0.35.0
 	github.com/fluxcd/pkg/untar v0.2.0
-	github.com/fluxcd/source-controller/api v0.36.0
+	github.com/fluxcd/source-controller/api v0.36.1
 	github.com/go-git/go-git/v5 v5.6.1
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.3.0
