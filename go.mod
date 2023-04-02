@@ -27,8 +27,8 @@ require (
 	github.com/hashicorp/go-retryablehttp v0.7.2
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.8.2
-	k8s.io/apimachinery v0.26.2
-	k8s.io/client-go v0.26.2
+	k8s.io/apimachinery v0.26.3
+	k8s.io/client-go v0.26.3
 	k8s.io/utils v0.0.0-20230313181309-38a27ef9d749
 	sigs.k8s.io/controller-runtime v0.14.5
 )
@@ -144,7 +144,7 @@ require (
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/api v0.26.2 // indirect
+	k8s.io/api v0.26.3 // indirect
 	k8s.io/apiextensions-apiserver v0.26.2 // indirect
 	k8s.io/cli-runtime v0.26.2 // indirect
 	k8s.io/component-base v0.26.2 // indirect
