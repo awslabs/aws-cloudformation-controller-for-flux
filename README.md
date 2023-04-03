@@ -64,7 +64,7 @@ spec:
   sourceRef:
     kind: GitRepository
     name: my-gitops-repo
-  interval: 10m
+  interval: 1h
   retryInterval: 5m
 ```
 

@@ -10,7 +10,7 @@ You can find instructions for running the CloudFormation controller on a local K
 1. [Prerequisites](#prerequisites)
 1. [Create AWS credentials](#create-aws-credentials)
 1. [Register the CloudFormation controller repository with Flux](#register-the-cloudformation-controller-repository-with-flux)
-1. [Deploy the CloudFormation controller](#deploy-the-cloudformation-controller)
+1. [Deploy the CloudFormation controller](#deploy-the-cloudformation-controller-using-flux)
    1. [Use IAM roles for service accounts on an Amazon EKS cluster](#option-1-short-lived-credentials-using-iam-roles-for-service-accounts-on-an-eks-cluster-recommended) (recommended)
    2. [Use AWS credentials in environment variables](#option-2-long-term-credentials-as-environment-variables)
    3. [Use AWS credentials in a mounted file](#option-3-long-term-credentials-in-a-mounted-credentials-file)
@@ -114,7 +114,7 @@ $ flux reconcile source git flux-system
 $ flux reconcile source git aws-cloudformation-controller-for-flux
 ```
 
-## Deploy the CloudFormation controller
+## Deploy the CloudFormation controller using Flux
 
 In your Flux configuration repository, create a file named `cfn-controller.yaml`, fill in the appropriate contents,
 then commit and push the file to your Flux configuration repository.  Validate that Flux is able to successfully
