@@ -8,8 +8,12 @@ You can find instructions for running the CloudFormation controller on a local K
 <!-- toc -->
 
 1. [Prerequisites](#prerequisites)
-1. [AWS credentials](#aws-credentials)
-1. [TODO](#todo)
+1. [Create AWS credentials](#create-aws-credentials)
+1. [Register the CloudFormation controller repository with Flux](#register-the-cloudformation-controller-repository-with-flux)
+1. [Deploy the CloudFormation controller](#deploy-the-cloudformation-controller)
+   1. [Use IAM roles for service accounts on an Amazon EKS cluster](#option-1-short-lived-credentials-using-iam-roles-for-service-accounts-on-an-eks-cluster-recommended) (recommended)
+   2. [Use AWS credentials in environment variables](#option-2-long-term-credentials-as-environment-variables)
+   3. [Use AWS credentials in a mounted file](#option-3-long-term-credentials-in-a-mounted-credentials-file)
 1. [Security recommendations](#security-recommendations)
    1. [Kubernetes cluster security](#kubernetes-cluster-security)
    1. [Kubernetes user permissions](#kubernetes-user-permissions)
@@ -75,13 +79,247 @@ $ eksctl create iamserviceaccount \
     --name cfn-controller \
     --role-only \
     --role-name "AWSCloudFormationControllerFluxIRSARole" \
-    --attach-policy-arn arn:aws:iam::111122223333:policy/my-policy \
+    --attach-policy-arn arn:aws:iam::123456789012:policy/my-policy \
     --approve
 ```
 
-## TODO instructions
+## Register the CloudFormation controller repository with Flux
 
-TODO
+In your Flux configuration repository, create a file named `cfn-controller-source.yaml` with the configuration below
+to register this GitHub repository with your Flux installation.
+
+```yaml
+apiVersion: source.toolkit.fluxcd.io/v1beta2
+kind: GitRepository
+metadata:
+  name: aws-cloudformation-controller-for-flux
+  namespace: flux-system
+spec:
+  interval: 1h
+  timeout: 60s
+  ref:
+    branch: main
+  url: https://github.com/awslabs/aws-cloudformation-controller-for-flux
+```
+
+Update the GitRepository `.spec.ref` field to point to the CloudFormation controller release version or commit ID you want to deploy.
+For example, replace `branch: main` with `tag: v0.0.1` to pin the installation to CloudFormation controller version 0.0.1.
+
+Commit and push the `cfn-controller-source.yaml` file to your Flux configuration repository.
+
+Run the following commands to verify that Flux can successfully connect to this repository.
+
+```bash
+$ flux reconcile source git flux-system
+$ flux reconcile source git aws-cloudformation-controller-for-flux
+```
+
+## Deploy the CloudFormation controller
+
+In your Flux configuration repository, create a file named `cfn-controller.yaml`, fill in the appropriate contents,
+then commit and push the file to your Flux configuration repository.
+The contents of the `cfn-controller.yaml` file depends on how you choose to provide AWS credentials
+to the CloudFormation controller.
+In all cases, you will need to know the name of the AWS region where the CloudFormation controller
+should deploy CloudFormation stacks and the name of the S3 bucket where the CloudFormation controller
+should upload CloudFormation templates.
+
+### Option 1: Short-lived credentials using IAM roles for service accounts on an EKS cluster (recommended)
+
+Copy and paste the following configuration into the `cfn-controller.yaml` file.
+Update the `eks.amazonaws.com/role-arn` value with the correct IAM role ARN.
+Update the `AWS_REGION` and `TEMPLATE_BUCKET` values with the correct values for your region and S3 bucket.
+
+```yaml
+apiVersion: kustomize.toolkit.fluxcd.io/v1beta2
+kind: Kustomization
+metadata:
+  name: aws-cloudformation-controller-for-flux
+  namespace: flux-system
+spec:
+  interval: 5m
+  path: ./config/default
+  prune: true
+  wait: true
+  timeout: 5m
+  sourceRef:
+    kind: GitRepository
+    name: aws-cloudformation-controller-for-flux
+  patches:
+    - patch: |
+        apiVersion: v1
+        kind: ServiceAccount
+        metadata:
+          name: cfn-controller
+          annotations:
+            eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/AWSCloudFormationControllerFluxIRSARole
+      target:
+        kind: ServiceAccount
+        name: cfn-controller
+    - patch: |
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: cfn-controller
+        spec:
+          template:
+            spec:
+              containers:
+              - name: manager
+                env:
+                  - name: AWS_REGION
+                    value: "us-west-2"
+                  - name: TEMPLATE_BUCKET
+                    value: "my-cloudformation-templates-bucket"
+      target:
+        kind: Deployment
+        name: cfn-controller
+```
+
+### Option 2: Long-term credentials as environment variables
+
+Create a Kubernetes secret that contains your IAM user's credentials.  First, encode your credentials:
+
+```bash
+$ echo -n 'FAKEAWSACCESSKEYID' | base64 -w 0
+RkFLRUFXU0FDQ0VTU0tFWUlE
+
+$ echo -n 'FAKEAWSSECRETACCESSKEY' | base64 -w 0
+RkFLRUFXU1NFQ1JFVEFDQ0VTU0tFWQ==
+```
+
+Then create a file named `secret.yaml` containing the Kubernetes secret configuration:
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: aws-creds-for-cfn-controller
+  namespace: flux-system
+type: Opaque
+data:
+  AWS_ACCESS_KEY_ID: RkFLRUFXU0FDQ0VTU0tFWUlE
+  AWS_SECRET_ACCESS_KEY: RkFLRUFXU1NFQ1JFVEFDQ0VTU0tFWQ==
+```
+
+Apply the secret to your Kubernetes cluster, then delete the configuration file.
+
+```bash
+$ kubectl apply -f secret.yaml
+$ rm secret.yaml
+```
+
+Copy and paste the following configuration into the `cfn-controller.yaml` file.
+Update the `AWS_REGION` and `TEMPLATE_BUCKET` values with the correct values for your region and S3 bucket.
+
+```yaml
+apiVersion: kustomize.toolkit.fluxcd.io/v1beta2
+kind: Kustomization
+metadata:
+  name: aws-cloudformation-controller-for-flux
+  namespace: flux-system
+spec:
+  interval: 5m
+  path: ./config/default
+  prune: true
+  wait: true
+  timeout: 5m
+  sourceRef:
+    kind: GitRepository
+    name: aws-cloudformation-controller-for-flux
+  patches:
+    - patch: |
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: cfn-controller
+        spec:
+          template:
+            spec:
+              containers:
+              - name: manager
+                env:
+                  - name: AWS_REGION
+                    value: "us-west-2"
+                  - name: TEMPLATE_BUCKET
+                    value: "my-cloudformation-templates-bucket"
+                  - name: AWS_ACCESS_KEY_ID
+                    valueFrom:
+                      secretKeyRef:
+                        name: aws-creds-for-cfn-controller
+                        key: AWS_ACCESS_KEY_ID
+                  - name: AWS_SECRET_ACCESS_KEY
+                    valueFrom:
+                      secretKeyRef:
+                        name: aws-creds-for-cfn-controller
+                        key: AWS_SECRET_ACCESS_KEY
+      target:
+        kind: Deployment
+        name: cfn-controller
+```
+
+### Option 3: Long-term credentials in a mounted credentials file
+
+Create a file named `credentials` that contains your IAM user's credentials:
+
+```ini
+[default]
+aws_access_key_id=FAKEAWSACCESSKEYID
+aws_secret_access_key=FAKEAWSSECRETACCESSKEY
+```
+
+Create a Kubernetes secret that contains credentials file, then delete the credentials file.
+```bash
+$ kubectl create secret generic aws-creds-for-cfn-controller -n flux-system --from-file ./credentials
+$ rm ./credentials
+```
+
+Copy and paste the following configuration into the `cfn-controller.yaml` file.
+Update the `AWS_REGION` and `TEMPLATE_BUCKET` values with the correct values for your region and S3 bucket.
+
+```yaml
+apiVersion: kustomize.toolkit.fluxcd.io/v1beta2
+kind: Kustomization
+metadata:
+  name: aws-cloudformation-controller-for-flux
+  namespace: flux-system
+spec:
+  interval: 5m
+  path: ./config/default
+  prune: true
+  wait: true
+  timeout: 5m
+  sourceRef:
+    kind: GitRepository
+    name: aws-cloudformation-controller-for-flux
+  patches:
+    - patch: |
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: cfn-controller
+        spec:
+          template:
+            spec:
+              containers:
+              - name: manager
+                env:
+                  - name: AWS_REGION
+                    value: "us-west-2"
+                  - name: TEMPLATE_BUCKET
+                    value: "my-cloudformation-templates-bucket"
+                volumeMounts:
+                - name: aws-creds
+                  mountPath: "/.aws"
+                  readOnly: true
+              volumes:
+              - name: aws-creds
+                secret:
+                  secretName: aws-creds-for-cfn-controller
+      target:
+        kind: Deployment
+        name: cfn-controller
+```
 
 ## Security recommendations
 
