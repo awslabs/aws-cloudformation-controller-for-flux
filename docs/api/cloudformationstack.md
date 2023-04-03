@@ -6,7 +6,7 @@
 </li>
 </ul>
 <h2 id="cloudformation.contrib.fluxcd.io/v1alpha1">cloudformation.contrib.fluxcd.io/v1alpha1</h2>
-<p>Package v2beta1 contains API Schema definitions for the CloudFormation v1alpha1 API group</p>
+<p>Package v1alpha1 contains API Schema definitions for the CloudFormation v1alpha1 API group</p>
 Resource Types:
 <ul class="simple"></ul>
 <h3 id="cloudformation.contrib.fluxcd.io/v1alpha1.CloudFormationStack">CloudFormationStack

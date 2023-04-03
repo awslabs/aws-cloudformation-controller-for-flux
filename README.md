@@ -68,6 +68,9 @@ spec:
   retryInterval: 5m
 ```
 
+See the [CloudFormationStack API reference](./docs/api/cloudformationstack.md) for the full set of configuration options
+supported by the CloudFormation controller for CloudFormation stacks.
+
 When either the stack template file in the git repo OR the stack object in Flux is created or updated, you will see the CloudFormation stack created/updated in your AWS account:
 
 ```yaml
@@ -88,6 +91,11 @@ Status:
 ## Installation
 
 See the [AWS CloudFormation Template Sync Controller for Flux installation guide](./docs/install.md).
+
+## API reference
+
+See the [CloudFormationStack API reference](./docs/api/cloudformationstack.md) for the full set of configuration options
+supported by the CloudFormation controller for CloudFormation stacks.
 
 ## Development
 

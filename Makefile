@@ -60,14 +60,14 @@ gen-mocks: mockgen
 	${MOCKGEN} -package=mocks -destination=./internal/mocks/mock_event_recorder.go k8s.io/client-go/tools/record EventRecorder
 	${MOCKGEN} -package=mocks -destination=./internal/mocks/mock_kubernetes_client.go sigs.k8s.io/controller-runtime/pkg/client Client,StatusWriter
 
-test: tidy generate gen-mocks fmt vet manifests
+test: tidy generate gen-mocks fmt vet manifests api-docs
 	go test ./... -coverprofile cover.out
 	cd api; go test ./... -coverprofile cover.out
 
 view-test-coverage:
 	go tool cover -html=cover.out
 
-build: generate gen-mocks fmt vet manifests
+build: generate gen-mocks fmt vet manifests api-docs
 	go build -o bin/manager \
  		-ldflags "-X main.BuildSHA=$(BUILD_SHA) -X main.BuildVersion=$(BUILD_VERSION)" \
  		main.go
