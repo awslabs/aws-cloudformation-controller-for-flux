@@ -28,7 +28,7 @@ $ curl -s https://fluxcd.io/install.sh | sudo bash
 | Test | `make test` |
 | Integration Test | `make integ-test` |
 | See CloudFormation stacks | `kubectl describe cfnstack -A` |
-| View logs | `kubectl logs -l app=cfn-controller --namespace flux-system` |
+| View logs | `kubectl logs deployment/cfn-controller --namespace flux-system` |
 | Clean up | `make clean` |
 
 ## Run the CloudFormation controller on a local kind cluster

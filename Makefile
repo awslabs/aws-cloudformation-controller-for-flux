@@ -110,8 +110,8 @@ endif
 	$(KUSTOMIZE) build config/dev/default | kubectl apply -f -
 	kubectl rollout restart deployment cfn-controller --namespace=flux-system
 	kubectl rollout status deployment/cfn-controller --namespace=flux-system --timeout=30s
+	kubectl logs deployment/cfn-controller --namespace flux-system
 	rm -rf config/dev
-	kubectl logs -l app=cfn-controller --namespace flux-system
 
 bootstrap-local-cluster:
 	$(shell pwd)/local-dev/bootstrap-local-kind-cluster.sh

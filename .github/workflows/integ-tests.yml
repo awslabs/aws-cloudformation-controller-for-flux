@@ -59,4 +59,4 @@ jobs:
           kubectl get all -n flux-system
           kubectl describe pods -l app=cfn-controller -n flux-system || true
           kubectl describe cfnstack -n flux-system || true
-          kubectl logs -l app=cfn-controller -n flux-system || true
+          kubectl logs deployment/cfn-controller -n flux-system || true

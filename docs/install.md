@@ -117,9 +117,18 @@ $ flux reconcile source git aws-cloudformation-controller-for-flux
 ## Deploy the CloudFormation controller
 
 In your Flux configuration repository, create a file named `cfn-controller.yaml`, fill in the appropriate contents,
-then commit and push the file to your Flux configuration repository.
+then commit and push the file to your Flux configuration repository.  Validate that Flux is able to successfully
+deploy the CloudFormation controller configuration:
+
+```bash
+$ flux reconcile source git flux-system
+$ flux reconcile kustomization aws-cloudformation-controller-for-flux
+$ kubectl rollout status deployment/cfn-controller -n flux-system
+$ kubectl logs deployment/cfn-controller -n flux-system
+```
+
 The contents of the `cfn-controller.yaml` file depends on how you choose to provide AWS credentials
-to the CloudFormation controller.
+to the CloudFormation controller; see the three options below.
 In all cases, you will need to know the name of the AWS region where the CloudFormation controller
 should deploy CloudFormation stacks and the name of the S3 bucket where the CloudFormation controller
 should upload CloudFormation templates.
