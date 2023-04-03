@@ -2,7 +2,7 @@
 # enabling GitHub Actions to run the controller integration tests against the AWS account
 # where this template is deployed.
 #   aws cloudformation deploy \
-#       --template-file .github/github-identity-provider-template.yaml \
+#       --template-file .github/cloudformation/integ-test-authentication.yaml \
 #       --stack-name github-identity-provider \
 #       --parameter-overrides GitHubOrg=awslabs RepositoryName=aws-cloudformation-controller-for-flux \
 #       --capabilities CAPABILITY_IAM \

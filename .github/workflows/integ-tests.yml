@@ -46,7 +46,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v2
         with:
           role-to-assume: ${{ secrets.INTEG_TEST_ROLE_ARN }}
-          aws-region: us-west-2
+          aws-region: ${{ secrets.INTEG_TEST_REGION }}
       - name: Bootstrap local test cluster
         run: make bootstrap-local-cluster
       - name: Deploy into local test cluster
