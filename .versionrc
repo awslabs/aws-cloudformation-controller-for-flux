@@ -1,0 +1,15 @@
+{
+    "packageFiles": [
+        {
+            "filename": "VERSION",
+            "type": "plain-text"
+        }
+    ],
+    "bumpFiles": [
+        {
+            "filename": "VERSION",
+            "type": "plain-text"
+        }
+    ],
+    "tagPrefix": "v"
+}

@@ -1,0 +1,243 @@
+name: Release CFN Controller
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  stage_release:
+    name: "Stage a new release"
+    runs-on: ubuntu-latest
+    outputs:
+      stagedversion: ${{ steps.versiondetails.outputs.stagedversion }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+      - name: Install standard-version
+        run: |
+          npm install -g standard-version@^9.5.0
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Check for new commits to release
+        run: |
+          CURRENT_VERSION=$(cat VERSION)
+          COMMITS_TO_RELEASE=$(git log --pretty=oneline v$CURRENT_VERSION..HEAD | wc -l)
+
+          echo Current version: v$CURRENT_VERSION
+          echo Commits to release: $COMMITS_TO_RELEASE
+
+          echo "CURRENT_VERSION=${CURRENT_VERSION}" >> $GITHUB_ENV
+          echo "COMMITS_TO_RELEASE=${COMMITS_TO_RELEASE}" >> $GITHUB_ENV
+
+      - name: Check if no release needed
+        if: ${{ env.COMMITS_TO_RELEASE == 0 }}
+        run: |
+          echo No changes to release!
+          echo Current release: $CURRENT_VERSION
+          exit 1
+
+      - name: Stage new version
+        run: |
+          standard-version
+
+          NEW_VERSION=$(cat VERSION)
+          RELEASE_COMMIT_ID=$(git rev-parse HEAD)
+
+          echo "NEW_VERSION=${NEW_VERSION}" >> $GITHUB_ENV
+          echo "RELEASE_COMMIT_ID=${RELEASE_COMMIT_ID}" >> $GITHUB_ENV
+
+      - name: Check if version was bumped
+        if: ${{env.NEW_VERSION == env.CURRENT_VERSION }}
+        run: |
+          echo No changes to release!
+          echo Current release: $CURRENT_VERSION
+          exit 1
+
+      - name: 'Show staged version details'
+        id: versiondetails
+        shell: bash
+        run: |
+          echo New version: v$NEW_VERSION
+          echo Commit ID: $RELEASE_COMMIT_ID
+          echo Previous version: v$CURRENT_VERSION
+          echo Changes to be released:
+          git log --pretty=oneline v$CURRENT_VERSION..v$NEW_VERSION
+
+          echo "stagedversion=${NEW_VERSION}" >> "$GITHUB_OUTPUT
+
+  run_unit_tests:
+    name: "Run unit tests"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Restore Go cache
+        uses: actions/cache@v3
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+      - name: Setup Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.19.x
+      - run: make test
+      - name: Check if working tree is dirty
+        run: |
+          if [[ $(git diff --stat) != '' ]]; then
+            git --no-pager diff
+            echo 'run make test and commit changes'
+            exit 1
+          fi
+
+  run_integration_tests:
+    name: "Run integration tests"
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v3
+      - name: Configure git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      - name: Restore Go cache
+        uses: actions/cache@v3
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+      - name: Setup Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.19.x
+      - name: Setup Kind
+        uses: engineerd/setup-kind@v0.5.0
+        with:
+          version: v0.17.0
+          image: kindest/node:v1.25.3
+      - name: Setup Kustomize
+        uses: fluxcd/pkg/actions/kustomize@main
+      - name: Setup Kubectl
+        uses: fluxcd/pkg/actions/kubectl@main
+      - name: Setup Flux CLI
+        uses: fluxcd/flux2/action@main
+      - name: Install tools
+        run: make install-tools
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.INTEG_TEST_ROLE_ARN }}
+          aws-region: ${{ secrets.INTEG_TEST_REGION }}
+      - name: Bootstrap local test cluster
+        run: make bootstrap-local-cluster
+      - name: Deploy into local test cluster
+        run: make deploy-local
+      - name: Run tests
+        run: make integ-test
+      - name: Debug failure
+        if: failure()
+        run: |
+          kubectl get all -n flux-system
+          kubectl describe pods -l app=cfn-controller -n flux-system || true
+          kubectl describe cfnstack -n flux-system || true
+          kubectl logs deployment/cfn-controller -n flux-system || true
+
+  release_new_version:
+    name: "Release the new version"
+    needs: [stage_release, run_unit_tests, run_integration_tests]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+      - name: Install release tools
+        run: |
+          npm install -g standard-version@^9.5.0
+      - name: Setup Kustomize
+        uses: fluxcd/pkg/actions/kustomize@main
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Update Kubernetes configuration with new version
+        env:
+          NEW_VERSION: ${{needs.stage_release.outputs.stagedversion}}
+        run: |
+          cd config/manager
+          kustomize edit set image public.ecr.aws/aws-cloudformation/aws-cloudformation-controller-for-flux=public.ecr.aws/aws-cloudformation/aws-cloudformation-controller-for-flux:v$NEW_VERSION
+          cd ../..
+          git add config/manager/kustomization.yaml
+          git commit -m "chore(release): Bump controller image version to v$NEW_VERSION"
+          echo "STAGED_VERSION=${NEW_VERSION}" >> $GITHUB_ENV
+
+      - name: Tag new version and update changelog
+        run: |
+          standard-version
+
+          NEW_VERSION=$(cat VERSION)
+          RELEASE_COMMIT_ID=$(git rev-parse HEAD)
+
+          echo "NEW_VERSION=${NEW_VERSION}" >> $GITHUB_ENV
+          echo "RELEASE_COMMIT_ID=${RELEASE_COMMIT_ID}" >> $GITHUB_ENV
+
+      - name: Confirm version number
+        if: ${{ env.STAGED_VERSION != env.NEW_VERSION }}
+        run: |
+          echo Staged release and actual release numbers do not match
+          echo Staged release: $STAGED_VERSION
+          echo Actual release: $NEW_VERSION
+          exit 1
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.PUBLISHER_BETA_ROLE_ARN }}
+          aws-region: ${{ secrets.PUBLISHER_REGION }}
+
+      - name: Login to Amazon ECR Public
+        id: login-ecr-public
+        uses: aws-actions/amazon-ecr-login@v1
+        with:
+          registry-type: public
+
+      - name: Build and push controller Docker image to ECR Public
+        env:
+          REGISTRY: ${{ steps.login-ecr-public.outputs.registry }}
+          REGISTRY_ALIAS: ${{ secrets.PUBLISHER_BETA_REGISTRY_ALIAS }}
+          REPOSITORY: aws-cloudformation-controller-for-flux
+        run: |
+          make build-docker-image
+          docker tag aws-cloudformation-controller-for-flux:latest $REGISTRY/$REGISTRY_ALIAS/$REPOSITORY:v$NEW_VERSION
+          docker push $REGISTRY/$REGISTRY_ALIAS/$REPOSITORY:v$NEW_VERSION
+
+      - name: Push new version to GitHub
+        run: |
+          git push origin HEAD:main
+          git push origin v$NEW_VERSION
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: v${{ env.NEW_VERSION }}
+          tag_name: v${{ env.NEW_VERSION }}
+          target_commitish: ${{ env.RELEASE_COMMIT_ID }}
+          body: See the [changelog](CHANGELOG.md) for details about the changes included in this release.
