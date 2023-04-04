@@ -8,16 +8,17 @@ You can find instructions for running the CloudFormation controller on a local K
 <!-- toc -->
 
 1. [Prerequisites](#prerequisites)
+1. [Create an AWS IAM policy](#create-an-aws-iam-policy)
 1. [Create AWS credentials](#create-aws-credentials)
 1. [Register the CloudFormation controller repository with Flux](#register-the-cloudformation-controller-repository-with-flux)
 1. [Deploy the CloudFormation controller](#deploy-the-cloudformation-controller-using-flux)
    1. [Use IAM roles for service accounts on an Amazon EKS cluster](#option-1-short-lived-credentials-using-iam-roles-for-service-accounts-on-an-eks-cluster-recommended) (recommended)
    2. [Use AWS credentials in environment variables](#option-2-long-term-credentials-as-environment-variables)
    3. [Use AWS credentials in a mounted file](#option-3-long-term-credentials-in-a-mounted-credentials-file)
+1. [Validate the CloudFormation controller deployment](#validate-the-cloudformation-controller-deployment)
 1. [Security recommendations](#security-recommendations)
    1. [Kubernetes cluster security](#kubernetes-cluster-security)
    1. [Kubernetes user permissions](#kubernetes-user-permissions)
-   1. [AWS IAM permissions](#aws-iam-permissions)
 <!-- tocstop -->
 
 ## Prerequisites
@@ -46,6 +47,122 @@ it will first upload the template to S3 and then provide a link to the S3 object
 To minimize storage costs, you can safely enable a lifecycle rule on the S3 bucket to expire
 objects after one day.
 
+## Create an AWS IAM policy
+
+The CloudFormation controller needs an IAM policy that allows it to deploy CloudFormation stacks in your AWS account.
+For example, you can create an IAM policy using the AWS CLI.
+
+```bash
+$ aws iam create-policy --policy-name my-policy --policy-document file://my-policy.json
+```
+
+We recommend that the AWS credentials used by the CloudFormation controller have the least privileged permissions needed
+to deploy your CloudFormation stacks in your AWS account.
+
+The CloudFormation controller requires the following IAM permissions for managing CloudFormation stacks in your AWS account:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "cloudformation:ContinueUpdateRollback",
+        "cloudformation:CreateChangeSet",
+        "cloudformation:DeleteChangeSet",
+        "cloudformation:DeleteStack",
+        "cloudformation:DescribeChangeSet",
+        "cloudformation:DescribeStacks",
+        "cloudformation:ExecuteChangeSet"
+      ],
+      "Resource": [
+        "arn:aws:cloudformation:us-west-2:123456789012:stack/*"
+      ]
+    }
+  ]
+}
+```
+
+The CloudFormation controller also requires the following IAM permissions to upload your CloudFormation templates to your S3 bucket:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3:PutObject",
+        "s3:AbortMultipartUpload"
+      ],
+      "Resource": [
+        "arn:aws:s3:::<your S3 bucket name>/flux-*.template"
+      ]
+    }
+  ]
+}
+```
+
+The CloudFormation controller also requires permissions on behalf of CloudFormation to download your CloudFormation
+templates from your S3 bucket and to provision the resources defined in your CloudFormation templates.
+
+For example, if your CloudFormation templates define `AWS::DynamoDB::Table` resources, the CloudFormation controller
+may need the following permissions.
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject"
+      ],
+      "Resource": [
+        "arn:aws:s3:::<your S3 bucket name>/flux-*.template"
+      ],
+      "Condition": {
+        "ForAnyValue:StringEquals": {
+          "aws:CalledVia": [
+            "cloudformation.amazonaws.com"
+          ]
+        }
+      }
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "dynamodb:CreateTable",
+        "dynamodb:DeleteTable",
+        "dynamodb:DescribeTable",
+        "dynamodb:DescribeTimeToLive",
+        "dynamodb:UpdateTimeToLive",
+        "dynamodb:UpdateContributorInsights",
+        "dynamodb:UpdateContinuousBackups",
+        "dynamodb:DescribeContinuousBackups",
+        "dynamodb:DescribeContributorInsights",
+        "dynamodb:EnableKinesisStreamingDestination",
+        "dynamodb:DisableKinesisStreamingDestination",
+        "dynamodb:DescribeKinesisStreamingDestination",
+        "dynamodb:ListTagsOfResource",
+        "dynamodb:TagResource",
+        "dynamodb:UntagResource",
+        "dynamodb:UpdateTable",
+      ],
+      "Resource": "arn:aws:dynamodb:us-west-2:123456789012:table/*",
+      "Condition": {
+        "ForAnyValue:StringEquals": {
+          "aws:CalledVia": [
+            "cloudformation.amazonaws.com"
+          ]
+        }
+      }
+    }
+  ]
+}
+```
+
 ## Create AWS credentials
 
 The CloudFormation controller relies on the [default behavior of the AWS SDK for Go V2](https://aws.github.io/aws-sdk-go-v2/docs/configuring-sdk/#specifying-credentials) to determine the AWS credentials that it uses to authenticate with AWS APIs.
@@ -64,14 +181,12 @@ We also recommend that the AWS credentials used by the CloudFormation controller
 to deploy your CloudFormation stacks in your AWS account.  See the [AWS IAM permissions](#aws-iam-permissions) section below
 for example policies to attach to your IAM user or role.
 
-For example, the following commands use eksctl and the AWS CLI to create an IAM OIDC identity provider for your EKS cluster,
-create an IAM policy and IAM role, and associate the IAM role with a Kubernetes service account for the CloudFormation controller
-in your EKS cluster's flux-system namespace.
+For example, the following commands use eksctl to create an IAM OIDC identity provider for your EKS cluster,
+create an IAM role, attach an IAM policy to the IAM role, and associate the IAM role with a Kubernetes service
+account for the CloudFormation controller in your EKS cluster's flux-system namespace.
 
 ```bash
 $ eksctl utils associate-iam-oidc-provider --cluster my-cluster --approve
-
-$ aws iam create-policy --policy-name my-policy --policy-document file://my-policy.json
 
 $ eksctl create iamserviceaccount \
     --cluster my-cluster \
@@ -117,16 +232,7 @@ $ flux reconcile source git aws-cloudformation-controller-for-flux
 ## Deploy the CloudFormation controller using Flux
 
 In your Flux configuration repository, create a file named `cfn-controller.yaml`, fill in the appropriate contents,
-then commit and push the file to your Flux configuration repository.  Validate that Flux is able to successfully
-deploy the CloudFormation controller configuration:
-
-```bash
-$ flux reconcile source git flux-system
-$ flux reconcile kustomization aws-cloudformation-controller-for-flux
-$ kubectl rollout status deployment/cfn-controller -n flux-system
-$ kubectl logs deployment/cfn-controller -n flux-system
-```
-
+then commit and push the file to your Flux configuration repository.
 The contents of the `cfn-controller.yaml` file depends on how you choose to provide AWS credentials
 to the CloudFormation controller; see the three options below.
 In all cases, you will need to know the name of the AWS region where the CloudFormation controller
@@ -330,6 +436,20 @@ spec:
         name: cfn-controller
 ```
 
+## Validate the CloudFormation controller deployment
+
+Validate that Flux is able to successfully deploy the CloudFormation controller configuration:
+
+```bash
+$ flux reconcile source git flux-system
+
+$ flux reconcile kustomization aws-cloudformation-controller-for-flux
+
+$ kubectl rollout status deployment/cfn-controller -n flux-system
+
+$ kubectl logs deployment/cfn-controller -n flux-system
+```
+
 ## Security recommendations
 
 ### Kubernetes cluster security
@@ -351,112 +471,3 @@ We recommend that users with access to your Kubernetes cluster have the least pr
 with the CloudFormation controller.  We have provided two sample Kubernetes roles that can be used to grant permissions to your users.
 * [Sample CloudFormationStack editor role](../config/rbac/cfnstack_editor_role.yaml)
 * [Sample CloudFormationStack viewer role](../config/rbac/cfnstack_viewer_role.yaml)
-
-### AWS IAM permissions
-
-We recommend that the AWS credentials used by the CloudFormation controller have the least privileged permissions needed
-to deploy your CloudFormation stacks in your AWS account.
-
-The CloudFormation controller requires the following IAM permissions for managing CloudFormation stacks in your AWS account:
-
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "cloudformation:ContinueUpdateRollback",
-        "cloudformation:CreateChangeSet",
-        "cloudformation:DeleteChangeSet",
-        "cloudformation:DeleteStack",
-        "cloudformation:DescribeChangeSet",
-        "cloudformation:DescribeStacks",
-        "cloudformation:ExecuteChangeSet"
-      ],
-      "Resource": [
-        "arn:aws:cloudformation:us-west-2:123456789012:stack/*"
-      ]
-    }
-  ]
-}
-```
-
-The CloudFormation controller also requires the following IAM permissions to upload your CloudFormation templates to your S3 bucket:
-
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "s3:PutObject",
-        "s3:AbortMultipartUpload"
-      ],
-      "Resource": [
-        "arn:aws:s3:::<your S3 bucket name>/flux-*.template"
-      ]
-    }
-  ]
-}
-```
-
-The CloudFormation controller also requires permissions on behalf of CloudFormation to download your CloudFormation
-templates from your S3 bucket and to provision the resources defined in your CloudFormation templates.
-
-For example, if your CloudFormation templates define `AWS::DynamoDB::Table` resources, the CloudFormation controller
-may need the following permissions.
-
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "s3:GetObject"
-      ],
-      "Resource": [
-        "arn:aws:s3:::<your S3 bucket name>/flux-*.template"
-      ],
-      "Condition": {
-        "ForAnyValue:StringEquals": {
-          "aws:CalledVia": [
-            "cloudformation.amazonaws.com"
-          ]
-        }
-      }
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "dynamodb:CreateTable",
-        "dynamodb:DeleteTable",
-        "dynamodb:DescribeTable",
-        "dynamodb:DescribeTimeToLive",
-        "dynamodb:UpdateTimeToLive",
-        "dynamodb:UpdateContributorInsights",
-        "dynamodb:UpdateContinuousBackups",
-        "dynamodb:DescribeContinuousBackups",
-        "dynamodb:DescribeContributorInsights",
-        "dynamodb:EnableKinesisStreamingDestination",
-        "dynamodb:DisableKinesisStreamingDestination",
-        "dynamodb:DescribeKinesisStreamingDestination",
-        "dynamodb:ListTagsOfResource",
-        "dynamodb:TagResource",
-        "dynamodb:UntagResource",
-        "dynamodb:UpdateTable",
-      ],
-      "Resource": "arn:aws:dynamodb:us-west-2:123456789012:table/*",
-      "Condition": {
-        "ForAnyValue:StringEquals": {
-          "aws:CalledVia": [
-            "cloudformation.amazonaws.com"
-          ]
-        }
-      }
-    }
-  ]
-}
-```
