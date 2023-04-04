@@ -55,7 +55,7 @@ func addFileToGitRepository(dir string, repo *git.Repository, gitCredentials *ht
 	if err != nil {
 		return "", err
 	}
-	if err = w.Pull(&git.PullOptions{RemoteName: "origin", Auth: gitCredentials}); err != nil {
+	if err = w.Pull(&git.PullOptions{RemoteName: "origin", Auth: gitCredentials}); err != nil && err != git.NoErrAlreadyUpToDate {
 		return "", err
 	}
 
@@ -104,7 +104,7 @@ func deleteFilesFromGitRepository(dir string, repo *git.Repository, gitCredentia
 	if err != nil {
 		return err
 	}
-	if err = w.Pull(&git.PullOptions{RemoteName: "origin", Auth: gitCredentials}); err != nil {
+	if err = w.Pull(&git.PullOptions{RemoteName: "origin", Auth: gitCredentials}); err != nil && err != git.NoErrAlreadyUpToDate {
 		return err
 	}
 
