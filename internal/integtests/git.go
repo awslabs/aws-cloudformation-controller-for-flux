@@ -50,9 +50,17 @@ func copyFileToGitRepository(dir string, repo *git.Repository, gitCredentials *h
 // Adds a file with the given content into the git repository.
 // If the destination file name is not specified, the method will create a file using a new unique file name
 func addFileToGitRepository(dir string, repo *git.Repository, gitCredentials *http.BasicAuth, content string, destFile string) (string, error) {
+	// Make sure the local repo is up to date with the remote
+	w, err := repo.Worktree()
+	if err != nil {
+		return "", err
+	}
+	if err = w.Pull(&git.PullOptions{RemoteName: "origin", Auth: gitCredentials}); err != nil {
+		return "", err
+	}
+
 	// Write the file into the git repo on disk
 	var newFile *os.File
-	var err error
 	if destFile == "" {
 		newFile, err = os.CreateTemp(dir, "integ-test.*.yaml")
 		if err != nil {
@@ -73,10 +81,6 @@ func addFileToGitRepository(dir string, repo *git.Repository, gitCredentials *ht
 	}
 
 	// Add the file to git
-	w, err := repo.Worktree()
-	if err != nil {
-		return newFilePath, err
-	}
 	if err = w.AddWithOptions(&git.AddOptions{All: true}); err != nil {
 		return newFilePath, err
 	}
@@ -95,10 +99,16 @@ func addFileToGitRepository(dir string, repo *git.Repository, gitCredentials *ht
 
 // Deletes files from the git repository
 func deleteFilesFromGitRepository(dir string, repo *git.Repository, gitCredentials *http.BasicAuth, filePaths ...string) error {
+	// Make sure the local repo is up to date with the remote
 	w, err := repo.Worktree()
 	if err != nil {
 		return err
 	}
+	if err = w.Pull(&git.PullOptions{RemoteName: "origin", Auth: gitCredentials}); err != nil {
+		return err
+	}
+
+	// Delete the files from disk
 	for _, filePath := range filePaths {
 		if filePath != "" {
 			if err = os.Remove(filePath); err != nil {
@@ -113,6 +123,8 @@ func deleteFilesFromGitRepository(dir string, repo *git.Repository, gitCredentia
 		}
 		return err
 	}
+
+	// Delete the files on the remote
 	if err = repo.Push(&git.PushOptions{RemoteName: "origin", Auth: gitCredentials}); err != nil {
 		return err
 	}
