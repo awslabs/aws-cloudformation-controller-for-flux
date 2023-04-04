@@ -71,7 +71,7 @@ jobs:
           echo Changes to be released:
           git log --pretty=oneline v$CURRENT_VERSION..v$NEW_VERSION
 
-          echo "stagedversion=${NEW_VERSION}" >> "$GITHUB_OUTPUT
+          echo "stagedversion=${NEW_VERSION}" >> $GITHUB_OUTPUT
 
   run_unit_tests:
     name: "Run unit tests"
