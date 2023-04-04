@@ -1,0 +1,67 @@
+# This CloudFormation template configures an IAM identity provider that uses GitHub's OIDC,
+# enabling GitHub Actions to publish the controller Docker image in the AWS account where
+# this template is deployed.
+#   aws cloudformation deploy \
+#       --template-file .github/cloudformation/publisher-authentication.yaml \
+#       --stack-name github-identity-provider \
+#       --parameter-overrides GitHubOrg=awslabs RepositoryName=aws-cloudformation-controller-for-flux \
+#       --capabilities CAPABILITY_NAMED_IAM \
+#       --region us-west-2 \
+#       --profile flux-cfn-publisher-account
+
+Parameters:
+  GitHubOrg:
+    Description: Name of GitHub organization/user (case sensitive)
+    Type: String
+  RepositoryName:
+    Description: Name of GitHub repository (case sensitive)
+    Type: String
+  OIDCProviderArn:
+    Description: Arn for the GitHub OIDC Provider.
+    Default: ""
+    Type: String
+  OIDCAudience:
+    Description: Audience supplied to configure-aws-credentials.
+    Default: "sts.amazonaws.com"
+    Type: String
+
+Conditions:
+  CreateOIDCProvider: !Equals
+    - !Ref OIDCProviderArn
+    - ""
+
+Resources:
+  Role:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: GitHubEcrPublisherRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonElasticContainerRegistryPublicPowerUser
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Action: sts:AssumeRoleWithWebIdentity
+            Principal:
+              Federated: !If
+                - CreateOIDCProvider
+                - !Ref GithubOidc
+                - !Ref OIDCProviderArn
+            Condition:
+              StringEquals:
+                token.actions.githubusercontent.com:aud: !Ref OIDCAudience
+              StringLike:
+                token.actions.githubusercontent.com:sub: !Sub repo:${GitHubOrg}/${RepositoryName}:*
+
+  GithubOidc:
+    Type: AWS::IAM::OIDCProvider
+    Condition: CreateOIDCProvider
+    Properties:
+      Url: https://token.actions.githubusercontent.com
+      ClientIdList:
+        - sts.amazonaws.com
+      ThumbprintList:
+        - 6938fd4d98bab03faadb97b34396831e3780aea1
+
+Outputs:
+  Role:
+    Value: !GetAtt Role.Arn

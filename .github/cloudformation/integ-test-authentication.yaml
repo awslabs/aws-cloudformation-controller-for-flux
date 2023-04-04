@@ -3,7 +3,7 @@
 # where this template is deployed.
 #   aws cloudformation deploy \
 #       --template-file .github/cloudformation/integ-test-authentication.yaml \
-#       --stack-name github-identity-provider \
+#       --stack-name github-integ-test-identity-provider \
 #       --parameter-overrides GitHubOrg=awslabs RepositoryName=aws-cloudformation-controller-for-flux \
 #       --capabilities CAPABILITY_IAM \
 #       --region us-west-2 \
