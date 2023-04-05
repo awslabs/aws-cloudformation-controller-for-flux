@@ -112,6 +112,7 @@ func (t *cfnControllerTestSuite) InitializeScenario(ctx *godog.ScenarioContext) 
 	ctx.Step(`^the CloudFormation stack in my AWS account should be in "([^"]*)" state$`, scenario.realCfnStackShouldBeInState)
 	ctx.Step(`^the CloudFormationStack should eventually be deleted$`, scenario.cfnStackObjectShouldBeDeleted)
 	ctx.Step(`^the CloudFormationStack\'s Ready condition should eventually have "([^"]*)" status$`, scenario.cfnStackObjectShouldHaveStatus)
+	ctx.Step(`^the other CloudFormationStack\'s Ready condition should eventually have "([^"]*)" status$`, scenario.otherCfnStackObjectShouldHaveStatus)
 }
 
 func (s *cfnControllerTestSuite) cleanup() {

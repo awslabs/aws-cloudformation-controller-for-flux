@@ -208,6 +208,32 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+func (r *CloudFormationStackReconciler) checkDependencies(cfnStack cfnv1.CloudFormationStack) error {
+	for _, d := range cfnStack.Spec.DependsOn {
+		if d.Namespace == "" {
+			d.Namespace = cfnStack.GetNamespace()
+		}
+		dName := types.NamespacedName{
+			Namespace: d.Namespace,
+			Name:      d.Name,
+		}
+		var dStack cfnv1.CloudFormationStack
+		err := r.Get(context.Background(), dName, &dStack)
+		if err != nil {
+			return fmt.Errorf("unable to get '%s' dependency: %w", dName, err)
+		}
+
+		if len(dStack.Status.Conditions) == 0 || dStack.Generation != dStack.Status.ObservedGeneration {
+			return fmt.Errorf("dependency '%s' is not ready", dName)
+		}
+
+		if !apimeta.IsStatusConditionTrue(dStack.Status.Conditions, meta.ReadyCondition) {
+			return fmt.Errorf("dependency '%s' is not ready", dName)
+		}
+	}
+	return nil
+}
+
 // loadCloudFormationTemplate attempts to download the artifact from the provided source,
 // loads the CloudFormation template file into memory, then removes the downloaded artifact.
 // It returns the loaded template on success, or returns an error.

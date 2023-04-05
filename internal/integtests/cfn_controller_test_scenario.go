@@ -27,7 +27,7 @@ const (
 	AnotherValidCfnTemplateFile = "examples/my-cloudformation-templates/another-template.yaml"
 	ThirdValidCfnTemplateFile   = "examples/my-cloudformation-templates/yet-another-template.yaml"
 
-	EventuallyMaxAttempts = 120
+	EventuallyMaxAttempts = 300
 	EventuallyRetryDelay  = "1s"
 )
 
@@ -39,8 +39,10 @@ type cfnControllerScenario struct {
 	otherCfnTemplateFile string
 
 	// Information about the CloudFormation stacks
-	realCfnStackName   string
-	cfnStackObjectName string
+	realCfnStackName        string
+	cfnStackObjectName      string
+	otherRealCfnStackName   string
+	otherCfnStackObjectName string
 
 	cleanedUp bool
 }
@@ -61,10 +63,25 @@ func (s *cfnControllerScenario) cleanup(ctx context.Context) error {
 		}
 	}
 
+	if s.otherCfnStackObjectName != "" {
+		if err := s.suite.cmdRunner.run("kubectl", "delete", "cfnstack", s.otherCfnStackObjectName, "--namespace", "flux-system", "--ignore-not-found=true"); err != nil {
+			return err
+		}
+	}
+
 	// Delete the real CFN stack
 	if s.realCfnStackName != "" {
 		_, err := s.suite.cfnClient.DeleteStack(ctx, &cloudformation.DeleteStackInput{
 			StackName: aws.String(s.realCfnStackName),
+		})
+		if err != nil && !stackDoesNotExist(err) {
+			return err
+		}
+	}
+
+	if s.otherRealCfnStackName != "" {
+		_, err := s.suite.cfnClient.DeleteStack(ctx, &cloudformation.DeleteStackInput{
+			StackName: aws.String(s.otherRealCfnStackName),
 		})
 		if err != nil && !stackDoesNotExist(err) {
 			return err
@@ -138,6 +155,19 @@ func (s *cfnControllerScenario) applyCfnStackConfiguration(cfnStackSpec *godog.D
 	stackSpec := cfnStackSpec.Content
 	stackSpec = strings.Replace(stackSpec, "{stack_name}", s.realCfnStackName, -1)
 	stackSpec = strings.Replace(stackSpec, "{stack_object_name}", s.cfnStackObjectName, -1)
+
+	if strings.Contains(stackSpec, "{other_stack_object_name}") {
+		if s.otherCfnStackObjectName == "" {
+			id, err := uuid.NewRandom()
+			if err != nil {
+				return err
+			}
+			s.otherCfnStackObjectName = fmt.Sprintf("integ-test-cfnstack-%s", id.String())
+			s.otherRealCfnStackName = fmt.Sprintf("cfn-flux-controller-integ-test-%s", id.String())
+		}
+		stackSpec = strings.Replace(stackSpec, "{other_stack_name}", s.otherRealCfnStackName, -1)
+		stackSpec = strings.Replace(stackSpec, "{other_stack_object_name}", s.otherCfnStackObjectName, -1)
+	}
 
 	if s.cfnTemplateFile != "" {
 		relativeCfnTemplateFilePath, err := filepath.Rel(s.suite.cfnTemplateRepoDir, s.cfnTemplateFile)
@@ -224,6 +254,30 @@ func (s *cfnControllerScenario) cfnStackObjectShouldHaveStatus(expectedStatus st
 	return nil
 }
 
+func (s *cfnControllerScenario) otherCfnStackObjectShouldHaveStatus(expectedStatus string) error {
+	eventuallyErr := eventually(func() error {
+		out, err := s.suite.cmdRunner.getOutput("kubectl", "get", "cfnstack", s.otherCfnStackObjectName, "--namespace", "flux-system", "-o", "jsonpath=\"{.status.conditions[?(@.type=='Ready')].status}\"")
+		if err != nil {
+			return err
+		}
+		out = strings.Trim(out, "\"")
+
+		if out == expectedStatus {
+			return nil
+		}
+		return errors.New(fmt.Sprintf("CloudFormationStack object %s did not achieve expected status Ready=%s, instead Ready=%s", s.otherCfnStackObjectName, expectedStatus, out))
+	})
+
+	if eventuallyErr != nil {
+		output, err := s.suite.cmdRunner.getOutput("kubectl", "get", "cfnstack", s.otherCfnStackObjectName, "--namespace", "flux-system")
+		if err == nil {
+			s.suite.testingT.Error(output)
+		}
+		return eventuallyErr
+	}
+	return nil
+}
+
 // Steps that manage real CloudFormation stacks
 
 func (s *cfnControllerScenario) realCfnStackShouldBeDeleted(ctx context.Context) error {
@@ -243,7 +297,7 @@ func (s *cfnControllerScenario) realCfnStackShouldBeDeleted(ctx context.Context)
 		return nil
 	}
 
-	return errors.New(fmt.Sprintf("CloudFormation stack %s is not deleted, current status %s", s.cfnStackObjectName, out.Stacks[0].StackStatus))
+	return errors.New(fmt.Sprintf("CloudFormation stack %s is not deleted, current status %s", s.realCfnStackName, out.Stacks[0].StackStatus))
 }
 
 func (s *cfnControllerScenario) realCfnStackShouldBeInState(ctx context.Context, expectedState string) error {
@@ -254,11 +308,11 @@ func (s *cfnControllerScenario) realCfnStackShouldBeInState(ctx context.Context,
 		return err
 	}
 	if len(out.Stacks) == 0 {
-		return errors.New(fmt.Sprintf("Could not find CloudFormation stack %s", s.cfnStackObjectName))
+		return errors.New(fmt.Sprintf("Could not find CloudFormation stack %s", s.realCfnStackName))
 	}
 
 	if string(out.Stacks[0].StackStatus) != expectedState {
-		return errors.New(fmt.Sprintf("CloudFormation stack %s is not in expected state %s, current state is %s", s.cfnStackObjectName, expectedState, out.Stacks[0].StackStatus))
+		return errors.New(fmt.Sprintf("CloudFormation stack %s is not in expected state %s, current state is %s", s.realCfnStackName, expectedState, out.Stacks[0].StackStatus))
 	}
 
 	return nil

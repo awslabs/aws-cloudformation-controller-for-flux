@@ -148,8 +148,9 @@ func main() {
 	}
 
 	reconcilerOpts := controllers.CloudFormationStackReconcilerOptions{
-		MaxConcurrentReconciles: concurrent,
-		HTTPRetry:               httpRetry,
+		MaxConcurrentReconciles:   concurrent,
+		HTTPRetry:                 httpRetry,
+		DependencyRequeueInterval: requeueDependency,
 	}
 
 	if err = reconciler.SetupWithManager(mgr, reconcilerOpts); err != nil {
