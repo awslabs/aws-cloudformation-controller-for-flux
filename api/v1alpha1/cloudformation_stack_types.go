@@ -57,6 +57,10 @@ type CloudFormationStackSpec struct {
 	// +optional
 	RetryInterval *metav1.Duration `json:"retryInterval,omitempty"`
 
+	// The parameter keys and values to set on the stack
+	// +optional
+	StackParameters []StackParameter `json:"stackParameters,omitempty"`
+
 	// Suspend tells the controller to suspend reconciliation for this CloudFormation stack,
 	// it does not apply to already started reconciliations. Defaults to false.
 	// +optional
@@ -74,6 +78,17 @@ type CloudFormationStackSpec struct {
 	// can be reconciled.
 	// +optional
 	DependsOn []meta.NamespacedObjectReference `json:"dependsOn,omitempty"`
+}
+
+// Key and value for a CloudFormation stack parameter.
+type StackParameter struct {
+	// Name of the stack parameter in your CloudFormation template.
+	// +required
+	Key string `json:"key"`
+
+	// Value of the stack parameter.
+	// +required
+	Value string `json:"value"`
 }
 
 // Reference to a Flux source object.

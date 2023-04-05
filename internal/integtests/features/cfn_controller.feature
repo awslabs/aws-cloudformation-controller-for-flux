@@ -71,6 +71,59 @@ Feature: CloudFormation controller for Flux
     And the CloudFormationStack's Ready condition should eventually have "True" status
     And the CloudFormation stack in my AWS account should be in "UPDATE_COMPLETE" state
 
+  Scenario: Update an existing CloudFormation stack by changing the stack parameters
+    Given I push a valid CloudFormation template with parameters to my git repository
+    And I trigger Flux to reconcile my git repository
+    And I apply the following CloudFormationStack configuration to my Kubernetes cluster
+      """
+      apiVersion: cloudformation.contrib.fluxcd.io/v1alpha1
+      kind: CloudFormationStack
+      metadata:
+        name: {stack_object_name}
+        namespace: flux-system
+      spec:
+        stackName: {stack_name}
+        templatePath: {template_with_parameters_path}
+        sourceRef:
+          kind: GitRepository
+          name: my-cfn-templates-repo
+        interval: 1h
+        retryInterval: 5s
+        stackParameters:
+          - key: Param1
+            value: Hello
+          - key: Param2
+            value: world
+      """
+    And the CloudFormationStack's Ready condition should eventually have "True" status
+    And the CloudFormation stack in my AWS account should be in "CREATE_COMPLETE" state
+
+    When I apply the following CloudFormationStack configuration to my Kubernetes cluster
+      """
+      apiVersion: cloudformation.contrib.fluxcd.io/v1alpha1
+      kind: CloudFormationStack
+      metadata:
+        name: {stack_object_name}
+        namespace: flux-system
+      spec:
+        stackName: {stack_name}
+        templatePath: {template_with_parameters_path}
+        sourceRef:
+          kind: GitRepository
+          name: my-cfn-templates-repo
+        interval: 1h
+        retryInterval: 5s
+        stackParameters:
+          - key: Param1
+            value: Hi
+          - key: Param2
+            value: everyone
+      """
+
+    Then the CloudFormationStack's Ready condition should eventually have "Unknown" status
+    And the CloudFormationStack's Ready condition should eventually have "True" status
+    And the CloudFormation stack in my AWS account should be in "UPDATE_COMPLETE" state
+
   Scenario: Update an existing CloudFormation stack by pushing a template file change
     Given I push a valid CloudFormation template to my git repository
     And I trigger Flux to reconcile my git repository

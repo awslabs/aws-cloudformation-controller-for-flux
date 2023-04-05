@@ -33,6 +33,8 @@ import (
 	"github.com/fluxcd/pkg/runtime/predicates"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
+	sdktypes "github.com/aws/aws-sdk-go-v2/service/cloudformation/types"
 	cfnv1 "github.com/awslabs/aws-cloudformation-controller-for-flux/api/v1alpha1"
 	"github.com/awslabs/aws-cloudformation-controller-for-flux/internal/clients"
 	"github.com/awslabs/aws-cloudformation-controller-for-flux/internal/clients/cloudformation"
@@ -316,6 +318,17 @@ func (r *CloudFormationStackReconciler) reconcileStack(ctx context.Context, cfnS
 			TemplateBucket: r.TemplateBucket,
 			TemplateBody:   templateContents.String(),
 		},
+	}
+
+	if len(cfnStack.Spec.StackParameters) > 0 {
+		var params []sdktypes.Parameter
+		for _, param := range cfnStack.Spec.StackParameters {
+			params = append(params, sdktypes.Parameter{
+				ParameterKey:   aws.String(param.Key),
+				ParameterValue: aws.String(param.Value),
+			})
+		}
+		clientStack.StackConfig.Parameters = params
 	}
 
 	// Check if we need to generate a new change set or describe the current one

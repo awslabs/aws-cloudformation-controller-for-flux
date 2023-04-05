@@ -1,0 +1,12 @@
+Parameters:
+  Param1:
+    Type: String
+  Param2:
+    Type: String
+
+Resources:
+  SampleResource:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Type: String
+      Value: !Sub "${Param1} ${Param2}"

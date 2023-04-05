@@ -124,6 +124,23 @@ spec:
                 maxLength: 128
                 minLength: 1
                 type: string
+              stackParameters:
+                description: The parameter keys and values to set on the stack
+                items:
+                  description: Key and value for a CloudFormation stack parameter.
+                  properties:
+                    key:
+                      description: Name of the stack parameter in your CloudFormation
+                        template.
+                      type: string
+                    value:
+                      description: Value of the stack parameter.
+                      type: string
+                  required:
+                  - key
+                  - value
+                  type: object
+                type: array
               suspend:
                 default: false
                 description: Suspend tells the controller to suspend reconciliation
