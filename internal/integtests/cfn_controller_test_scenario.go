@@ -23,9 +23,10 @@ import (
 )
 
 const (
-	ValidCfnTemplateFile        = "examples/my-cloudformation-templates/template.yaml"
-	AnotherValidCfnTemplateFile = "examples/my-cloudformation-templates/another-template.yaml"
-	ThirdValidCfnTemplateFile   = "examples/my-cloudformation-templates/yet-another-template.yaml"
+	ValidCfnTemplateFile          = "examples/my-cloudformation-templates/template.yaml"
+	AnotherValidCfnTemplateFile   = "examples/my-cloudformation-templates/another-template.yaml"
+	ThirdValidCfnTemplateFile     = "examples/my-cloudformation-templates/yet-another-template.yaml"
+	CfnTemplateFileWithParameters = "examples/my-cloudformation-templates/template-with-parameters.yaml"
 
 	EventuallyMaxAttempts = 300
 	EventuallyRetryDelay  = "1s"
@@ -35,8 +36,9 @@ type cfnControllerScenario struct {
 	suite *cfnControllerTestSuite
 
 	// Information about the CloudFormation templates git repository
-	cfnTemplateFile      string
-	otherCfnTemplateFile string
+	cfnTemplateFile               string
+	otherCfnTemplateFile          string
+	cfnTemplateFileWithParameters string
 
 	// Information about the CloudFormation stacks
 	realCfnStackName        string
@@ -89,7 +91,13 @@ func (s *cfnControllerScenario) cleanup(ctx context.Context) error {
 	}
 
 	// Delete the CFN templates from the templates git repo
-	deleteFilesFromGitRepository(s.suite.cfnTemplateRepoDir, s.suite.cfnTemplateRepo, s.suite.gitCredentials, s.cfnTemplateFile, s.otherCfnTemplateFile)
+	deleteFilesFromGitRepository(
+		s.suite.cfnTemplateRepoDir,
+		s.suite.cfnTemplateRepo,
+		s.suite.gitCredentials,
+		s.cfnTemplateFile,
+		s.otherCfnTemplateFile,
+		s.cfnTemplateFileWithParameters)
 
 	s.cleanedUp = true
 	return nil
@@ -109,6 +117,15 @@ func (s *cfnControllerScenario) createCfnTemplateFile() error {
 func (s *cfnControllerScenario) createSecondCfnTemplateFile() error {
 	newFilePath, err := copyFileToGitRepository(s.suite.cfnTemplateRepoDir, s.suite.cfnTemplateRepo, s.suite.gitCredentials, AnotherValidCfnTemplateFile, "")
 	s.otherCfnTemplateFile = newFilePath
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *cfnControllerScenario) createCfnTemplateFileWithParameters() error {
+	newFilePath, err := copyFileToGitRepository(s.suite.cfnTemplateRepoDir, s.suite.cfnTemplateRepo, s.suite.gitCredentials, CfnTemplateFileWithParameters, "")
+	s.cfnTemplateFileWithParameters = newFilePath
 	if err != nil {
 		return err
 	}
@@ -175,6 +192,14 @@ func (s *cfnControllerScenario) applyCfnStackConfiguration(cfnStackSpec *godog.D
 			return err
 		}
 		stackSpec = strings.Replace(stackSpec, "{template_path}", relativeCfnTemplateFilePath, -1)
+	}
+
+	if s.cfnTemplateFileWithParameters != "" {
+		relativeCfnTemplateWithParametersFilePath, err := filepath.Rel(s.suite.cfnTemplateRepoDir, s.cfnTemplateFileWithParameters)
+		if err != nil {
+			return err
+		}
+		stackSpec = strings.Replace(stackSpec, "{template_with_parameters_path}", relativeCfnTemplateWithParametersFilePath, -1)
 	}
 
 	if s.otherCfnTemplateFile != "" {

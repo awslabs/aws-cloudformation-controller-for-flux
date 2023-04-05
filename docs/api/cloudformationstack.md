@@ -135,6 +135,20 @@ value to retry failures.</p>
 </tr>
 <tr>
 <td>
+<code>stackParameters</code><br>
+<em>
+<a href="#cloudformation.contrib.fluxcd.io/v1alpha1.StackParameter">
+[]StackParameter
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The parameter keys and values to set on the stack</p>
+</td>
+</tr>
+<tr>
+<td>
 <code>suspend</code><br>
 <em>
 bool
@@ -293,6 +307,20 @@ Kubernetes meta/v1.Duration
 <p>The interval at which to retry a previously failed reconciliation.
 When not specified, the controller uses the CloudFormationStackSpec.Interval
 value to retry failures.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>stackParameters</code><br>
+<em>
+<a href="#cloudformation.contrib.fluxcd.io/v1alpha1.StackParameter">
+[]StackParameter
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The parameter keys and values to set on the stack</p>
 </td>
 </tr>
 <tr>
@@ -585,6 +613,49 @@ string
 <td>
 <em>(Optional)</em>
 <p>Namespace of the source object, defaults to the namespace of the CloudFormation stack object.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<h3 id="cloudformation.contrib.fluxcd.io/v1alpha1.StackParameter">StackParameter
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#cloudformation.contrib.fluxcd.io/v1alpha1.CloudFormationStackSpec">CloudFormationStackSpec</a>)
+</p>
+<p>Key and value for a CloudFormation stack parameter.</p>
+<div class="md-typeset__scrollwrap">
+<div class="md-typeset__table">
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>key</code><br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>Name of the stack parameter in your CloudFormation template.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>value</code><br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>Value of the stack parameter.</p>
 </td>
 </tr>
 </tbody>

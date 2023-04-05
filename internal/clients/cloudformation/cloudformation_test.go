@@ -425,6 +425,96 @@ func TestCloudFormation_CreateStack(t *testing.T) {
 				return m
 			},
 		},
+		"creates the stack with parameters": {
+			inStack: &types.Stack{
+				Name:           mockStackName,
+				Region:         mockRegion,
+				Generation:     mockGenerationId,
+				SourceRevision: mockSourceRevision,
+				StackConfig: &types.StackConfig{
+					TemplateBucket: mockBucket,
+					TemplateBody:   mockTemplateContent,
+					TemplateURL:    mockTemplateUrl,
+					Parameters: []sdktypes.Parameter{
+						{
+							ParameterKey:   aws.String("hello"),
+							ParameterValue: aws.String("world"),
+						},
+					},
+				},
+			},
+			createMock: func(ctrl *gomock.Controller) client {
+				m := mocks.NewMockclient(ctrl)
+				expectedIn := &cloudformation.CreateChangeSetInput{
+					ChangeSetName:       aws.String(mockChangeSetName),
+					StackName:           aws.String(mockStackName),
+					Description:         aws.String("Managed by Flux"),
+					ChangeSetType:       sdktypes.ChangeSetTypeCreate,
+					TemplateURL:         aws.String(mockTemplateUrl),
+					IncludeNestedStacks: aws.Bool(true),
+					Capabilities: []sdktypes.Capability{
+						sdktypes.CapabilityCapabilityIam,
+						sdktypes.CapabilityCapabilityNamedIam,
+						sdktypes.CapabilityCapabilityAutoExpand,
+					},
+					Parameters: []sdktypes.Parameter{
+						{
+							ParameterKey:   aws.String("hello"),
+							ParameterValue: aws.String("world"),
+						},
+					},
+				}
+				m.EXPECT().CreateChangeSet(gomock.Any(), gomock.Eq(expectedIn), gomock.Any()).Return(&cloudformation.CreateChangeSetOutput{
+					Id: aws.String(mockChangeSetArn),
+				}, nil)
+				return m
+			},
+		},
+		"creates the stack with tags": {
+			inStack: &types.Stack{
+				Name:           mockStackName,
+				Region:         mockRegion,
+				Generation:     mockGenerationId,
+				SourceRevision: mockSourceRevision,
+				StackConfig: &types.StackConfig{
+					TemplateBucket: mockBucket,
+					TemplateBody:   mockTemplateContent,
+					TemplateURL:    mockTemplateUrl,
+					Tags: []sdktypes.Tag{
+						{
+							Key:   aws.String("hello"),
+							Value: aws.String("world"),
+						},
+					},
+				},
+			},
+			createMock: func(ctrl *gomock.Controller) client {
+				m := mocks.NewMockclient(ctrl)
+				expectedIn := &cloudformation.CreateChangeSetInput{
+					ChangeSetName:       aws.String(mockChangeSetName),
+					StackName:           aws.String(mockStackName),
+					Description:         aws.String("Managed by Flux"),
+					ChangeSetType:       sdktypes.ChangeSetTypeCreate,
+					TemplateURL:         aws.String(mockTemplateUrl),
+					IncludeNestedStacks: aws.Bool(true),
+					Capabilities: []sdktypes.Capability{
+						sdktypes.CapabilityCapabilityIam,
+						sdktypes.CapabilityCapabilityNamedIam,
+						sdktypes.CapabilityCapabilityAutoExpand,
+					},
+					Tags: []sdktypes.Tag{
+						{
+							Key:   aws.String("hello"),
+							Value: aws.String("world"),
+						},
+					},
+				}
+				m.EXPECT().CreateChangeSet(gomock.Any(), gomock.Eq(expectedIn), gomock.Any()).Return(&cloudformation.CreateChangeSetOutput{
+					Id: aws.String(mockChangeSetArn),
+				}, nil)
+				return m
+			},
+		},
 	}
 
 	for name, tc := range testCases {
@@ -467,7 +557,7 @@ func TestCloudFormation_UpdateStack(t *testing.T) {
 			},
 			wantedErr: fmt.Errorf("create change set flux-2-main-sha1-132f4e719209eb10b9485302f8593fc0e680f4fc for stack mock-stack-1234: %w", genericApiError),
 		},
-		"creates the stack": {
+		"updates the stack": {
 			inStack: generateMockStack(),
 			createMock: func(ctrl *gomock.Controller) client {
 				m := mocks.NewMockclient(ctrl)
@@ -482,6 +572,63 @@ func TestCloudFormation_UpdateStack(t *testing.T) {
 						sdktypes.CapabilityCapabilityIam,
 						sdktypes.CapabilityCapabilityNamedIam,
 						sdktypes.CapabilityCapabilityAutoExpand,
+					},
+				}
+				m.EXPECT().CreateChangeSet(gomock.Any(), gomock.Eq(expectedIn), gomock.Any()).Return(&cloudformation.CreateChangeSetOutput{
+					Id: aws.String(mockChangeSetArn),
+				}, nil)
+				return m
+			},
+		},
+		"updates the stack with parameters and tags": {
+			inStack: &types.Stack{
+				Name:           mockStackName,
+				Region:         mockRegion,
+				Generation:     mockGenerationId,
+				SourceRevision: mockSourceRevision,
+				StackConfig: &types.StackConfig{
+					TemplateBucket: mockBucket,
+					TemplateBody:   mockTemplateContent,
+					TemplateURL:    mockTemplateUrl,
+					Parameters: []sdktypes.Parameter{
+						{
+							ParameterKey:   aws.String("Hello"),
+							ParameterValue: aws.String("World"),
+						},
+					},
+					Tags: []sdktypes.Tag{
+						{
+							Key:   aws.String("Hi"),
+							Value: aws.String("There"),
+						},
+					},
+				},
+			},
+			createMock: func(ctrl *gomock.Controller) client {
+				m := mocks.NewMockclient(ctrl)
+				expectedIn := &cloudformation.CreateChangeSetInput{
+					ChangeSetName:       aws.String(mockChangeSetName),
+					StackName:           aws.String(mockStackName),
+					Description:         aws.String("Managed by Flux"),
+					ChangeSetType:       sdktypes.ChangeSetTypeUpdate,
+					TemplateURL:         aws.String(mockTemplateUrl),
+					IncludeNestedStacks: aws.Bool(true),
+					Capabilities: []sdktypes.Capability{
+						sdktypes.CapabilityCapabilityIam,
+						sdktypes.CapabilityCapabilityNamedIam,
+						sdktypes.CapabilityCapabilityAutoExpand,
+					},
+					Parameters: []sdktypes.Parameter{
+						{
+							ParameterKey:   aws.String("Hello"),
+							ParameterValue: aws.String("World"),
+						},
+					},
+					Tags: []sdktypes.Tag{
+						{
+							Key:   aws.String("Hi"),
+							Value: aws.String("There"),
+						},
 					},
 				}
 				m.EXPECT().CreateChangeSet(gomock.Any(), gomock.Eq(expectedIn), gomock.Any()).Return(&cloudformation.CreateChangeSetOutput{
