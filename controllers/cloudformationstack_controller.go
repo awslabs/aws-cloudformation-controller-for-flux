@@ -61,8 +61,9 @@ type CloudFormationStackReconciler struct {
 }
 
 type CloudFormationStackReconcilerOptions struct {
-	MaxConcurrentReconciles int
-	HTTPRetry               int
+	MaxConcurrentReconciles   int
+	HTTPRetry                 int
+	DependencyRequeueInterval time.Duration
 }
 
 func (r *CloudFormationStackReconciler) SetupWithManager(mgr ctrl.Manager, opts CloudFormationStackReconcilerOptions) error {
@@ -79,6 +80,8 @@ func (r *CloudFormationStackReconciler) SetupWithManager(mgr ctrl.Manager, opts 
 		r.IndexBy(sourcev1.OCIRepositoryKind)); err != nil {
 		return fmt.Errorf("failed setting index fields: %w", err)
 	}
+
+	r.requeueDependency = opts.DependencyRequeueInterval
 
 	// Configure the retryable http client for retrieving artifacts.
 	httpClient := retryablehttp.NewClient()
@@ -259,12 +262,31 @@ func (r *CloudFormationStackReconciler) reconcile(ctx context.Context, cfnStack 
 		return cfnStack, ctrl.Result{RequeueAfter: cfnStack.GetRetryInterval()}, nil
 	}
 
+	// Check dependencies
+	if len(cfnStack.Spec.DependsOn) > 0 {
+		if err := r.checkDependencies(cfnStack); err != nil {
+			msg := fmt.Sprintf("Dependencies do not meet ready condition (%s)", err.Error())
+			r.event(ctx, cfnStack, sourceObj.GetArtifact().Revision, eventv1.EventSeverityInfo, msg)
+			log.Info(msg)
+			cfnStack = cfnv1.CloudFormationStackNotReady(cfnStack, cfnv1.ReadinessUpdate{
+				Message:        msg,
+				Reason:         cfnv1.DependencyNotReadyReason,
+				SourceRevision: sourceObj.GetArtifact().Revision,
+			})
+			return cfnStack, ctrl.Result{RequeueAfter: r.requeueDependency}, nil
+		}
+	}
+
 	// Load stack template file from artifact
 	templateContents, err := r.loadCloudFormationTemplate(ctx, cfnStack, sourceObj.GetArtifact())
 	if err != nil {
 		msg := fmt.Sprintf("Failed to load template '%s' from source '%s'", cfnStack.Spec.TemplatePath, cfnStack.Spec.SourceRef.String())
 		log.Error(err, msg)
-		cfnStack = cfnv1.CloudFormationStackNotReady(cfnStack, cfnv1.ReadinessUpdate{Message: msg, Reason: cfnv1.ArtifactFailedReason})
+		cfnStack = cfnv1.CloudFormationStackNotReady(cfnStack, cfnv1.ReadinessUpdate{
+			Message:        msg,
+			Reason:         cfnv1.ArtifactFailedReason,
+			SourceRevision: sourceObj.GetArtifact().Revision,
+		})
 		return cfnStack, ctrl.Result{RequeueAfter: cfnStack.GetRetryInterval()}, err
 	}
 	revision := sourceObj.GetArtifact().Revision
