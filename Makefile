@@ -61,6 +61,9 @@ test: tidy generate gen-mocks fmt vet manifests api-docs
 	go test ./... -coverprofile cover.out
 	cd api; go test ./... -coverprofile cover.out
 
+scan:
+	${GOSEC} ./...
+
 view-test-coverage:
 	go tool cover -html=cover.out
 
@@ -123,7 +126,7 @@ integ-test: generate fmt vet manifests
 ##### Install dev tools #####
 
 .PHONY: install-tools
-install-tools: kustomize controller-gen gen-crd-api-reference-docs
+install-tools: kustomize controller-gen gen-crd-api-reference-docs gosec
 
 KUSTOMIZE = $(shell pwd)/bin/kustomize
 .PHONY: kustomize
@@ -139,6 +142,11 @@ MOCKGEN = $(GOBIN)/mockgen
 .PHONY: mockgen
 mockgen: ## Download mockgen locally if necessary.
 	$(call go-install-tool,$(MOCKGEN),github.com/golang/mock/mockgen@v1.6.0)
+
+GOSEC = $(GOBIN)/gosec
+.PHONY: gosec
+gosec: ## Download gosec locally if necessary.
+	$(call go-install-tool,$(GOSEC),github.com/securego/gosec/v2/cmd/gosec@v2.15.0)
 
 GEN_CRD_API_REFERENCE_DOCS = $(GOBIN)/gen-crd-api-reference-docs
 .PHONY: gen-crd-api-reference-docs

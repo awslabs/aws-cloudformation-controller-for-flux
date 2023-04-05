@@ -26,6 +26,7 @@ You can find instructions for running the CloudFormation controller on a local K
 These instructions assume you already have a Kubernetes cluster with Flux installed.
 See the [Flux documentation](https://fluxcd.io/flux/get-started/) for instructions
 on installing Flux into your Kubernetes cluster.
+Note that the CloudFormation controller requires the Flux source controller v0.18.0 or newer.
 
 These instructions also assume that you already created the following prerequisite resources.
 You can use the [sample CloudFormation template](../examples/resources.yaml) for creating these resources.

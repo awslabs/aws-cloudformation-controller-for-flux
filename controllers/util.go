@@ -3,13 +3,13 @@ package controllers
 import (
 	"bytes"
 	"context"
-	"crypto/sha1"
 	"crypto/sha256"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 
 	cfnv1 "github.com/awslabs/aws-cloudformation-controller-for-flux/api/v1alpha1"
 	securejoin "github.com/cyphar/filepath-securejoin"
@@ -260,7 +260,11 @@ func (r *CloudFormationStackReconciler) loadCloudFormationTemplate(ctx context.C
 	if err != nil {
 		return nil, fmt.Errorf("failed to download artifact, error: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			log.Error(err, "Error closing artifact download")
+		}
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("failed to download artifact, status code: %s", resp.Status)
@@ -295,7 +299,7 @@ func (r *CloudFormationStackReconciler) loadCloudFormationTemplate(ctx context.C
 		return nil, fmt.Errorf(msg)
 	}
 
-	templateBytes, err := os.ReadFile(templateFilePath)
+	templateBytes, err := os.ReadFile(filepath.Clean(templateFilePath))
 	if err != nil {
 		msg := fmt.Sprintf("unable to read template file '%s' in the artifact temp directory", cfnStack.Spec.TemplatePath)
 		log.Error(err, msg)
@@ -307,11 +311,6 @@ func (r *CloudFormationStackReconciler) loadCloudFormationTemplate(ctx context.C
 
 func (r *CloudFormationStackReconciler) copyAndVerifyArtifact(artifact *sourcev1.Artifact, buf *bytes.Buffer, reader io.Reader) error {
 	hasher := sha256.New()
-
-	// for backwards compatibility with source-controller v0.17.2 and older
-	if len(artifact.Checksum) == 40 {
-		hasher = sha1.New()
-	}
 
 	// compute checksum
 	mw := io.MultiWriter(hasher, buf)
