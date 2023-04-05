@@ -9,6 +9,8 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
+	"time"
 
 	git "github.com/go-git/go-git/v5"
 	http "github.com/go-git/go-git/v5/plumbing/transport/http"
@@ -16,6 +18,9 @@ import (
 
 const (
 	CodeCommitRegion = "us-west-2"
+
+	GitEventuallyMaxAttempts = 5
+	GitEventuallyRetryDelay  = "2s"
 )
 
 // Clones a repository from CodeCommit.
@@ -39,94 +44,127 @@ func cloneGitRepository(ctx context.Context, repositoryName string, gitCredentia
 
 // Copies the given file into the git repository.
 // If the destination file name is not specified, the method will create a file using a new unique file name
-func copyFileToGitRepository(dir string, repo *git.Repository, gitCredentials *http.BasicAuth, originalFile string, destFile string) (string, error) {
+func copyFileToGitRepository(ctx context.Context, repositoryName string, gitCredentials *http.BasicAuth, originalFile string, destFile string) (string, error) {
 	content, err := os.ReadFile("../../" + originalFile)
 	if err != nil {
 		return "", err
 	}
-	return addFileToGitRepository(dir, repo, gitCredentials, string(content), destFile)
+	return addFileToGitRepository(ctx, repositoryName, gitCredentials, string(content), destFile)
 }
 
 // Adds a file with the given content into the git repository.
 // If the destination file name is not specified, the method will create a file using a new unique file name
-func addFileToGitRepository(dir string, repo *git.Repository, gitCredentials *http.BasicAuth, content string, destFile string) (string, error) {
-	// Make sure the local repo is up to date with the remote
-	w, err := repo.Worktree()
-	if err != nil {
-		return "", err
-	}
-	if err = w.Pull(&git.PullOptions{RemoteName: "origin", Auth: gitCredentials}); err != nil && err != git.NoErrAlreadyUpToDate {
-		return "", err
-	}
+func addFileToGitRepository(ctx context.Context, repositoryName string, gitCredentials *http.BasicAuth, content string, destFile string) (string, error) {
+	var newFileRelativePath string
 
-	// Write the file into the git repo on disk
-	var newFile *os.File
-	if destFile == "" {
-		newFile, err = os.CreateTemp(dir, "integ-test.*.yaml")
+	err := gitEventually(func() error {
+		// Clone the repo fresh
+		repo, dir, err := cloneGitRepository(ctx, repositoryName, gitCredentials)
 		if err != nil {
-			return "", err
+			return err
 		}
-	} else {
-		newFile, err = os.OpenFile(destFile, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
+		defer os.RemoveAll(dir)
+		w, err := repo.Worktree()
 		if err != nil {
-			return "", err
+			return err
 		}
-	}
-	newFilePath := newFile.Name()
-	if _, err = newFile.Write([]byte(content)); err != nil {
-		return newFilePath, err
-	}
-	if err = newFile.Close(); err != nil {
-		return newFilePath, err
-	}
 
-	// Add the file to git
-	if err = w.AddWithOptions(&git.AddOptions{All: true}); err != nil {
-		return newFilePath, err
-	}
-	if _, err = w.Commit("Add file for integ test", &git.CommitOptions{AllowEmptyCommits: false}); err != nil {
-		if err == git.ErrEmptyCommit {
-			// Nothing to do
-			return newFilePath, nil
-		}
-		return newFilePath, err
-	}
-	if err = repo.Push(&git.PushOptions{RemoteName: "origin", Auth: gitCredentials}); err != nil {
-		return newFilePath, err
-	}
-	return newFilePath, nil
-}
-
-// Deletes files from the git repository
-func deleteFilesFromGitRepository(dir string, repo *git.Repository, gitCredentials *http.BasicAuth, filePaths ...string) error {
-	// Make sure the local repo is up to date with the remote
-	w, err := repo.Worktree()
-	if err != nil {
-		return err
-	}
-	if err = w.Pull(&git.PullOptions{RemoteName: "origin", Auth: gitCredentials}); err != nil && err != git.NoErrAlreadyUpToDate {
-		return err
-	}
-
-	// Delete the files from disk
-	for _, filePath := range filePaths {
-		if filePath != "" {
-			if err = os.Remove(filePath); err != nil {
+		// Write the file into the git repo on disk
+		var newFile *os.File
+		if destFile == "" {
+			newFile, err = os.CreateTemp(dir, "integ-test.*.yaml")
+			if err != nil {
+				return err
+			}
+		} else {
+			newFile, err = os.OpenFile(dir+"/"+destFile, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
+			if err != nil {
 				return err
 			}
 		}
-	}
-	if _, err = w.Commit("Delete integ test files", &git.CommitOptions{All: true, AllowEmptyCommits: false}); err != nil {
-		if err == git.ErrEmptyCommit {
-			// Nothing to do
-			return nil
+		newFilePath := newFile.Name()
+		newFileRelativePath, err = filepath.Rel(dir, newFilePath)
+		if err != nil {
+			return err
 		}
-		return err
+		if _, err = newFile.Write([]byte(content)); err != nil {
+			return err
+		}
+		if err = newFile.Close(); err != nil {
+			return err
+		}
+
+		// Add the file to git
+		if err = w.AddWithOptions(&git.AddOptions{All: true}); err != nil {
+			return err
+		}
+		if _, err = w.Commit("Add file for integ test", &git.CommitOptions{AllowEmptyCommits: false}); err != nil {
+			if err == git.ErrEmptyCommit {
+				// Nothing to do
+				return nil
+			}
+			return err
+		}
+		if err = repo.Push(&git.PushOptions{RemoteName: "origin", Auth: gitCredentials}); err != nil {
+			return err
+		}
+		return nil
+	})
+
+	return newFileRelativePath, err
+}
+
+// Deletes files from the git repository
+func deleteFilesFromGitRepository(ctx context.Context, repositoryName string, gitCredentials *http.BasicAuth, filePaths ...string) error {
+	return gitEventually(func() error {
+		// Clone the repo fresh
+		repo, dir, err := cloneGitRepository(ctx, repositoryName, gitCredentials)
+		if err != nil {
+			return err
+		}
+		defer os.RemoveAll(dir)
+		w, err := repo.Worktree()
+		if err != nil {
+			return err
+		}
+
+		// Delete the files from disk
+		for _, filePath := range filePaths {
+			if filePath != "" {
+				if err = os.Remove(dir + "/" + filePath); err != nil {
+					return err
+				}
+			}
+		}
+		if _, err = w.Commit("Delete integ test files", &git.CommitOptions{All: true, AllowEmptyCommits: false}); err != nil {
+			if err == git.ErrEmptyCommit {
+				// Nothing to do
+				return nil
+			}
+			return err
+		}
+
+		// Delete the files on the remote
+		if err = repo.Push(&git.PushOptions{RemoteName: "origin", Auth: gitCredentials}); err != nil {
+			return err
+		}
+		return nil
+	})
+}
+
+func gitEventually(f func() error) (err error) {
+	delay, durationErr := time.ParseDuration(GitEventuallyRetryDelay)
+	if err != nil {
+		return durationErr
 	}
 
-	// Delete the files on the remote
-	if err = repo.Push(&git.PushOptions{RemoteName: "origin", Auth: gitCredentials}); err != nil {
-		return err
+	for i := 0; i < GitEventuallyMaxAttempts; i++ {
+		err = f()
+		if err != nil {
+			time.Sleep(delay)
+			continue
+		}
+		break
 	}
-	return nil
+	return err
 }

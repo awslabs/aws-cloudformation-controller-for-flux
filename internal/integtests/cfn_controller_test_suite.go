@@ -9,8 +9,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 
@@ -18,7 +16,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/cloudformation"
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 	"github.com/cucumber/godog"
-	git "github.com/go-git/go-git/v5"
 	http "github.com/go-git/go-git/v5/plumbing/transport/http"
 )
 
@@ -38,15 +35,6 @@ type cfnControllerTestSuite struct {
 	secretsManagerClient *secretsmanager.Client
 	cfnClient            *cloudformation.Client
 	gitCredentials       *http.BasicAuth
-
-	// Information about the flux configuration git repository
-	fluxConfigRepo                   *git.Repository
-	fluxConfigRepoDir                string
-	fluxConfigTemplateRepoConfigFile string
-
-	// Information about the CloudFormation templates git repository
-	cfnTemplateRepo    *git.Repository
-	cfnTemplateRepoDir string
 }
 
 func (t *cfnControllerTestSuite) InitializeTestSuite(ctx *godog.TestSuiteContext) {
@@ -83,13 +71,6 @@ func (t *cfnControllerTestSuite) InitializeTestSuite(ctx *godog.TestSuiteContext
 
 		// TODO clear out any old CFN stacks from previous integ tests
 	})
-
-	// After completing the test suite:
-	// 1. Remove the local git repos from disk
-	// 2. Tear down the local Kubernetes cluster
-	ctx.AfterSuite(func() {
-		t.cleanup()
-	})
 }
 
 func (t *cfnControllerTestSuite) InitializeScenario(ctx *godog.ScenarioContext) {
@@ -116,27 +97,9 @@ func (t *cfnControllerTestSuite) InitializeScenario(ctx *godog.ScenarioContext) 
 	ctx.Step(`^the other CloudFormationStack\'s Ready condition should eventually have "([^"]*)" status$`, scenario.otherCfnStackObjectShouldHaveStatus)
 }
 
-func (s *cfnControllerTestSuite) cleanup() {
-	if s.fluxConfigRepoDir != "" {
-		os.RemoveAll(s.fluxConfigRepoDir)
-	}
-	if s.cfnTemplateRepoDir != "" {
-		os.RemoveAll(s.cfnTemplateRepoDir)
-	}
-}
-
 func (s *cfnControllerTestSuite) checkTemplateGitRepository(ctx context.Context) error {
-	// Clone the Flux config repository locally, and add the template git repository configuration to the Flux config repo
-	repo, dir, err := cloneGitRepository(ctx, FluxConfigRepoName, s.gitCredentials)
-	s.fluxConfigRepo = repo
-	s.fluxConfigRepoDir = dir
-	if err != nil {
-		return err
-	}
-
 	// Add the template git repository configuration to the Flux config repo
-	s.fluxConfigTemplateRepoConfigFile = filepath.Join(s.fluxConfigRepoDir, "my-cloudformation-templates-repo.yaml")
-	_, err = copyFileToGitRepository(dir, repo, s.gitCredentials, CfnTemplatesRepoConfigFile, s.fluxConfigTemplateRepoConfigFile)
+	_, err := copyFileToGitRepository(ctx, FluxConfigRepoName, s.gitCredentials, CfnTemplatesRepoConfigFile, "my-cloudformation-templates-repo.yaml")
 	if err != nil {
 		return err
 	}
@@ -151,14 +114,7 @@ func (s *cfnControllerTestSuite) checkTemplateGitRepository(ctx context.Context)
 		return err
 	}
 
-	// Clone the template git repository locally
-	// TODO clear out any old integ test templates
-	repo, dir, err = cloneGitRepository(ctx, CfnTemplateRepoName, s.gitCredentials)
-	s.cfnTemplateRepo = repo
-	s.cfnTemplateRepoDir = dir
-	if err != nil {
-		return err
-	}
+	// TODO clear out any old integ test templates from the template git repository
 
 	return nil
 }

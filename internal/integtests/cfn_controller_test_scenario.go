@@ -92,8 +92,8 @@ func (s *cfnControllerScenario) cleanup(ctx context.Context) error {
 
 	// Delete the CFN templates from the templates git repo
 	deleteFilesFromGitRepository(
-		s.suite.cfnTemplateRepoDir,
-		s.suite.cfnTemplateRepo,
+		ctx,
+		CfnTemplateRepoName,
 		s.suite.gitCredentials,
 		s.cfnTemplateFile,
 		s.otherCfnTemplateFile,
@@ -105,8 +105,8 @@ func (s *cfnControllerScenario) cleanup(ctx context.Context) error {
 
 // Steps that manipulate the template git repository
 
-func (s *cfnControllerScenario) createCfnTemplateFile() error {
-	newFilePath, err := copyFileToGitRepository(s.suite.cfnTemplateRepoDir, s.suite.cfnTemplateRepo, s.suite.gitCredentials, ValidCfnTemplateFile, "")
+func (s *cfnControllerScenario) createCfnTemplateFile(ctx context.Context) error {
+	newFilePath, err := copyFileToGitRepository(ctx, CfnTemplateRepoName, s.suite.gitCredentials, ValidCfnTemplateFile, "")
 	s.cfnTemplateFile = newFilePath
 	if err != nil {
 		return err
@@ -114,8 +114,8 @@ func (s *cfnControllerScenario) createCfnTemplateFile() error {
 	return nil
 }
 
-func (s *cfnControllerScenario) createSecondCfnTemplateFile() error {
-	newFilePath, err := copyFileToGitRepository(s.suite.cfnTemplateRepoDir, s.suite.cfnTemplateRepo, s.suite.gitCredentials, AnotherValidCfnTemplateFile, "")
+func (s *cfnControllerScenario) createSecondCfnTemplateFile(ctx context.Context) error {
+	newFilePath, err := copyFileToGitRepository(ctx, CfnTemplateRepoName, s.suite.gitCredentials, AnotherValidCfnTemplateFile, "")
 	s.otherCfnTemplateFile = newFilePath
 	if err != nil {
 		return err
@@ -123,8 +123,8 @@ func (s *cfnControllerScenario) createSecondCfnTemplateFile() error {
 	return nil
 }
 
-func (s *cfnControllerScenario) createCfnTemplateFileWithParameters() error {
-	newFilePath, err := copyFileToGitRepository(s.suite.cfnTemplateRepoDir, s.suite.cfnTemplateRepo, s.suite.gitCredentials, CfnTemplateFileWithParameters, "")
+func (s *cfnControllerScenario) createCfnTemplateFileWithParameters(ctx context.Context) error {
+	newFilePath, err := copyFileToGitRepository(ctx, CfnTemplateRepoName, s.suite.gitCredentials, CfnTemplateFileWithParameters, "")
 	s.cfnTemplateFileWithParameters = newFilePath
 	if err != nil {
 		return err
@@ -132,8 +132,8 @@ func (s *cfnControllerScenario) createCfnTemplateFileWithParameters() error {
 	return nil
 }
 
-func (s *cfnControllerScenario) updateCfnTemplateFile() error {
-	_, err := copyFileToGitRepository(s.suite.cfnTemplateRepoDir, s.suite.cfnTemplateRepo, s.suite.gitCredentials, ThirdValidCfnTemplateFile, s.cfnTemplateFile)
+func (s *cfnControllerScenario) updateCfnTemplateFile(ctx context.Context) error {
+	_, err := copyFileToGitRepository(ctx, CfnTemplateRepoName, s.suite.gitCredentials, ThirdValidCfnTemplateFile, s.cfnTemplateFile)
 	if err != nil {
 		return err
 	}
@@ -187,27 +187,15 @@ func (s *cfnControllerScenario) applyCfnStackConfiguration(cfnStackSpec *godog.D
 	}
 
 	if s.cfnTemplateFile != "" {
-		relativeCfnTemplateFilePath, err := filepath.Rel(s.suite.cfnTemplateRepoDir, s.cfnTemplateFile)
-		if err != nil {
-			return err
-		}
-		stackSpec = strings.Replace(stackSpec, "{template_path}", relativeCfnTemplateFilePath, -1)
+		stackSpec = strings.Replace(stackSpec, "{template_path}", s.cfnTemplateFile, -1)
 	}
 
 	if s.cfnTemplateFileWithParameters != "" {
-		relativeCfnTemplateWithParametersFilePath, err := filepath.Rel(s.suite.cfnTemplateRepoDir, s.cfnTemplateFileWithParameters)
-		if err != nil {
-			return err
-		}
-		stackSpec = strings.Replace(stackSpec, "{template_with_parameters_path}", relativeCfnTemplateWithParametersFilePath, -1)
+		stackSpec = strings.Replace(stackSpec, "{template_with_parameters_path}", s.cfnTemplateFileWithParameters, -1)
 	}
 
 	if s.otherCfnTemplateFile != "" {
-		relativeOtherCfnTemplateFilePath, err := filepath.Rel(s.suite.cfnTemplateRepoDir, s.otherCfnTemplateFile)
-		if err != nil {
-			return err
-		}
-		stackSpec = strings.Replace(stackSpec, "{other_template_path}", relativeOtherCfnTemplateFilePath, -1)
+		stackSpec = strings.Replace(stackSpec, "{other_template_path}", s.otherCfnTemplateFile, -1)
 	}
 
 	s.suite.cmdRunner.runWithStdIn(stackSpec, "kubectl", "apply", "-f", "-")
