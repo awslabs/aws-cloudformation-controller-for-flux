@@ -11,3 +11,10 @@ All notable changes to this project will be documented in this file. See [standa
 * Add support for stack parameters ([465b1c8](https://github.com/awslabs/aws-cloudformation-controller-for-flux/commit/465b1c8933304a2a74471062a7ccd7a82c3cee5e))
 
 ### [0.0.2](https://github.com/awslabs/aws-cloudformation-controller-for-flux/compare/v0.0.1...v0.0.2) (2023-04-04)
+
+Working CloudFormation controller with support for declaring a CloudFormationStack object with a stack name and
+a Flux source reference for the stack's CloudFormation template.
+
+### 0.0.1 (2023-03-03)
+
+Beginning of this project
