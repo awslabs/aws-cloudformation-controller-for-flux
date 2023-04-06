@@ -56,7 +56,7 @@ const (
 	mockTemplateSourceBucketName                      = "mock-cfn-template-source-bucket"
 	mockSourceRevision                                = "mock-source-revision"
 	mockSourceRevision2                               = "mock-new-source-revision"
-	mockTemplateSourceFile                            = "../examples/my-cloudformation-templates/template.yaml"
+	mockTemplateSourceFile                            = "../../examples/my-cloudformation-templates/template.yaml"
 	mockTemplateUploadBucket                          = "mock-template-upload-bucket"
 	mockChangeSetName                                 = "flux-1-mock-source-revision"
 	mockChangeSetNameNewGeneration                    = "flux-2-mock-source-revision"

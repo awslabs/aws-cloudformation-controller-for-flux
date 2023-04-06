@@ -25,7 +25,6 @@ RUN go mod download
 
 # Copy controller source code
 COPY main.go main.go
-COPY controllers/ controllers/
 COPY internal/ internal/
 
 # Build

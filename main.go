@@ -25,9 +25,9 @@ import (
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 
 	cfnv1 "github.com/awslabs/aws-cloudformation-controller-for-flux/api/v1alpha1"
-	"github.com/awslabs/aws-cloudformation-controller-for-flux/controllers"
 	"github.com/awslabs/aws-cloudformation-controller-for-flux/internal/clients/cloudformation"
 	"github.com/awslabs/aws-cloudformation-controller-for-flux/internal/clients/s3"
+	"github.com/awslabs/aws-cloudformation-controller-for-flux/internal/controllers"
 	// +kubebuilder:scaffold:imports
 )
 
