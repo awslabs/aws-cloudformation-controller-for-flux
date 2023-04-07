@@ -27,6 +27,7 @@ import (
 	clienttypes "github.com/awslabs/aws-cloudformation-controller-for-flux/internal/clients/types"
 	"github.com/awslabs/aws-cloudformation-controller-for-flux/internal/mocks"
 	"github.com/fluxcd/pkg/apis/meta"
+	"github.com/fluxcd/pkg/runtime/acl"
 	"github.com/fluxcd/pkg/runtime/metrics"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 	"github.com/golang/mock/gomock"
@@ -48,7 +49,8 @@ const (
 	mockNamespace                                     = "mock-namespace"
 	mockGenerationId                                  = 1
 	mockGenerationId2                                 = 2
-	mockSourceNamespace                               = "mock-source-namespace"
+	mockSourceNamespace                               = "mock-namespace"
+	mockSourceNamespace2                              = "mock-source-namespace"
 	mockRealStackName                                 = "mock-real-stack"
 	mockTemplatePath                                  = "template.yaml"
 	mockTemplateGitRepoName                           = "mock-cfn-template-git-repo"
@@ -86,9 +88,18 @@ var (
 		Name:      mockTemplateGitRepoName,
 		Namespace: mockSourceNamespace,
 	}
+	mockGitRef2 = cfnv1.SourceReference{
+		Kind:      sourcev1.GitRepositoryKind,
+		Name:      mockTemplateGitRepoName,
+		Namespace: mockSourceNamespace2,
+	}
 	mockGitSourceReference = types.NamespacedName{
 		Name:      mockTemplateGitRepoName,
 		Namespace: mockSourceNamespace,
+	}
+	mockGitSourceReference2 = types.NamespacedName{
+		Name:      mockTemplateGitRepoName,
+		Namespace: mockSourceNamespace2,
 	}
 
 	mockOCIRef = cfnv1.SourceReference{
@@ -504,6 +515,7 @@ func runReconciliationLoopTestCase(t *testing.T, tc *reconciliationLoopTestCase)
 			gomock.Any(),
 			gomock.Any(),
 			gomock.Any(),
+			ctrlclient.FieldOwner("cfn-controller-test"),
 		).DoAndReturn(func(ctx context.Context, obj ctrlclient.Object, patch ctrlclient.Patch, opts ...ctrlclient.PatchOption) error {
 			// Stack should be marked as creation in progress
 			cfnStack, ok := obj.(*cfnv1.CloudFormationStack)
@@ -518,6 +530,7 @@ func runReconciliationLoopTestCase(t *testing.T, tc *reconciliationLoopTestCase)
 				gomock.Any(),
 				gomock.Any(),
 				gomock.Any(),
+				ctrlclient.FieldOwner("cfn-controller-test"),
 			).DoAndReturn(func(ctx context.Context, obj ctrlclient.Object, patch ctrlclient.Patch, opts ...ctrlclient.PatchOption) error {
 				// Stack should be marked as reconciliation in progress
 				cfnStack, ok := obj.(*cfnv1.CloudFormationStack)
@@ -549,15 +562,17 @@ func runReconciliationLoopTestCase(t *testing.T, tc *reconciliationLoopTestCase)
 	}
 
 	reconciler := &CloudFormationStackReconciler{
-		Scheme:            scheme,
-		Client:            k8sClient,
-		CfnClient:         cfnClient,
-		S3Client:          s3Client,
-		TemplateBucket:    mockTemplateUploadBucket,
-		EventRecorder:     eventRecorder,
-		MetricsRecorder:   metricsRecorder,
-		httpClient:        httpClient,
-		requeueDependency: mockDependencyRetryIntervalDuration,
+		Scheme:              scheme,
+		Client:              k8sClient,
+		CfnClient:           cfnClient,
+		S3Client:            s3Client,
+		TemplateBucket:      mockTemplateUploadBucket,
+		EventRecorder:       eventRecorder,
+		MetricsRecorder:     metricsRecorder,
+		ControllerName:      "cfn-controller-test",
+		NoCrossNamespaceRef: true,
+		httpClient:          httpClient,
+		requeueDependency:   mockDependencyRetryIntervalDuration,
 	}
 
 	request := ctrl.Request{NamespacedName: mockStackNamespacedName}
@@ -1388,6 +1403,31 @@ func TestCfnController_ReconcileSource(t *testing.T) {
 				cfnClient.EXPECT().CreateStack(expectedCreateStackIn).Return(mockChangeSetArn, nil)
 			},
 		},
+		"reject source in another namespace": {
+			wantedErr:          acl.AccessDeniedError("can't access 'GitRepository/mock-source-namespace/mock-cfn-template-git-repo', cross-namespace references have been blocked"),
+			wantedRequeueDelay: mockRetryIntervalDuration,
+			wantedStackStatus: &cfnv1.CloudFormationStackStatus{
+				ObservedGeneration: mockGenerationId,
+				StackName:          mockRealStackName,
+				Conditions: []metav1.Condition{
+					{
+						Type:               "Ready",
+						Status:             "False",
+						ObservedGeneration: mockGenerationId,
+						Reason:             "ArtifactFailed",
+						Message:            fmt.Sprintf("Failed to resolve source 'GitRepository/mock-source-namespace/mock-cfn-template-git-repo'"),
+					},
+				},
+			},
+			markStackAsInProgress: true,
+			fillInInitialCfnStack: func(cfnStack *cfnv1.CloudFormationStack) {
+				cfnStack.Name = mockStackName
+				cfnStack.Namespace = mockNamespace
+				cfnStack.Generation = mockGenerationId
+				cfnStack.Spec = generateMockCfnStackSpec()
+				cfnStack.Spec.SourceRef = mockGitRef2
+			},
+		},
 		"git source cannot be found": {
 			wantedRequeueDelay: mockRetryIntervalDuration,
 			wantedStackStatus: &cfnv1.CloudFormationStackStatus{
@@ -1541,7 +1581,7 @@ func TestCfnController_ReconcileSource(t *testing.T) {
 						Status:             "False",
 						ObservedGeneration: mockGenerationId,
 						Reason:             "ArtifactFailed",
-						Message:            "Source 'GitRepository/mock-source-namespace/mock-cfn-template-git-repo' is not ready, artifact not found",
+						Message:            "Source 'GitRepository/mock-namespace/mock-cfn-template-git-repo' is not ready, artifact not found",
 					},
 				},
 			},
@@ -1571,7 +1611,7 @@ func TestCfnController_ReconcileSource(t *testing.T) {
 						Status:             "False",
 						ObservedGeneration: mockGenerationId,
 						Reason:             "ArtifactFailed",
-						Message:            "Failed to load template 'template.yaml' from source 'GitRepository/mock-source-namespace/mock-cfn-template-git-repo'",
+						Message:            "Failed to load template 'template.yaml' from source 'GitRepository/mock-namespace/mock-cfn-template-git-repo'",
 					},
 				},
 			},
@@ -1602,7 +1642,7 @@ func TestCfnController_ReconcileSource(t *testing.T) {
 						Status:             "False",
 						ObservedGeneration: mockGenerationId,
 						Reason:             "ArtifactFailed",
-						Message:            "Failed to load template 'template.yaml' from source 'GitRepository/mock-source-namespace/mock-cfn-template-git-repo'",
+						Message:            "Failed to load template 'template.yaml' from source 'GitRepository/mock-namespace/mock-cfn-template-git-repo'",
 					},
 				},
 			},
@@ -1638,7 +1678,7 @@ func TestCfnController_ReconcileSource(t *testing.T) {
 						Status:             "False",
 						ObservedGeneration: mockGenerationId,
 						Reason:             "ArtifactFailed",
-						Message:            "Failed to load template 'does-not-exist.yaml' from source 'GitRepository/mock-source-namespace/mock-cfn-template-git-repo'",
+						Message:            "Failed to load template 'does-not-exist.yaml' from source 'GitRepository/mock-namespace/mock-cfn-template-git-repo'",
 					},
 				},
 			},
@@ -1665,7 +1705,7 @@ func TestCfnController_ReconcileSource(t *testing.T) {
 						Status:             "False",
 						ObservedGeneration: mockGenerationId,
 						Reason:             "ArtifactFailed",
-						Message:            "Failed to load template '../../usr/bin/ls' from source 'GitRepository/mock-source-namespace/mock-cfn-template-git-repo'",
+						Message:            "Failed to load template '../../usr/bin/ls' from source 'GitRepository/mock-namespace/mock-cfn-template-git-repo'",
 					},
 				},
 			},
@@ -1692,7 +1732,7 @@ func TestCfnController_ReconcileSource(t *testing.T) {
 						Status:             "False",
 						ObservedGeneration: mockGenerationId,
 						Reason:             "ArtifactFailed",
-						Message:            "Failed to load template '/usr/bin/ls' from source 'GitRepository/mock-source-namespace/mock-cfn-template-git-repo'",
+						Message:            "Failed to load template '/usr/bin/ls' from source 'GitRepository/mock-namespace/mock-cfn-template-git-repo'",
 					},
 				},
 			},
@@ -1719,7 +1759,7 @@ func TestCfnController_ReconcileSource(t *testing.T) {
 						Status:             "False",
 						ObservedGeneration: mockGenerationId,
 						Reason:             "ArtifactFailed",
-						Message:            "Failed to load template './' from source 'GitRepository/mock-source-namespace/mock-cfn-template-git-repo'",
+						Message:            "Failed to load template './' from source 'GitRepository/mock-namespace/mock-cfn-template-git-repo'",
 					},
 				},
 			},

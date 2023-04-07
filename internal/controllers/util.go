@@ -15,10 +15,13 @@ import (
 	securejoin "github.com/cyphar/filepath-securejoin"
 	eventv1 "github.com/fluxcd/pkg/apis/event/v1beta1"
 	"github.com/fluxcd/pkg/apis/meta"
+	"github.com/fluxcd/pkg/runtime/acl"
 	"github.com/fluxcd/pkg/runtime/dependency"
 	"github.com/fluxcd/pkg/untar"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 	"github.com/hashicorp/go-retryablehttp"
+	"github.com/opencontainers/go-digest"
+	_ "github.com/opencontainers/go-digest/blake3"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -96,7 +99,9 @@ func (r *CloudFormationStackReconciler) patchStatus(ctx context.Context, cfnStac
 	if err := r.Client.Get(ctx, key, latest); err != nil {
 		return err
 	}
-	return r.Client.Status().Patch(ctx, cfnStack, client.MergeFrom(latest))
+	patch := client.MergeFrom(latest.DeepCopy())
+	latest.Status = cfnStack.Status
+	return r.Client.Status().Patch(ctx, latest, patch, client.FieldOwner(r.ControllerName))
 }
 
 func (r *CloudFormationStackReconciler) recordSuspension(ctx context.Context, cfnStack cfnv1.CloudFormationStack) {
@@ -149,6 +154,11 @@ func (r *CloudFormationStackReconciler) getSource(ctx context.Context, cfnStack 
 	namespacedName := types.NamespacedName{
 		Namespace: sourceNamespace,
 		Name:      cfnStack.Spec.SourceRef.Name,
+	}
+
+	if r.NoCrossNamespaceRef && sourceNamespace != cfnStack.Namespace {
+		return nil, acl.AccessDeniedError(fmt.Sprintf("can't access '%s/%s', cross-namespace references have been blocked",
+			cfnStack.Spec.SourceRef.Kind, namespacedName))
 	}
 
 	switch cfnStack.Spec.SourceRef.Kind {
@@ -310,17 +320,37 @@ func (r *CloudFormationStackReconciler) loadCloudFormationTemplate(ctx context.C
 }
 
 func (r *CloudFormationStackReconciler) copyAndVerifyArtifact(artifact *sourcev1.Artifact, buf *bytes.Buffer, reader io.Reader) error {
-	hasher := sha256.New()
+	if artifact.Digest != "" {
+		dig, err := digest.Parse(artifact.Digest)
+		if err != nil {
+			return fmt.Errorf("failed to verify artifact: %w", err)
+		}
 
-	// compute checksum
-	mw := io.MultiWriter(hasher, buf)
-	if _, err := io.Copy(mw, reader); err != nil {
-		return err
+		// Verify the downloaded artifact against the advertised digest.
+		verifier := dig.Verifier()
+		mw := io.MultiWriter(verifier, buf)
+		if _, err := io.Copy(mw, reader); err != nil {
+			return err
+		}
+
+		if !verifier.Verified() {
+			return fmt.Errorf("failed to verify artifact: computed digest doesn't match advertised '%s'", dig)
+		}
 	}
 
-	if checksum := fmt.Sprintf("%x", hasher.Sum(nil)); checksum != artifact.Checksum {
-		return fmt.Errorf("failed to verify artifact: computed checksum '%s' doesn't match advertised '%s'",
-			checksum, artifact.Checksum)
+	if artifact.Checksum != "" {
+		hasher := sha256.New()
+
+		// compute checksum
+		mw := io.MultiWriter(hasher, buf)
+		if _, err := io.Copy(mw, reader); err != nil {
+			return err
+		}
+
+		if checksum := fmt.Sprintf("%x", hasher.Sum(nil)); checksum != artifact.Checksum {
+			return fmt.Errorf("failed to verify artifact: computed checksum '%s' doesn't match advertised '%s'",
+				checksum, artifact.Checksum)
+		}
 	}
 
 	return nil

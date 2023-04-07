@@ -25,6 +25,8 @@ require (
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.3.0
 	github.com/hashicorp/go-retryablehttp v0.7.2
+	github.com/opencontainers/go-digest v1.0.0
+	github.com/opencontainers/go-digest/blake3 v0.0.0-20230329235805-65fac7b55eb7
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.8.2
 	k8s.io/apimachinery v0.26.3
@@ -32,6 +34,10 @@ require (
 	k8s.io/utils v0.0.0-20230313181309-38a27ef9d749
 	sigs.k8s.io/controller-runtime v0.14.6
 )
+
+// Replace digest lib to master to gather access to BLAKE3.
+// xref: https://github.com/opencontainers/go-digest/pull/66
+replace github.com/opencontainers/go-digest => github.com/opencontainers/go-digest v1.0.1-0.20220411205349-bde1400a84be
 
 // Pin kustomize to v4.5.7
 // See https://github.com/fluxcd/flux2/issues/3564
@@ -112,6 +118,7 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/monochromegane/go-gitignore v0.0.0-20200626010858-205db1a8cc00 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
+	github.com/onsi/gomega v1.27.5 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/pjbgf/sha1cd v0.3.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
@@ -126,6 +133,7 @@ require (
 	github.com/spf13/cobra v1.6.1 // indirect
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
 	github.com/xlab/treeprint v1.2.0 // indirect
+	github.com/zeebo/blake3 v0.1.1 // indirect
 	go.starlark.net v0.0.0-20230302034142-4b1e35fe2254 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.10.0 // indirect

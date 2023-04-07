@@ -13,9 +13,12 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
+	ctrlcache "sigs.k8s.io/controller-runtime/pkg/cache"
 	crtlmetrics "sigs.k8s.io/controller-runtime/pkg/metrics"
 
+	"github.com/fluxcd/pkg/runtime/acl"
 	"github.com/fluxcd/pkg/runtime/client"
+	helper "github.com/fluxcd/pkg/runtime/controller"
 	"github.com/fluxcd/pkg/runtime/events"
 	"github.com/fluxcd/pkg/runtime/leaderelection"
 	"github.com/fluxcd/pkg/runtime/logger"
@@ -55,16 +58,18 @@ func init() {
 
 func main() {
 	var (
-		metricsAddr           string
-		eventsAddr            string
-		healthAddr            string
-		concurrent            int
-		requeueDependency     time.Duration
-		clientOptions         client.Options
-		logOptions            logger.Options
-		leaderElectionOptions leaderelection.Options
-		watchAllNamespaces    bool
-		httpRetry             int
+		metricsAddr             string
+		eventsAddr              string
+		healthAddr              string
+		concurrent              int
+		requeueDependency       time.Duration
+		gracefulShutdownTimeout time.Duration
+		clientOptions           client.Options
+		logOptions              logger.Options
+		aclOptions              acl.Options
+		leaderElectionOptions   leaderelection.Options
+		watchOptions            helper.WatchOptions
+		httpRetry               int
 	)
 
 	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
@@ -72,13 +77,15 @@ func main() {
 	flag.StringVar(&healthAddr, "health-addr", ":9440", "The address the health endpoint binds to.")
 	flag.IntVar(&concurrent, "concurrent", 4, "The number of concurrent CloudFormationStack reconciles.")
 	flag.DurationVar(&requeueDependency, "requeue-dependency", 30*time.Second, "The interval at which failing dependencies are reevaluated.")
-	flag.BoolVar(&watchAllNamespaces, "watch-all-namespaces", true,
-		"Watch for custom resources in all namespaces, if set to false it will only watch the runtime namespace.")
+	flag.DurationVar(&gracefulShutdownTimeout, "graceful-shutdown-timeout", 600*time.Second,
+		"The duration given to the reconciler to finish before forcibly stopping.")
 	flag.IntVar(&httpRetry, "http-retry", 9, "The maximum number of retries when failing to fetch artifacts over HTTP.")
 
 	clientOptions.BindFlags(flag.CommandLine)
 	logOptions.BindFlags(flag.CommandLine)
+	aclOptions.BindFlags(flag.CommandLine)
 	leaderElectionOptions.BindFlags(flag.CommandLine)
+	watchOptions.BindFlags(flag.CommandLine)
 	flag.Parse()
 
 	ctrl.SetLogger(logger.NewLogger(logOptions))
@@ -87,8 +94,19 @@ func main() {
 	crtlmetrics.Registry.MustRegister(metricsRecorder.Collectors()...)
 
 	watchNamespace := ""
-	if !watchAllNamespaces {
+	if !watchOptions.AllNamespaces {
 		watchNamespace = os.Getenv("RUNTIME_NAMESPACE")
+	}
+
+	watchSelector, err := helper.GetWatchSelector(watchOptions)
+	if err != nil {
+		setupLog.Error(err, "unable to configure watch label selector for manager")
+		os.Exit(1)
+	}
+
+	leaderElectionId := fmt.Sprintf("%s-%s", controllerName, "leader-election")
+	if watchOptions.LabelSelector != "" {
+		leaderElectionId = leaderelection.GenerateID(leaderElectionId, watchOptions.LabelSelector)
 	}
 
 	restConfig := client.GetConfigOrDie(clientOptions)
@@ -102,9 +120,15 @@ func main() {
 		LeaseDuration:                 &leaderElectionOptions.LeaseDuration,
 		RenewDeadline:                 &leaderElectionOptions.RenewDeadline,
 		RetryPeriod:                   &leaderElectionOptions.RetryPeriod,
-		LeaderElectionID:              fmt.Sprintf("%s-leader-election", controllerName),
+		GracefulShutdownTimeout:       &gracefulShutdownTimeout,
+		LeaderElectionID:              leaderElectionId,
 		Namespace:                     watchNamespace,
 		Logger:                        ctrl.Log,
+		NewCache: ctrlcache.BuilderWithOptions(ctrlcache.Options{
+			SelectorsByObject: ctrlcache.SelectorsByObject{
+				&cfnv1.CloudFormationStack{}: {Label: watchSelector},
+			},
+		}),
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
@@ -138,13 +162,15 @@ func main() {
 	templateBucket := os.Getenv("TEMPLATE_BUCKET")
 
 	reconciler := &controllers.CloudFormationStackReconciler{
-		Client:          mgr.GetClient(),
-		Scheme:          mgr.GetScheme(),
-		EventRecorder:   eventRecorder,
-		MetricsRecorder: metricsRecorder,
-		CfnClient:       cfnClient,
-		S3Client:        s3Client,
-		TemplateBucket:  templateBucket,
+		Client:              mgr.GetClient(),
+		Scheme:              mgr.GetScheme(),
+		EventRecorder:       eventRecorder,
+		MetricsRecorder:     metricsRecorder,
+		NoCrossNamespaceRef: aclOptions.NoCrossNamespaceRefs,
+		CfnClient:           cfnClient,
+		S3Client:            s3Client,
+		TemplateBucket:      templateBucket,
+		ControllerName:      controllerName,
 	}
 
 	reconcilerOpts := controllers.CloudFormationStackReconcilerOptions{

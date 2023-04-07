@@ -51,15 +51,19 @@ import (
 // CloudFormationStackReconciler reconciles a CloudFormationStack object
 type CloudFormationStackReconciler struct {
 	client.Client
+
+	Scheme              *runtime.Scheme
+	EventRecorder       kuberecorder.EventRecorder
+	MetricsRecorder     *metrics.Recorder
+	NoCrossNamespaceRef bool
+	ControllerName      string
+
+	CfnClient      clients.CloudFormationClient
+	S3Client       clients.S3Client
+	TemplateBucket string
+
 	httpClient        *retryablehttp.Client
 	requeueDependency time.Duration
-
-	CfnClient       clients.CloudFormationClient
-	S3Client        clients.S3Client
-	TemplateBucket  string
-	EventRecorder   kuberecorder.EventRecorder
-	MetricsRecorder *metrics.Recorder
-	Scheme          *runtime.Scheme
 }
 
 type CloudFormationStackReconcilerOptions struct {
