@@ -229,7 +229,9 @@ jobs:
         run: |
           make build-docker-image
           docker tag aws-cloudformation-controller-for-flux:latest $REGISTRY/$REGISTRY_ALIAS/$REPOSITORY-beta:v$NEW_VERSION
+          docker tag aws-cloudformation-controller-for-flux:latest $REGISTRY/$REGISTRY_ALIAS/$REPOSITORY-beta:latest
           docker push $REGISTRY/$REGISTRY_ALIAS/$REPOSITORY-beta:v$NEW_VERSION
+          docker push $REGISTRY/$REGISTRY_ALIAS/$REPOSITORY-beta:latest
 
       - name: Push new version to GitHub
         run: |
