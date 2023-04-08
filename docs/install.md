@@ -234,6 +234,7 @@ $ flux reconcile source git aws-cloudformation-controller-for-flux
 
 In your Flux configuration repository, create a file named `cfn-controller.yaml`, fill in the appropriate contents,
 then commit and push the file to your Flux configuration repository.
+
 The contents of the `cfn-controller.yaml` file depends on how you choose to provide AWS credentials
 to the CloudFormation controller; see the three options below.
 In all cases, you will need to know the name of the AWS region where the CloudFormation controller
@@ -435,6 +436,35 @@ spec:
       target:
         kind: Deployment
         name: cfn-controller
+```
+
+## Configure CloudFormation controller flags
+
+If needed, you can configure the CloudFormation controller using command line flags.
+For the full set of available flags, run:
+
+```bash
+$ docker run --rm public.ecr.aws/aws-cloudformation/aws-cloudformation-controller-for-flux --help
+```
+
+Specify the command line flags you want to use in your `cfn-controller.yaml` file,
+then commit and push the changes to your Flux configuration repository.
+For example, the following Kustomize patch added to the `cfn-controller.yaml` file will
+increase the number of concurrent CloudFormationStack reconciles to 10 using the `--controller` flag.
+
+```yaml
+  patches:
+    - patch: |
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: cfn-controller
+        spec:
+          template:
+            spec:
+              containers:
+              - name: manager
+                args: ["--concurrent", "10"]
 ```
 
 ## Validate the CloudFormation controller deployment
