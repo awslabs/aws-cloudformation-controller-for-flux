@@ -149,6 +149,20 @@ value to retry failures.</p>
 </tr>
 <tr>
 <td>
+<code>stackTags</code><br>
+<em>
+<a href="#cloudformation.contrib.fluxcd.io/v1alpha1.StackTag">
+[]StackTag
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The tag keys and values to set on the stack</p>
+</td>
+</tr>
+<tr>
+<td>
 <code>suspend</code><br>
 <em>
 bool
@@ -321,6 +335,20 @@ value to retry failures.</p>
 <td>
 <em>(Optional)</em>
 <p>The parameter keys and values to set on the stack</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>stackTags</code><br>
+<em>
+<a href="#cloudformation.contrib.fluxcd.io/v1alpha1.StackTag">
+[]StackTag
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The tag keys and values to set on the stack</p>
 </td>
 </tr>
 <tr>
@@ -656,6 +684,49 @@ string
 </td>
 <td>
 <p>Value of the stack parameter.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<h3 id="cloudformation.contrib.fluxcd.io/v1alpha1.StackTag">StackTag
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#cloudformation.contrib.fluxcd.io/v1alpha1.CloudFormationStackSpec">CloudFormationStackSpec</a>)
+</p>
+<p>Key and value for a CloudFormation stack tag.</p>
+<div class="md-typeset__scrollwrap">
+<div class="md-typeset__table">
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>key</code><br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>Name of the stack tag.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>value</code><br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>Value of the stack tag.</p>
 </td>
 </tr>
 </tbody>

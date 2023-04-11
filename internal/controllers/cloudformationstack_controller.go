@@ -335,6 +335,17 @@ func (r *CloudFormationStackReconciler) reconcileStack(ctx context.Context, cfnS
 		clientStack.StackConfig.Parameters = params
 	}
 
+	if len(cfnStack.Spec.StackTags) > 0 {
+		var tags []sdktypes.Tag
+		for _, tag := range cfnStack.Spec.StackTags {
+			tags = append(tags, sdktypes.Tag{
+				Key:   aws.String(tag.Key),
+				Value: aws.String(tag.Value),
+			})
+		}
+		clientStack.StackConfig.Tags = tags
+	}
+
 	// Check if we need to generate a new change set or describe the current one
 	desiredChangeSetName := cloudformation.GetChangeSetName(cfnStack.Generation, revision)
 	lastAttemptedChangeSetName := cloudformation.ExtractChangeSetName(cfnStack.Status.LastAttemptedChangeSet)

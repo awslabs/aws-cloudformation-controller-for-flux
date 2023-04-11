@@ -61,6 +61,10 @@ type CloudFormationStackSpec struct {
 	// +optional
 	StackParameters []StackParameter `json:"stackParameters,omitempty"`
 
+	// The tag keys and values to set on the stack
+	// +optional
+	StackTags []StackTag `json:"stackTags,omitempty"`
+
 	// Suspend tells the controller to suspend reconciliation for this CloudFormation stack,
 	// it does not apply to already started reconciliations. Defaults to false.
 	// +optional
@@ -87,6 +91,17 @@ type StackParameter struct {
 	Key string `json:"key"`
 
 	// Value of the stack parameter.
+	// +required
+	Value string `json:"value"`
+}
+
+// Key and value for a CloudFormation stack tag.
+type StackTag struct {
+	// Name of the stack tag.
+	// +required
+	Key string `json:"key"`
+
+	// Value of the stack tag.
 	// +required
 	Value string `json:"value"`
 }

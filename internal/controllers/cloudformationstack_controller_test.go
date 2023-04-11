@@ -970,6 +970,141 @@ func TestCfnController_ReconcileStack(t *testing.T) {
 				cfnClient.EXPECT().UpdateStack(expectedUpdateStackIn).Return(mockChangeSetArnNewGeneration, nil)
 			},
 		},
+		"create stack with tags": {
+			wantedEvents: []*expectedEvent{{
+				eventType: "Normal",
+				severity:  "info",
+				message:   fmt.Sprintf("Creation of stack 'mock-real-stack' in progress (change set %s)", mockChangeSetArn),
+			}},
+			wantedRequeueDelay: mockPollIntervalDuration,
+			wantedStackStatus: &cfnv1.CloudFormationStackStatus{
+				ObservedGeneration:     mockGenerationId,
+				StackName:              mockRealStackName,
+				LastAttemptedRevision:  mockSourceRevision,
+				LastAttemptedChangeSet: mockChangeSetArn,
+				Conditions: []metav1.Condition{
+					{
+						Type:               "Ready",
+						Status:             "Unknown",
+						ObservedGeneration: mockGenerationId,
+						Reason:             "Progressing",
+						Message:            fmt.Sprintf("Creation of stack 'mock-real-stack' in progress (change set %s)", mockChangeSetArn),
+					},
+				},
+			},
+			markStackAsInProgress: true,
+			fillInSource:          generateMockGitRepoSource,
+			mockS3ClientCalls:     mockS3ClientUpload,
+			fillInInitialCfnStack: func(cfnStack *cfnv1.CloudFormationStack) {
+				cfnStack.Name = mockStackName
+				cfnStack.Namespace = mockNamespace
+				cfnStack.Generation = mockGenerationId
+				cfnStack.Spec = generateMockCfnStackSpec()
+				cfnStack.Spec.StackTags = []cfnv1.StackTag{
+					{
+						Key:   "TagKey",
+						Value: "TagValue",
+					},
+				}
+			},
+			mockCfnClientCalls: func(cfnClient *clientmocks.MockCloudFormationClient) {
+				expectedDescribeStackIn := generateStackInput(mockGenerationId, mockSourceRevision, "")
+				expectedDescribeStackIn.Tags = []sdktypes.Tag{
+					{
+						Key:   aws.String("TagKey"),
+						Value: aws.String("TagValue"),
+					},
+				}
+				cfnClient.EXPECT().DescribeStack(expectedDescribeStackIn).Return(nil, &cloudformation.ErrStackNotFound{})
+
+				expectedDescribeChangeSetIn := generateStackInput(mockGenerationId, mockSourceRevision, "")
+				expectedDescribeChangeSetIn.Tags = expectedDescribeStackIn.Tags
+				cfnClient.EXPECT().DescribeChangeSet(expectedDescribeChangeSetIn).Return(nil, &cloudformation.ErrChangeSetNotFound{})
+
+				expectedCreateStackIn := generateStackInputWithTemplateUrl(mockGenerationId, mockSourceRevision)
+				expectedCreateStackIn.Tags = expectedDescribeStackIn.Tags
+				cfnClient.EXPECT().CreateStack(expectedCreateStackIn).Return(mockChangeSetArn, nil)
+			},
+		},
+		"update stack with tags": {
+			wantedEvents: []*expectedEvent{{
+				eventType: "Normal",
+				severity:  "info",
+				message:   fmt.Sprintf("Update of stack 'mock-real-stack' in progress (change set %s)", mockChangeSetArnNewGeneration),
+			}},
+			wantedRequeueDelay: mockPollIntervalDuration,
+			wantedStackStatus: &cfnv1.CloudFormationStackStatus{
+				ObservedGeneration:     mockGenerationId2,
+				StackName:              mockRealStackName,
+				LastAttemptedRevision:  mockSourceRevision,
+				LastAppliedRevision:    mockSourceRevision,
+				LastAttemptedChangeSet: mockChangeSetArnNewGeneration,
+				LastAppliedChangeSet:   mockChangeSetArn,
+				Conditions: []metav1.Condition{
+					{
+						Type:               "Ready",
+						Status:             "Unknown",
+						ObservedGeneration: mockGenerationId2,
+						Reason:             "Progressing",
+						Message:            fmt.Sprintf("Update of stack 'mock-real-stack' in progress (change set %s)", mockChangeSetArnNewGeneration),
+					},
+				},
+			},
+			markStackAsInProgress: true,
+			fillInSource:          generateMockGitRepoSource,
+			mockS3ClientCalls:     mockS3ClientUpload,
+			fillInInitialCfnStack: func(cfnStack *cfnv1.CloudFormationStack) {
+				cfnStack.Name = mockStackName
+				cfnStack.Namespace = mockNamespace
+				cfnStack.Generation = mockGenerationId2
+				cfnStack.Spec = generateMockCfnStackSpec()
+				cfnStack.Spec.StackTags = []cfnv1.StackTag{
+					{
+						Key:   "TagKey",
+						Value: "TagValue",
+					},
+				}
+				cfnStack.Status = cfnv1.CloudFormationStackStatus{
+					ObservedGeneration:     mockGenerationId,
+					StackName:              mockRealStackName,
+					LastAttemptedRevision:  mockSourceRevision,
+					LastAppliedRevision:    mockSourceRevision,
+					LastAttemptedChangeSet: mockChangeSetArn,
+					LastAppliedChangeSet:   mockChangeSetArn,
+					Conditions: []metav1.Condition{
+						{
+							Type:               "Ready",
+							Status:             "True",
+							ObservedGeneration: mockGenerationId,
+							Reason:             "Hello",
+							Message:            "World",
+						},
+					},
+				}
+			},
+			mockCfnClientCalls: func(cfnClient *clientmocks.MockCloudFormationClient) {
+				expectedDescribeStackIn := generateStackInput(mockGenerationId2, mockSourceRevision, "")
+				expectedDescribeStackIn.Tags = []sdktypes.Tag{
+					{
+						Key:   aws.String("TagKey"),
+						Value: aws.String("TagValue"),
+					},
+				}
+				cfnClient.EXPECT().DescribeStack(expectedDescribeStackIn).Return(&clienttypes.StackDescription{
+					StackName:         aws.String(mockRealStackName),
+					StackStatus:       sdktypes.StackStatusCreateComplete,
+					StackStatusReason: aws.String("hello world"),
+				}, nil)
+
+				expectedDescribeChangeSetIn := generateStackInput(mockGenerationId2, mockSourceRevision, "")
+				expectedDescribeChangeSetIn.Tags = expectedDescribeStackIn.Tags
+				cfnClient.EXPECT().DescribeChangeSet(expectedDescribeChangeSetIn).Return(nil, &cloudformation.ErrChangeSetNotFound{})
+
+				expectedUpdateStackIn := generateStackInputWithTemplateUrl(mockGenerationId2, mockSourceRevision)
+				expectedUpdateStackIn.Tags = expectedDescribeStackIn.Tags
+				cfnClient.EXPECT().UpdateStack(expectedUpdateStackIn).Return(mockChangeSetArnNewGeneration, nil)
+			},
+		},
 		"continue stack rollback if the real stack has UPDATE_ROLLBACK_FAILED status": {
 			wantedEvents: []*expectedEvent{{
 				eventType: "Warning",
