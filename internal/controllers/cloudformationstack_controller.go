@@ -56,7 +56,9 @@ type CloudFormationStackReconciler struct {
 	EventRecorder       kuberecorder.EventRecorder
 	MetricsRecorder     *metrics.Recorder
 	NoCrossNamespaceRef bool
-	ControllerName      string
+
+	ControllerName    string
+	ControllerVersion string
 
 	CfnClient      clients.CloudFormationClient
 	S3Client       clients.S3Client
@@ -335,16 +337,29 @@ func (r *CloudFormationStackReconciler) reconcileStack(ctx context.Context, cfnS
 		clientStack.StackConfig.Parameters = params
 	}
 
+	tags := []sdktypes.Tag{
+		{
+			Key:   aws.String(fmt.Sprintf("%s/version", r.ControllerName)),
+			Value: aws.String(r.ControllerVersion),
+		},
+		{
+			Key:   aws.String(fmt.Sprintf("%s/name", r.ControllerName)),
+			Value: aws.String(cfnStack.Name),
+		},
+		{
+			Key:   aws.String(fmt.Sprintf("%s/namespace", r.ControllerName)),
+			Value: aws.String(cfnStack.Namespace),
+		},
+	}
 	if len(cfnStack.Spec.StackTags) > 0 {
-		var tags []sdktypes.Tag
 		for _, tag := range cfnStack.Spec.StackTags {
 			tags = append(tags, sdktypes.Tag{
 				Key:   aws.String(tag.Key),
 				Value: aws.String(tag.Value),
 			})
 		}
-		clientStack.StackConfig.Tags = tags
 	}
+	clientStack.StackConfig.Tags = tags
 
 	// Check if we need to generate a new change set or describe the current one
 	desiredChangeSetName := cloudformation.GetChangeSetName(cfnStack.Generation, revision)

@@ -142,7 +142,9 @@ spec:
                   type: object
                 type: array
               stackTags:
-                description: The tag keys and values to set on the stack
+                description: 'The tag keys and values to set on the stack. Default
+                  tags will be added: cfn-flux-controller/version, cfn-flux-controller/name,
+                  cfn-flux-controller/namespace.'
                 items:
                   description: Key and value for a CloudFormation stack tag.
                   properties:

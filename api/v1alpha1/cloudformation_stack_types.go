@@ -61,7 +61,9 @@ type CloudFormationStackSpec struct {
 	// +optional
 	StackParameters []StackParameter `json:"stackParameters,omitempty"`
 
-	// The tag keys and values to set on the stack
+	// The tag keys and values to set on the stack.
+	// Default tags will be added:
+	// cfn-flux-controller/version, cfn-flux-controller/name, cfn-flux-controller/namespace.
 	// +optional
 	StackTags []StackTag `json:"stackTags,omitempty"`
 

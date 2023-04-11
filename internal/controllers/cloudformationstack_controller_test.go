@@ -288,6 +288,20 @@ func generateStackInput(generation int64, sourceRevision string, changeSetArn st
 		StackConfig: &clienttypes.StackConfig{
 			TemplateBucket: mockTemplateUploadBucket,
 			TemplateBody:   mockTemplateSourceFileContents,
+			Tags: []sdktypes.Tag{
+				{
+					Key:   aws.String("cfn-controller-test/version"),
+					Value: aws.String("v0.0.0"),
+				},
+				{
+					Key:   aws.String("cfn-controller-test/name"),
+					Value: aws.String(mockStackName),
+				},
+				{
+					Key:   aws.String("cfn-controller-test/namespace"),
+					Value: aws.String(mockNamespace),
+				},
+			},
 		},
 	}
 }
@@ -570,6 +584,7 @@ func runReconciliationLoopTestCase(t *testing.T, tc *reconciliationLoopTestCase)
 		EventRecorder:       eventRecorder,
 		MetricsRecorder:     metricsRecorder,
 		ControllerName:      "cfn-controller-test",
+		ControllerVersion:   "v0.0.0",
 		NoCrossNamespaceRef: true,
 		httpClient:          httpClient,
 		requeueDependency:   mockDependencyRetryIntervalDuration,
@@ -1009,12 +1024,12 @@ func TestCfnController_ReconcileStack(t *testing.T) {
 			},
 			mockCfnClientCalls: func(cfnClient *clientmocks.MockCloudFormationClient) {
 				expectedDescribeStackIn := generateStackInput(mockGenerationId, mockSourceRevision, "")
-				expectedDescribeStackIn.Tags = []sdktypes.Tag{
-					{
+				expectedDescribeStackIn.Tags = append(expectedDescribeStackIn.Tags,
+					sdktypes.Tag{
 						Key:   aws.String("TagKey"),
 						Value: aws.String("TagValue"),
 					},
-				}
+				)
 				cfnClient.EXPECT().DescribeStack(expectedDescribeStackIn).Return(nil, &cloudformation.ErrStackNotFound{})
 
 				expectedDescribeChangeSetIn := generateStackInput(mockGenerationId, mockSourceRevision, "")
@@ -1084,12 +1099,12 @@ func TestCfnController_ReconcileStack(t *testing.T) {
 			},
 			mockCfnClientCalls: func(cfnClient *clientmocks.MockCloudFormationClient) {
 				expectedDescribeStackIn := generateStackInput(mockGenerationId2, mockSourceRevision, "")
-				expectedDescribeStackIn.Tags = []sdktypes.Tag{
-					{
+				expectedDescribeStackIn.Tags = append(expectedDescribeStackIn.Tags,
+					sdktypes.Tag{
 						Key:   aws.String("TagKey"),
 						Value: aws.String("TagValue"),
 					},
-				}
+				)
 				cfnClient.EXPECT().DescribeStack(expectedDescribeStackIn).Return(&clienttypes.StackDescription{
 					StackName:         aws.String(mockRealStackName),
 					StackStatus:       sdktypes.StackStatusCreateComplete,

@@ -92,6 +92,7 @@ func main() {
 	flag.Parse()
 
 	ctrl.SetLogger(logger.NewLogger(logOptions))
+	setupLog.Info("Configuring manager", "version", BuildVersion, "sha", BuildSHA)
 
 	metricsRecorder := metrics.NewRecorder()
 	crtlmetrics.Registry.MustRegister(metricsRecorder.Collectors()...)
@@ -174,6 +175,7 @@ func main() {
 		S3Client:            s3Client,
 		TemplateBucket:      templateBucket,
 		ControllerName:      controllerName,
+		ControllerVersion:   BuildVersion,
 	}
 
 	reconcilerOpts := controllers.CloudFormationStackReconcilerOptions{

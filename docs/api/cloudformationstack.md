@@ -158,7 +158,9 @@ value to retry failures.</p>
 </td>
 <td>
 <em>(Optional)</em>
-<p>The tag keys and values to set on the stack</p>
+<p>The tag keys and values to set on the stack.
+Default tags will be added:
+cfn-flux-controller/version, cfn-flux-controller/name, cfn-flux-controller/namespace.</p>
 </td>
 </tr>
 <tr>
@@ -348,7 +350,9 @@ value to retry failures.</p>
 </td>
 <td>
 <em>(Optional)</em>
-<p>The tag keys and values to set on the stack</p>
+<p>The tag keys and values to set on the stack.
+Default tags will be added:
+cfn-flux-controller/version, cfn-flux-controller/name, cfn-flux-controller/namespace.</p>
 </td>
 </tr>
 <tr>
