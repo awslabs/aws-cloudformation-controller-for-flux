@@ -71,6 +71,7 @@ func main() {
 		watchOptions            helper.WatchOptions
 		httpRetry               int
 		awsRegion               string
+		templateBucket          string
 		stackTags               map[string]string
 	)
 
@@ -84,6 +85,8 @@ func main() {
 	flag.IntVar(&httpRetry, "http-retry", 9, "The maximum number of retries when failing to fetch artifacts over HTTP.")
 	flag.StringVar(&awsRegion, "aws-region", "",
 		"The AWS region where CloudFormation stacks should be deployed. Will default to the AWS_REGION environment variable.")
+	flag.StringVar(&templateBucket, "template-bucket", "",
+		"The S3 bucket where the controller should upload CloudFormation templates for deployment. Will default to the TEMPLATE_BUCKET environment variable.")
 	flag.StringToStringVar(&stackTags, "stack-tags", map[string]string{},
 		"Tag key and value pairs to apply to all CloudFormation stacks, in addition to the default tags added by the controller "+
 			"(cfn-flux-controller/version, cfn-flux-controller/name, cfn-flux-controller/namespace). "+
@@ -167,8 +170,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	// TODO get bucket from annotations, controller flags, etc
-	templateBucket := os.Getenv("TEMPLATE_BUCKET")
+	if templateBucket == "" {
+		templateBucket = os.Getenv("TEMPLATE_BUCKET")
+	}
 
 	reconciler := &controllers.CloudFormationStackReconciler{
 		Client:              mgr.GetClient(),
