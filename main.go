@@ -71,6 +71,7 @@ func main() {
 		watchOptions            helper.WatchOptions
 		httpRetry               int
 		awsRegion               string
+		stackTags               map[string]string
 	)
 
 	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
@@ -83,6 +84,10 @@ func main() {
 	flag.IntVar(&httpRetry, "http-retry", 9, "The maximum number of retries when failing to fetch artifacts over HTTP.")
 	flag.StringVar(&awsRegion, "aws-region", "",
 		"The AWS region where CloudFormation stacks should be deployed. Will default to the AWS_REGION environment variable.")
+	flag.StringToStringVar(&stackTags, "stack-tags", map[string]string{},
+		"Tag key and value pairs to apply to all CloudFormation stacks, in addition to the default tags added by the controller "+
+			"(cfn-flux-controller/version, cfn-flux-controller/name, cfn-flux-controller/namespace). "+
+			"Example: default-tag-name=default-tag-value,another-tag-name=another-tag-value.")
 
 	clientOptions.BindFlags(flag.CommandLine)
 	logOptions.BindFlags(flag.CommandLine)
@@ -174,6 +179,7 @@ func main() {
 		CfnClient:           cfnClient,
 		S3Client:            s3Client,
 		TemplateBucket:      templateBucket,
+		StackTags:           stackTags,
 		ControllerName:      controllerName,
 		ControllerVersion:   BuildVersion,
 	}

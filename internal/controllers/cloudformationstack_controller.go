@@ -63,6 +63,7 @@ type CloudFormationStackReconciler struct {
 	CfnClient      clients.CloudFormationClient
 	S3Client       clients.S3Client
 	TemplateBucket string
+	StackTags      map[string]string
 
 	httpClient        *retryablehttp.Client
 	requeueDependency time.Duration
@@ -350,6 +351,12 @@ func (r *CloudFormationStackReconciler) reconcileStack(ctx context.Context, cfnS
 			Key:   aws.String(fmt.Sprintf("%s/namespace", r.ControllerName)),
 			Value: aws.String(cfnStack.Namespace),
 		},
+	}
+	for key, value := range r.StackTags {
+		tags = append(tags, sdktypes.Tag{
+			Key:   aws.String(key),
+			Value: aws.String(value),
+		})
 	}
 	if len(cfnStack.Spec.StackTags) > 0 {
 		for _, tag := range cfnStack.Spec.StackTags {

@@ -301,6 +301,10 @@ func generateStackInput(generation int64, sourceRevision string, changeSetArn st
 					Key:   aws.String("cfn-controller-test/namespace"),
 					Value: aws.String(mockNamespace),
 				},
+				{
+					Key:   aws.String("default-tag"),
+					Value: aws.String("default-tag-value"),
+				},
 			},
 		},
 	}
@@ -576,15 +580,18 @@ func runReconciliationLoopTestCase(t *testing.T, tc *reconciliationLoopTestCase)
 	}
 
 	reconciler := &CloudFormationStackReconciler{
-		Scheme:              scheme,
-		Client:              k8sClient,
-		CfnClient:           cfnClient,
-		S3Client:            s3Client,
-		TemplateBucket:      mockTemplateUploadBucket,
-		EventRecorder:       eventRecorder,
-		MetricsRecorder:     metricsRecorder,
-		ControllerName:      "cfn-controller-test",
-		ControllerVersion:   "v0.0.0",
+		Scheme:            scheme,
+		Client:            k8sClient,
+		CfnClient:         cfnClient,
+		S3Client:          s3Client,
+		TemplateBucket:    mockTemplateUploadBucket,
+		EventRecorder:     eventRecorder,
+		MetricsRecorder:   metricsRecorder,
+		ControllerName:    "cfn-controller-test",
+		ControllerVersion: "v0.0.0",
+		StackTags: map[string]string{
+			"default-tag": "default-tag-value",
+		},
 		NoCrossNamespaceRef: true,
 		httpClient:          httpClient,
 		requeueDependency:   mockDependencyRetryIntervalDuration,
