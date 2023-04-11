@@ -8,7 +8,8 @@ jobs:
     name: "Stage a new release"
     runs-on: ubuntu-latest
     outputs:
-      stagedversion: ${{ steps.versiondetails.outputs.stagedversion }}
+      staged_version: ${{ steps.versiondetails.outputs.stagedversion }}
+      staged_version_available: ${{ steps.versiondetails.outputs.stagedversionavailable }}
     steps:
       - uses: actions/checkout@v3
         with:
@@ -42,9 +43,9 @@ jobs:
         run: |
           echo No changes to release!
           echo Current release: $CURRENT_VERSION
-          exit 1
 
       - name: Stage new version
+        if: ${{ env.COMMITS_TO_RELEASE != 0 }}
         run: |
           standard-version
 
@@ -55,13 +56,13 @@ jobs:
           echo "RELEASE_COMMIT_ID=${RELEASE_COMMIT_ID}" >> $GITHUB_ENV
 
       - name: Check if version was bumped
-        if: ${{env.NEW_VERSION == env.CURRENT_VERSION }}
+        if: ${{ env.COMMITS_TO_RELEASE != 0 && env.NEW_VERSION == env.CURRENT_VERSION }}
         run: |
           echo No changes to release!
           echo Current release: $CURRENT_VERSION
-          exit 1
 
       - name: 'Show staged version details'
+        if: ${{ env.COMMITS_TO_RELEASE != 0 && env.NEW_VERSION != env.CURRENT_VERSION }}
         id: versiondetails
         shell: bash
         run: |
@@ -72,11 +73,13 @@ jobs:
           git log --pretty=oneline v$CURRENT_VERSION..v$NEW_VERSION
 
           echo "stagedversion=${NEW_VERSION}" >> $GITHUB_OUTPUT
+          echo "stagedversionavailable=true" >> $GITHUB_OUTPUT
 
   run_unit_tests:
     name: "Run unit tests"
     runs-on: ubuntu-latest
     needs: stage_release
+    if: needs.stage_release.outputs.staged_version_available == 'true'
     steps:
       - uses: actions/checkout@v3
       - name: Restore Go cache
@@ -102,7 +105,8 @@ jobs:
   run_integration_tests:
     name: "Run integration tests"
     runs-on: ubuntu-latest
-    needs: run_unit_tests
+    needs: stage_release
+    if: needs.stage_release.outputs.staged_version_available == 'true'
     permissions:
       id-token: write
       contents: read
@@ -158,6 +162,7 @@ jobs:
   release_new_version:
     name: "Release the new version"
     needs: [stage_release, run_unit_tests, run_integration_tests]
+    if: needs.stage_release.outputs.staged_version_available == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -182,7 +187,7 @@ jobs:
 
       - name: Update Kubernetes configuration with new version
         env:
-          NEW_VERSION: ${{needs.stage_release.outputs.stagedversion}}
+          NEW_VERSION: ${{needs.stage_release.outputs.staged_version}}
         run: |
           cd config/manager
           kustomize edit set image public.ecr.aws/aws-cloudformation/aws-cloudformation-controller-for-flux=public.ecr.aws/aws-cloudformation/aws-cloudformation-controller-for-flux:v$NEW_VERSION
