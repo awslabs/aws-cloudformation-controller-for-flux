@@ -2,6 +2,8 @@ name: Release CFN Controller
 
 on:
   workflow_dispatch: {}
+  schedule:
+    - cron: '0 18 * * 2' # Tuesdays at 10 am PST, 11 am PDT
 
 jobs:
   stage_release:
