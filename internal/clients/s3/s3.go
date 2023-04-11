@@ -33,12 +33,13 @@ type S3 struct {
 }
 
 // New returns an S3 client.
-func New(ctx context.Context) (clients.S3Client, error) {
+func New(ctx context.Context, region string) (clients.S3Client, error) {
 	cfg, err := config.LoadDefaultConfig(
 		ctx,
 		config.WithAPIOptions([]func(*middleware.Stack) error{
 			awsmiddleware.AddUserAgentKey("cfn-flux-controller"),
 		}),
+		config.WithRegion(region),
 	)
 	if err != nil {
 		return nil, err

@@ -70,6 +70,7 @@ func main() {
 		leaderElectionOptions   leaderelection.Options
 		watchOptions            helper.WatchOptions
 		httpRetry               int
+		awsRegion               string
 	)
 
 	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
@@ -80,6 +81,8 @@ func main() {
 	flag.DurationVar(&gracefulShutdownTimeout, "graceful-shutdown-timeout", 600*time.Second,
 		"The duration given to the reconciler to finish before forcibly stopping.")
 	flag.IntVar(&httpRetry, "http-retry", 9, "The maximum number of retries when failing to fetch artifacts over HTTP.")
+	flag.StringVar(&awsRegion, "aws-region", "",
+		"The AWS region where CloudFormation stacks should be deployed. Will default to the AWS_REGION environment variable.")
 
 	clientOptions.BindFlags(flag.CommandLine)
 	logOptions.BindFlags(flag.CommandLine)
@@ -146,13 +149,13 @@ func main() {
 
 	signalHandlerContext := ctrl.SetupSignalHandler()
 
-	cfnClient, err := cloudformation.New(signalHandlerContext)
+	cfnClient, err := cloudformation.New(signalHandlerContext, awsRegion)
 	if err != nil {
 		setupLog.Error(err, "unable to create CloudFormation client")
 		os.Exit(1)
 	}
 
-	s3Client, err := s3.New(signalHandlerContext)
+	s3Client, err := s3.New(signalHandlerContext, awsRegion)
 	if err != nil {
 		setupLog.Error(err, "unable to create S3 client")
 		os.Exit(1)

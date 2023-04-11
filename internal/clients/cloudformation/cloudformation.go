@@ -25,12 +25,13 @@ type CloudFormation struct {
 }
 
 // New creates a new CloudFormation client.
-func New(ctx context.Context) (clients.CloudFormationClient, error) {
+func New(ctx context.Context, region string) (clients.CloudFormationClient, error) {
 	cfg, err := config.LoadDefaultConfig(
 		ctx,
 		config.WithAPIOptions([]func(*middleware.Stack) error{
 			awsmiddleware.AddUserAgentKey("cfn-flux-controller"),
 		}),
+		config.WithRegion(region),
 	)
 	if err != nil {
 		return nil, err
