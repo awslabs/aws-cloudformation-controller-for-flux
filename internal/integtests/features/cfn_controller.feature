@@ -125,7 +125,7 @@ Feature: CloudFormation controller for Flux
     And the CloudFormation stack in my AWS account should be in "UPDATE_COMPLETE" state
 
   Scenario: Update an existing CloudFormation stack by changing the stack tags
-    Given I push a valid CloudFormation template with parameters to my git repository
+    Given I push a valid CloudFormation template to my git repository
     And I trigger Flux to reconcile my git repository
     And I apply the following CloudFormationStack configuration to my Kubernetes cluster
       """
