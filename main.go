@@ -174,6 +174,11 @@ func main() {
 		templateBucket = os.Getenv("TEMPLATE_BUCKET")
 	}
 
+	controllerVersion := BuildVersion
+	if controllerVersion == "" {
+		controllerVersion = "unknown-version"
+	}
+
 	reconciler := &controllers.CloudFormationStackReconciler{
 		Client:              mgr.GetClient(),
 		Scheme:              mgr.GetScheme(),
