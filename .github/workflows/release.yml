@@ -219,7 +219,7 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
-          role-to-assume: ${{ secrets.PUBLISHER_BETA_ROLE_ARN }}
+          role-to-assume: ${{ secrets.PUBLISHER_ROLE_ARN }}
           aws-region: ${{ secrets.PUBLISHER_REGION }}
 
       - name: Login to Amazon ECR Public
@@ -231,14 +231,14 @@ jobs:
       - name: Build and push controller Docker image to ECR Public
         env:
           REGISTRY: ${{ steps.login-ecr-public.outputs.registry }}
-          REGISTRY_ALIAS: ${{ secrets.PUBLISHER_BETA_REGISTRY_ALIAS }}
+          REGISTRY_ALIAS: ${{ secrets.PUBLISHER_REGISTRY_ALIAS }}
           REPOSITORY: aws-cloudformation-controller-for-flux
         run: |
           make build-docker-image
-          docker tag aws-cloudformation-controller-for-flux:latest $REGISTRY/$REGISTRY_ALIAS/$REPOSITORY-beta:v$NEW_VERSION
-          docker tag aws-cloudformation-controller-for-flux:latest $REGISTRY/$REGISTRY_ALIAS/$REPOSITORY-beta:latest
-          docker push $REGISTRY/$REGISTRY_ALIAS/$REPOSITORY-beta:v$NEW_VERSION
-          docker push $REGISTRY/$REGISTRY_ALIAS/$REPOSITORY-beta:latest
+          docker tag aws-cloudformation-controller-for-flux:latest $REGISTRY/$REGISTRY_ALIAS/$REPOSITORY:v$NEW_VERSION
+          docker tag aws-cloudformation-controller-for-flux:latest $REGISTRY/$REGISTRY_ALIAS/$REPOSITORY:latest
+          docker push $REGISTRY/$REGISTRY_ALIAS/$REPOSITORY:v$NEW_VERSION
+          docker push $REGISTRY/$REGISTRY_ALIAS/$REPOSITORY:latest
 
       - name: Push new version to GitHub
         run: |
