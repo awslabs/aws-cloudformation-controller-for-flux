@@ -190,7 +190,7 @@ func main() {
 		TemplateBucket:      templateBucket,
 		StackTags:           stackTags,
 		ControllerName:      controllerName,
-		ControllerVersion:   BuildVersion,
+		ControllerVersion:   controllerVersion,
 	}
 
 	reconcilerOpts := controllers.CloudFormationStackReconcilerOptions{
