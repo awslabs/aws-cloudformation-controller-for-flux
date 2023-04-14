@@ -30,15 +30,15 @@ Connect a git repository to Flux - this git repository will store your CloudForm
 apiVersion: source.toolkit.fluxcd.io/v1beta2
 kind: GitRepository
 metadata:
-  name: my-gitops-repo
+  name: my-cfn-templates-repo
   namespace: flux-system
 spec:
-  url: https://git-codecommit.us-west-2.amazonaws.com/v1/repos/my-gitops-repo
+  url: https://git-codecommit.us-west-2.amazonaws.com/v1/repos/my-cfn-templates-repo
   ref:
     branch: main
   interval: 5m
   secretRef:
-    name: my-gitops-repo-auth
+    name: my-cfn-templates-repo-auth
 ```
 
 In your git repository, add a CloudFormation template file for each stack that you want automatically deployed by Flux:
@@ -63,7 +63,7 @@ spec:
   templatePath: ./hello-world/stack-template.yaml
   sourceRef:
     kind: GitRepository
-    name: my-gitops-repo
+    name: my-cfn-templates-repo
   interval: 1h
   retryInterval: 5m
 ```
