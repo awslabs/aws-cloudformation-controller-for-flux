@@ -33,10 +33,10 @@ metadata:
   name: my-cfn-templates-repo
   namespace: flux-system
 spec:
-  url: https://git-codecommit.us-west-2.amazonaws.com/v1/repos/my-cfn-templates-repo
+  url: https://github.com/clareliguori/my-cfn-templates
   ref:
     branch: main
-  interval: 5m
+  interval: 30s
   secretRef:
     name: my-cfn-templates-repo-auth
 ```
