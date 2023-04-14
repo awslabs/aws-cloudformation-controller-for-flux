@@ -56,15 +56,15 @@ Register each CloudFormation template file in your git repository with Flux as a
 apiVersion: cloudformation.contrib.fluxcd.io/v1alpha1
 kind: CloudFormationStack
 metadata:
-  name: hello-world-stack
+  name: my-cfn-stack
   namespace: flux-system
 spec:
-  stackName: flux-hello-world
-  templatePath: ./hello-world/stack-template.yaml
+  stackName: clares-stack
+  templatePath: template.yaml
   sourceRef:
     kind: GitRepository
     name: my-cfn-templates-repo
-  interval: 1h
+  interval: 15m
   retryInterval: 5m
 ```
 
@@ -74,14 +74,14 @@ supported by the CloudFormation controller for CloudFormation stacks.
 When either the stack template file in the git repo OR the stack object in Flux is created or updated, you will see the CloudFormation stack created/updated in your AWS account:
 
 ```yaml
-$ kubectl describe cfnstack hello-world-stack --namespace flux-system
-Name:         cfn-sample-stack
+$ kubectl describe cfnstack my-cfn-stack -n flux-system
+Name:         my-cfn-stack
 Namespace:    flux-system
 ...
 Status:
   Conditions:
     Last Transition Time:  2023-02-28T19:56:58Z
-    Message:               deployed stack 'flux-hello-world'
+    Message:               deployed stack 'clares-stack'
     Observed Generation:   1
     Reason:                Succeeded
     Status:                True
