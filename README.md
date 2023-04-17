@@ -44,9 +44,9 @@ spec:
 In your git repository, add a CloudFormation template file for each stack that you want automatically deployed by Flux:
 
 ```
-hello-world/stack-template.yaml
-hey-there/another-stack-template.yaml
-hi-friend/my-stack-template.yaml
+project-a/stack-template.yaml
+project-b/template.yaml
+project-c/my-stack-template.yaml
 README.md
 ```
 
@@ -60,7 +60,7 @@ metadata:
   namespace: flux-system
 spec:
   stackName: flux-hello-world
-  templatePath: ./hello-world/stack-template.yaml
+  templatePath: ./project-a/stack-template.yaml
   sourceRef:
     kind: GitRepository
     name: my-cfn-templates-repo
@@ -75,7 +75,7 @@ When either the stack template file in the git repo OR the stack object in Flux 
 
 ```yaml
 $ kubectl describe cfnstack hello-world-stack --namespace flux-system
-Name:         cfn-sample-stack
+Name:         hello-world-stack
 Namespace:    flux-system
 ...
 Status:
