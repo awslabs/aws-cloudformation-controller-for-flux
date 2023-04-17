@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.2.0](https://github.com/awslabs/aws-cloudformation-controller-for-flux/compare/v0.1.1...v0.2.0) (2023-04-17)
+
+
+### ⚠ BREAKING CHANGES
+
+* Switch to publishing to production ECR public repo
+
+### Features
+
+* Apply default stack tags to all stacks (cfn-flux-controller/version, cfn-flux-controller/name, cfn-flux-controller/namespace) ([e50fb10](https://github.com/awslabs/aws-cloudformation-controller-for-flux/commit/e50fb1083e60a2cec4885123b70615e9928f3685))
+* New aws-region controller flag ([b656ab2](https://github.com/awslabs/aws-cloudformation-controller-for-flux/commit/b656ab2a9bfaabd326df802407b8fa67cd7d2098))
+* New stack-tags controller flag for specifying default stack tags ([b6942a3](https://github.com/awslabs/aws-cloudformation-controller-for-flux/commit/b6942a3bbe6cdaf1a035dd0c521e62655dbc29bd))
+* New template-bucket controller flag for specifying the S3 bucket to use for storing CloudFormation templates prior to stack deployment ([271da08](https://github.com/awslabs/aws-cloudformation-controller-for-flux/commit/271da08bff27d68a97482fb246235b25c55176f0))
+* Specify stack tags in the CloudFormationStack object ([e71683f](https://github.com/awslabs/aws-cloudformation-controller-for-flux/commit/e71683f9002e84192803fb1565865702e426c731))
+* Switch to publishing to production ECR public repo ([e0e4c2e](https://github.com/awslabs/aws-cloudformation-controller-for-flux/commit/e0e4c2ea97202cea415017fcca5302e12169f89b))
+
+
+### Bug Fixes
+
+* Fill in default version if unknown during build ([ccb1940](https://github.com/awslabs/aws-cloudformation-controller-for-flux/commit/ccb19408f964dfcdbc708f245cde5bb9273ddfe6))
+
 ### [0.1.1](https://github.com/awslabs/aws-cloudformation-controller-for-flux/compare/v0.1.0...v0.1.1) (2023-04-11)
 
 ## [0.1.0](https://github.com/awslabs/aws-cloudformation-controller-for-flux/compare/v0.0.3...v0.1.0) (2023-04-07)
