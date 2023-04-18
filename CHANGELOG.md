@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [0.2.1](https://github.com/awslabs/aws-cloudformation-controller-for-flux/compare/v0.2.0...v0.2.1) (2023-04-18)
 
+
+### Bug Fixes
+
+* Add amd64 nodeSelector ([74dfa5b](https://github.com/awslabs/aws-cloudformation-controller-for-flux/commit/74dfa5bc9611ba8ec700fd01f5092ea827c54170))
+
 ## [0.2.0](https://github.com/awslabs/aws-cloudformation-controller-for-flux/compare/v0.1.1...v0.2.0) (2023-04-17)
 
 
