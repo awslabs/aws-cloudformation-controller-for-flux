@@ -16,6 +16,7 @@ You can find instructions for running the CloudFormation controller on a local K
    2. [Use AWS credentials in environment variables](#option-2-long-term-credentials-as-environment-variables)
    3. [Use AWS credentials in a mounted file](#option-3-long-term-credentials-in-a-mounted-credentials-file)
 1. [Validate the CloudFormation controller deployment](#validate-the-cloudformation-controller-deployment)
+1. [Enable Flux notifications for the CloudFormation controller](#enable-flux-notifications-for-the-cloudformation-controller)
 1. [Security recommendations](#security-recommendations)
    1. [Kubernetes cluster security](#kubernetes-cluster-security)
    1. [Kubernetes user permissions](#kubernetes-user-permissions)
@@ -479,6 +480,53 @@ $ flux reconcile kustomization aws-cloudformation-controller-for-flux
 $ kubectl rollout status deployment/cfn-controller -n flux-system
 
 $ kubectl logs deployment/cfn-controller -n flux-system
+```
+
+## Enable Flux notifications for the CloudFormation controller
+
+Notifications must be enabled for third-party Flux controllers, including the CloudFormation controller.
+See the [Flux documentation](https://fluxcd.io/flux/cheatsheets/bootstrap/#enable-notifications-for-third-party-controllers) for more details.
+
+In your Flux configuration repository, update the `flux-system/kustomization.yaml` file to match the following content.
+Commit and push the changes to your Flux configuration repository.
+
+```yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - gotk-components.yaml
+  - gotk-sync.yaml
+patches:
+  - patch: |
+      - op: add
+        path: /spec/versions/0/schema/openAPIV3Schema/properties/spec/properties/eventSources/items/properties/kind/enum/-
+        value: CloudFormationStack
+      - op: add
+        path: /spec/versions/1/schema/openAPIV3Schema/properties/spec/properties/eventSources/items/properties/kind/enum/-
+        value: CloudFormationStack
+    target:
+      kind: CustomResourceDefinition
+      name:  alerts.notification.toolkit.fluxcd.io
+  - patch: |
+      - op: add
+        path: /spec/versions/0/schema/openAPIV3Schema/properties/spec/properties/resources/items/properties/kind/enum/-
+        value: CloudFormationStack
+      - op: add
+        path: /spec/versions/1/schema/openAPIV3Schema/properties/spec/properties/resources/items/properties/kind/enum/-
+        value: CloudFormationStack
+    target:
+      kind: CustomResourceDefinition
+      name:  receivers.notification.toolkit.fluxcd.io
+  - patch: |
+      - op: add
+        path: /rules/-
+        value:
+          apiGroups: [ 'cloudformation.contrib.fluxcd.io' ]
+          resources: [ '*' ]
+          verbs: [ '*' ]
+    target:
+      kind: ClusterRole
+      name:  crd-controller-flux-system
 ```
 
 ## Security recommendations
