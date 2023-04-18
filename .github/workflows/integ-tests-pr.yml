@@ -1,19 +1,23 @@
-name: Integ Tests
+name: Pull Request Integ Tests
 
 on:
-  push:
+  pull_request_target:
+    types: [opened, synchronize, reopened, labeled]
     branches: [main]
   workflow_dispatch: {}
 
 jobs:
   integ_tests:
-    name: Run Integration Tests
+    name: Run Pull Request Integration Tests
     runs-on: ubuntu-latest
+    if: contains(github.event.pull_request.labels.*.name, 'safe-to-test')
     permissions:
       id-token: write
       contents: read
     steps:
       - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
       - name: Configure git
         run: |
           git config --global user.name "github-actions[bot]"
