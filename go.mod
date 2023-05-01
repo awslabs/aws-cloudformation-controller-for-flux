@@ -19,7 +19,7 @@ require (
 	github.com/fluxcd/pkg/apis/event v0.4.1
 	github.com/fluxcd/pkg/apis/meta v1.0.0
 	github.com/fluxcd/pkg/runtime v0.35.0
-	github.com/fluxcd/pkg/untar v0.2.0
+	github.com/fluxcd/pkg/untar v0.3.0
 	github.com/fluxcd/source-controller/api v0.36.1
 	github.com/go-git/go-git/v5 v5.6.1
 	github.com/golang/mock v1.6.0
@@ -78,6 +78,7 @@ require (
 	github.com/evanphx/json-patch/v5 v5.6.0 // indirect
 	github.com/exponent-io/jsonpath v0.0.0-20210407135951-1de76d718b3f // indirect
 	github.com/fluxcd/pkg/apis/acl v0.1.0 // indirect
+	github.com/fluxcd/pkg/tar v0.2.0 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/go-errors/errors v1.4.2 // indirect
 	github.com/go-git/gcfg v1.5.0 // indirect
