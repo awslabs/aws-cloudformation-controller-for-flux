@@ -23,9 +23,6 @@ spec:
         # Required for AWS IAM Role bindings
         # https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts-technical-overview.html
         fsGroup: 1337
-      nodeSelector:
-        kubernetes.io/os: linux
-        kubernetes.io/arch: amd64
       containers:
       - name: manager
         image: public.ecr.aws/aws-cloudformation/aws-cloudformation-controller-for-flux

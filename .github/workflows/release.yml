@@ -182,6 +182,11 @@ jobs:
           npm install -g standard-version@^9.5.0
       - name: Setup Kustomize
         uses: fluxcd/pkg/actions/kustomize@main
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@v2
+      - name: Setup Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v2
       - name: Configure git
         run: |
           git config user.name "github-actions[bot]"
@@ -228,17 +233,30 @@ jobs:
         with:
           registry-type: public
 
-      - name: Build and push controller Docker image to ECR Public
+      - name: Configure Docker image tags
+        id: docker-image-tags
         env:
           REGISTRY: ${{ steps.login-ecr-public.outputs.registry }}
           REGISTRY_ALIAS: ${{ secrets.PUBLISHER_REGISTRY_ALIAS }}
           REPOSITORY: aws-cloudformation-controller-for-flux
         run: |
-          make build-docker-image
-          docker tag aws-cloudformation-controller-for-flux:latest $REGISTRY/$REGISTRY_ALIAS/$REPOSITORY:v$NEW_VERSION
-          docker tag aws-cloudformation-controller-for-flux:latest $REGISTRY/$REGISTRY_ALIAS/$REPOSITORY:latest
-          docker push $REGISTRY/$REGISTRY_ALIAS/$REPOSITORY:v$NEW_VERSION
-          docker push $REGISTRY/$REGISTRY_ALIAS/$REPOSITORY:latest
+          echo "versioned_image=$REGISTRY/$REGISTRY_ALIAS/$REPOSITORY:v$NEW_VERSION" >> "$GITHUB_OUTPUT"
+          echo "latest_image=$REGISTRY/$REGISTRY_ALIAS/$REPOSITORY:latest" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push controller Docker image to ECR Public
+        uses: docker/build-push-action@v4
+        with:
+          push: true
+          builder: ${{ steps.buildx.outputs.name }}
+          context: .
+          file: ./Dockerfile
+          build-args: |
+            BUILD_SHA=${{ github.sha }}
+            BUILD_VERSION=v${{ env.NEW_VERSION }}
+          platforms: linux/amd64,linux/arm/v7,linux/arm64
+          tags: |
+            ${{ steps.docker-image-tags.outputs.versioned_image }}
+            ${{ steps.docker-image-tags.outputs.latest_image }}
 
       - name: Push new version to GitHub
         run: |
