@@ -253,7 +253,7 @@ jobs:
           build-args: |
             BUILD_SHA=${{ github.sha }}
             BUILD_VERSION=v${{ env.NEW_VERSION }}
-          platforms: linux/amd64,linux/arm/v7,linux/arm64
+          platforms: linux/amd64,linux/arm64
           tags: |
             ${{ steps.docker-image-tags.outputs.versioned_image }}
             ${{ steps.docker-image-tags.outputs.latest_image }}
