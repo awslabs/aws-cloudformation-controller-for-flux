@@ -1,13 +1,13 @@
 # Build the controller binary
 FROM public.ecr.aws/docker/library/golang:1.19 as builder
 
-ARG GOARCH=amd64
+ARG TARGETARCH
 
 WORKDIR /workspace
 
 ENV GOPROXY=https://proxy.golang.org|direct
 ENV GO111MODULE=on
-ENV GOARCH=$GOARCH
+ENV GOARCH=$TARGETARCH
 ENV GOOS=linux
 ENV CGO_ENABLED=0
 
