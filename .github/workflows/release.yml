@@ -247,6 +247,7 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           push: true
+          no-cache: true
           builder: ${{ steps.buildx.outputs.name }}
           context: .
           file: ./Dockerfile
