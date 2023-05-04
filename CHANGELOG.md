@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.3](https://github.com/awslabs/aws-cloudformation-controller-for-flux/compare/v0.2.2...v0.2.3) (2023-05-04)
+
+
+### Features
+
+* Publish ARM Docker images for the controller ([e1e296d](https://github.com/awslabs/aws-cloudformation-controller-for-flux/commit/e1e296d5fed6d472699706468afce5a25eed0eec)), closes [#32](https://github.com/awslabs/aws-cloudformation-controller-for-flux/issues/32)
+
+
+### Bug Fixes
+
+* Pull target arch from Docker ([eed3351](https://github.com/awslabs/aws-cloudformation-controller-for-flux/commit/eed3351463555bd70ac2d2c374a80d28b111c469))
+* Remove ARM v7 support (not supported by base image) ([2d2034d](https://github.com/awslabs/aws-cloudformation-controller-for-flux/commit/2d2034daa5b84a8befcf5d37e0eea4d7cd0268a7))
+
 ### [0.2.2](https://github.com/awslabs/aws-cloudformation-controller-for-flux/compare/v0.2.1...v0.2.2) (2023-04-25)
 
 ### [0.2.1](https://github.com/awslabs/aws-cloudformation-controller-for-flux/compare/v0.2.0...v0.2.1) (2023-04-18)
