@@ -38,3 +38,28 @@ jobs:
         uses: securego/gosec@master
         with:
           args: ./...
+  build_docker_image:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@v2
+      - name: Setup Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v2
+      - name: Build controller Docker image
+        uses: docker/build-push-action@v4
+        with:
+          push: false
+          builder: ${{ steps.buildx.outputs.name }}
+          context: .
+          file: ./Dockerfile
+          build-args: |
+            BUILD_SHA=${{ github.sha }}
+            BUILD_VERSION=test-build
+          platforms: linux/amd64,linux/arm/v7,linux/arm64
+          tags: |
+            cfn-flux-controller:test-build
