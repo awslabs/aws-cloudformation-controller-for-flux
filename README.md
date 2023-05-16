@@ -101,6 +101,8 @@ supported by the CloudFormation controller for CloudFormation stacks.
 
 For information about developing the CloudFormation controller locally, see [Developing the AWS CloudFormation Template Sync Controller for Flux](./docs/developing.md).
 
+For information about the design of the CloudFormation controller, see [AWS CloudFormation Template Sync Controller for Flux Design](./docs/design.md).
+
 ## Security
 
 See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more information on reporting security issues.

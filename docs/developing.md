@@ -1,10 +1,8 @@
 # Developing the AWS CloudFormation Template Sync Controller for Flux
 
-Learn how to develop the AWS CloudFormation Template Sync Controller for Flux.
+Follow these instructions for setting a local development environment for the AWS CloudFormation Template Sync Controller for Flux.
 
-## Set up a local development environment
-
-### Install required tools
+## Install required tools
 
 1. Install go 1.19+
 
@@ -19,14 +17,14 @@ https://kind.sigs.k8s.io/docs/user/quick-start
 $ curl -s https://fluxcd.io/install.sh | sudo bash
 ```
 
-### Useful commands
+## Useful commands
 
 |  | Command |
 | ------ | ----------- |
 | Generate CRDs | `make generate` |
 | Build | `make build` |
 | Test | `make test` |
-| Integration Test | `make integ-test` |
+| Integration test | `make integ-test` |
 | See CloudFormation stacks | `kubectl describe cfnstack -A` |
 | View logs | `kubectl logs deployment/cfn-controller --namespace flux-system` |
 | Clean up | `make clean` |
