@@ -1,1 +1,924 @@
-<mxfile modified="2023-03-07T18:24:07.860Z" host="Electron" agent="5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/20.8.16 Chrome/106.0.5249.199 Electron/21.4.0 Safari/537.36" etag="mH-qcFd9Ye5BoxahYN21" version="20.8.16" type="device" pages="3"><diagram id="SOUpMyilc1v6sO0bcS_Z4" name="Create">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</diagram><diagram id="BTnab3MmHQmzCfqtOLRl" name="Update">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</diagram><diagram id="DwCrOFtsWHXVb4Im4mES" name="Delete">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</diagram></mxfile>
+<mxfile modified="2023-05-16T16:28:37.437Z" host="Electron" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/21.2.8 Chrome/112.0.5615.165 Electron/24.2.0 Safari/537.36" etag="S2sEG9bRhmUor5RIjS-3" version="21.2.8" type="device" pages="3">
+  <diagram id="SOUpMyilc1v6sO0bcS_Z4" name="Create">
+    <mxGraphModel dx="1114" dy="1027" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" nextCellIdValue="39">
+          <ResourceDescriptor resource="_:0" serialization-version="v0" as="resourceDescriptor">
+            <SemanticDataContainer serialization-version="v0">
+              <StringLiteral content="0" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/a2255956-c3df-4c2c-b489-c307f68abc97" />
+              <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/84a80b5f-5642-4a17-9585-ebfdb65f4bec" property="https://ontology.security.amazon.dev/foundation/system-modeling/04539597-4283-4f65-8090-ae67f9d3e949" />
+            </SemanticDataContainer>
+          </ResourceDescriptor>
+        </mxCell>
+        <mxCell id="1" parent="0">
+          <ResourceDescriptor resource="_:1" serialization-version="v0" as="resourceDescriptor">
+            <SemanticDataContainer serialization-version="v0">
+              <StringLiteral content="1" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/a2255956-c3df-4c2c-b489-c307f68abc97" />
+              <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/84a80b5f-5642-4a17-9585-ebfdb65f4bec" property="https://ontology.security.amazon.dev/foundation/system-modeling/04539597-4283-4f65-8090-ae67f9d3e949" />
+            </SemanticDataContainer>
+          </ResourceDescriptor>
+        </mxCell>
+        <object label="&lt;b&gt;AWS CloudFormation&lt;/b&gt;" stencilType="cloudformation" id="_0WKEjGSolQWEmS241A_3-1">
+          <mxCell style="points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;gradientColor=#F34482;gradientDirection=north;fillColor=#BC1356;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws20.resourceIcon;resIcon=mxgraph.aws20.cloudformation;" parent="1" vertex="1" rdfUpgraded="1" assetTypeVersion="3">
+            <mxGeometry x="705" y="380" width="70" height="70" as="geometry" />
+            <ResourceDescriptor resource="_:_0WKEjGSolQWEmS241A_3-1" serialization-version="v0" as="resourceDescriptor">
+              <SemanticDataContainer serialization-version="v0">
+                <StringLiteral content="_0WKEjGSolQWEmS241A_3-1" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/a2255956-c3df-4c2c-b489-c307f68abc97" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/84a80b5f-5642-4a17-9585-ebfdb65f4bec" property="https://ontology.security.amazon.dev/foundation/system-modeling/04539597-4283-4f65-8090-ae67f9d3e949" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/4f51991f-f3c6-4a47-9b00-013560ab92f4" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <IRI resource="https://ontology.security.amazon.dev/foundation/graph-structure/0b4eeac8-04e5-4e85-869c-bd56fb947b7b" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <StringLiteral content="AWS CloudFormation" property="http://www.w3.org/2000/01/rdf-schema#label" />
+                <StringLiteral content="UnknownPage" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/05cc531c-d241-49c3-80dc-bd3777c5426f" />
+              </SemanticDataContainer>
+            </ResourceDescriptor>
+          </mxCell>
+        </object>
+        <object label="&lt;b&gt;Kubernetes API Server&lt;/b&gt;" stencilType="eks" id="_0WKEjGSolQWEmS241A_3-4">
+          <mxCell style="points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;gradientColor=#F78E04;gradientDirection=north;fillColor=#D05C17;strokeColor=#ffffff;dashed=0;verticalLabelPosition=top;verticalAlign=bottom;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws20.resourceIcon;resIcon=mxgraph.aws20.eks;labelPosition=center;" parent="1" vertex="1" rdfUpgraded="1" assetTypeVersion="3">
+            <mxGeometry x="265" y="240" width="80" height="80" as="geometry" />
+            <ResourceDescriptor resource="_:_0WKEjGSolQWEmS241A_3-4" serialization-version="v0" as="resourceDescriptor">
+              <SemanticDataContainer serialization-version="v0">
+                <StringLiteral content="_0WKEjGSolQWEmS241A_3-4" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/a2255956-c3df-4c2c-b489-c307f68abc97" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/aaab50ab-4afb-40c3-9a78-a6373ff63d7c" property="https://ontology.security.amazon.dev/foundation/system-modeling/04539597-4283-4f65-8090-ae67f9d3e949" />
+                <IRI resource="https://ontology.security.amazon.dev/foundation/graph-structure/0b4eeac8-04e5-4e85-869c-bd56fb947b7b" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <StringLiteral content="Kubernetes API Server" property="http://www.w3.org/2000/01/rdf-schema#label" />
+                <StringLiteral content="UnknownPage" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/05cc531c-d241-49c3-80dc-bd3777c5426f" />
+              </SemanticDataContainer>
+            </ResourceDescriptor>
+          </mxCell>
+        </object>
+        <object label="" stencilType="generic-channel" id="_0WKEjGSolQWEmS241A_3-18">
+          <mxCell style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;entryX=1;entryY=0.75;entryDx=0;entryDy=0;entryPerimeter=0;jettySize=auto;orthogonalLoop=1;" parent="1" target="_0WKEjGSolQWEmS241A_3-4" edge="1" rdfUpgraded="1" assetTypeVersion="3">
+            <mxGeometry relative="1" as="geometry">
+              <mxPoint x="510" y="500" as="sourcePoint" />
+            </mxGeometry>
+            <ResourceDescriptor resource="_:_0WKEjGSolQWEmS241A_3-18" serialization-version="v0" as="resourceDescriptor">
+              <SemanticDataContainer serialization-version="v0">
+                <StringLiteral content="_0WKEjGSolQWEmS241A_3-18" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/a2255956-c3df-4c2c-b489-c307f68abc97" />
+                <StringLiteral content="UnknownPage" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/05cc531c-d241-49c3-80dc-bd3777c5426f" />
+                <IRI resource="https://ontology.security.amazon.dev/foundation/graph-structure/65157620-74b7-470e-bd9d-b9bf56b6cb4b" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/84a80b5f-5642-4a17-9585-ebfdb65f4bec" property="https://ontology.security.amazon.dev/foundation/system-modeling/04539597-4283-4f65-8090-ae67f9d3e949" />
+                <BlankNodeID resource="_:_0WKEjGSolQWEmS241A_3-4" property="https://ontology.security.amazon.dev/foundation/graph-structure/617be0ed-cf17-4a01-a75d-81ed3a472532" />
+              </SemanticDataContainer>
+            </ResourceDescriptor>
+          </mxCell>
+        </object>
+        <object label="" stencilType="generic-channel" id="_0WKEjGSolQWEmS241A_3-23">
+          <mxCell style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;" parent="1" target="_0WKEjGSolQWEmS241A_3-11" edge="1" rdfUpgraded="1" assetTypeVersion="3">
+            <mxGeometry relative="1" as="geometry">
+              <mxPoint x="510" y="520" as="sourcePoint" />
+            </mxGeometry>
+            <ResourceDescriptor resource="_:_0WKEjGSolQWEmS241A_3-23" serialization-version="v0" as="resourceDescriptor">
+              <SemanticDataContainer serialization-version="v0">
+                <StringLiteral content="_0WKEjGSolQWEmS241A_3-23" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/a2255956-c3df-4c2c-b489-c307f68abc97" />
+                <StringLiteral content="UnknownPage" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/05cc531c-d241-49c3-80dc-bd3777c5426f" />
+                <IRI resource="https://ontology.security.amazon.dev/foundation/graph-structure/65157620-74b7-470e-bd9d-b9bf56b6cb4b" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/84a80b5f-5642-4a17-9585-ebfdb65f4bec" property="https://ontology.security.amazon.dev/foundation/system-modeling/04539597-4283-4f65-8090-ae67f9d3e949" />
+                <BlankNodeID resource="_:_0WKEjGSolQWEmS241A_3-11" property="https://ontology.security.amazon.dev/foundation/graph-structure/617be0ed-cf17-4a01-a75d-81ed3a472532" />
+              </SemanticDataContainer>
+            </ResourceDescriptor>
+          </mxCell>
+        </object>
+        <object label="&lt;b&gt;Flux Source Controller&lt;/b&gt;" stencilType="container" id="_0WKEjGSolQWEmS241A_3-5">
+          <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#D05C17;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.container_1;fontFamily=Helvetica;" parent="1" vertex="1" rdfUpgraded="1" assetTypeVersion="3">
+            <mxGeometry x="515" y="470" width="80" height="80" as="geometry" />
+            <ResourceDescriptor resource="_:_0WKEjGSolQWEmS241A_3-5" serialization-version="v0" as="resourceDescriptor">
+              <SemanticDataContainer serialization-version="v0">
+                <StringLiteral content="_0WKEjGSolQWEmS241A_3-5" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/a2255956-c3df-4c2c-b489-c307f68abc97" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/84a80b5f-5642-4a17-9585-ebfdb65f4bec" property="https://ontology.security.amazon.dev/foundation/system-modeling/04539597-4283-4f65-8090-ae67f9d3e949" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/4f51991f-f3c6-4a47-9b00-013560ab92f4" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <IRI resource="https://ontology.security.amazon.dev/foundation/graph-structure/0b4eeac8-04e5-4e85-869c-bd56fb947b7b" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <StringLiteral content="Flux Source Controller" property="http://www.w3.org/2000/01/rdf-schema#label" />
+                <StringLiteral content="UnknownPage" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/05cc531c-d241-49c3-80dc-bd3777c5426f" />
+              </SemanticDataContainer>
+            </ResourceDescriptor>
+          </mxCell>
+        </object>
+        <object label="" stencilType="generic-channel" id="_0WKEjGSolQWEmS241A_3-19">
+          <mxCell style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;jettySize=auto;orthogonalLoop=1;" parent="1" source="_0WKEjGSolQWEmS241A_3-8" target="_0WKEjGSolQWEmS241A_3-4" edge="1" rdfUpgraded="1" assetTypeVersion="3">
+            <mxGeometry relative="1" as="geometry" />
+            <ResourceDescriptor resource="_:_0WKEjGSolQWEmS241A_3-19" serialization-version="v0" as="resourceDescriptor">
+              <SemanticDataContainer serialization-version="v0">
+                <StringLiteral content="_0WKEjGSolQWEmS241A_3-19" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/a2255956-c3df-4c2c-b489-c307f68abc97" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/84a80b5f-5642-4a17-9585-ebfdb65f4bec" property="https://ontology.security.amazon.dev/foundation/system-modeling/04539597-4283-4f65-8090-ae67f9d3e949" />
+                <StringLiteral content="UnknownPage" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/05cc531c-d241-49c3-80dc-bd3777c5426f" />
+                <IRI resource="https://ontology.security.amazon.dev/foundation/graph-structure/65157620-74b7-470e-bd9d-b9bf56b6cb4b" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <BlankNodeID resource="_:_0WKEjGSolQWEmS241A_3-8" property="https://ontology.security.amazon.dev/foundation/graph-structure/d1fc066e-3862-4ae0-8304-6cef42f40a50" />
+                <BlankNodeID resource="_:_0WKEjGSolQWEmS241A_3-4" property="https://ontology.security.amazon.dev/foundation/graph-structure/617be0ed-cf17-4a01-a75d-81ed3a472532" />
+              </SemanticDataContainer>
+            </ResourceDescriptor>
+          </mxCell>
+        </object>
+        <object label="" stencilType="generic-channel" id="_0WKEjGSolQWEmS241A_3-21">
+          <mxCell style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;jettySize=auto;orthogonalLoop=1;" parent="1" target="_0WKEjGSolQWEmS241A_3-1" edge="1" rdfUpgraded="1" assetTypeVersion="3">
+            <mxGeometry relative="1" as="geometry">
+              <mxPoint x="600" y="290" as="sourcePoint" />
+            </mxGeometry>
+            <ResourceDescriptor resource="_:_0WKEjGSolQWEmS241A_3-21" serialization-version="v0" as="resourceDescriptor">
+              <SemanticDataContainer serialization-version="v0">
+                <StringLiteral content="_0WKEjGSolQWEmS241A_3-21" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/a2255956-c3df-4c2c-b489-c307f68abc97" />
+                <StringLiteral content="UnknownPage" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/05cc531c-d241-49c3-80dc-bd3777c5426f" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/84a80b5f-5642-4a17-9585-ebfdb65f4bec" property="https://ontology.security.amazon.dev/foundation/system-modeling/04539597-4283-4f65-8090-ae67f9d3e949" />
+                <IRI resource="https://ontology.security.amazon.dev/foundation/graph-structure/65157620-74b7-470e-bd9d-b9bf56b6cb4b" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <BlankNodeID resource="_:_0WKEjGSolQWEmS241A_3-1" property="https://ontology.security.amazon.dev/foundation/graph-structure/617be0ed-cf17-4a01-a75d-81ed3a472532" />
+              </SemanticDataContainer>
+            </ResourceDescriptor>
+          </mxCell>
+        </object>
+        <object label="" stencilType="generic-channel" id="_0WKEjGSolQWEmS241A_3-22">
+          <mxCell style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;" parent="1" source="_0WKEjGSolQWEmS241A_3-8" target="_0WKEjGSolQWEmS241A_3-5" edge="1" rdfUpgraded="1" assetTypeVersion="3">
+            <mxGeometry relative="1" as="geometry" />
+            <ResourceDescriptor resource="_:_0WKEjGSolQWEmS241A_3-22" serialization-version="v0" as="resourceDescriptor">
+              <SemanticDataContainer serialization-version="v0">
+                <StringLiteral content="_0WKEjGSolQWEmS241A_3-22" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/a2255956-c3df-4c2c-b489-c307f68abc97" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/84a80b5f-5642-4a17-9585-ebfdb65f4bec" property="https://ontology.security.amazon.dev/foundation/system-modeling/04539597-4283-4f65-8090-ae67f9d3e949" />
+                <StringLiteral content="UnknownPage" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/05cc531c-d241-49c3-80dc-bd3777c5426f" />
+                <IRI resource="https://ontology.security.amazon.dev/foundation/graph-structure/65157620-74b7-470e-bd9d-b9bf56b6cb4b" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <BlankNodeID resource="_:_0WKEjGSolQWEmS241A_3-8" property="https://ontology.security.amazon.dev/foundation/graph-structure/d1fc066e-3862-4ae0-8304-6cef42f40a50" />
+                <BlankNodeID resource="_:_0WKEjGSolQWEmS241A_3-5" property="https://ontology.security.amazon.dev/foundation/graph-structure/617be0ed-cf17-4a01-a75d-81ed3a472532" />
+              </SemanticDataContainer>
+            </ResourceDescriptor>
+          </mxCell>
+        </object>
+        <object label="" stencilType="generic-channel" id="_nm1d2nPAYFvigHrUNV_H-36">
+          <mxCell style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;" parent="1" source="_0WKEjGSolQWEmS241A_3-8" target="_nm1d2nPAYFvigHrUNV_H-35" edge="1" rdfUpgraded="1" assetTypeVersion="3">
+            <mxGeometry relative="1" as="geometry" />
+            <ResourceDescriptor resource="_:_nm1d2nPAYFvigHrUNV_H-36" serialization-version="v0" as="resourceDescriptor">
+              <SemanticDataContainer serialization-version="v0">
+                <StringLiteral content="_nm1d2nPAYFvigHrUNV_H-36" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/a2255956-c3df-4c2c-b489-c307f68abc97" />
+                <BlankNodeID resource="_:_0WKEjGSolQWEmS241A_3-8" property="https://ontology.security.amazon.dev/foundation/graph-structure/d1fc066e-3862-4ae0-8304-6cef42f40a50" />
+                <BlankNodeID resource="_:_nm1d2nPAYFvigHrUNV_H-35" property="https://ontology.security.amazon.dev/foundation/graph-structure/617be0ed-cf17-4a01-a75d-81ed3a472532" />
+                <IRI resource="https://ontology.security.amazon.dev/foundation/graph-structure/65157620-74b7-470e-bd9d-b9bf56b6cb4b" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/84a80b5f-5642-4a17-9585-ebfdb65f4bec" property="https://ontology.security.amazon.dev/foundation/system-modeling/04539597-4283-4f65-8090-ae67f9d3e949" />
+                <StringLiteral content="UnknownPage" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/05cc531c-d241-49c3-80dc-bd3777c5426f" />
+              </SemanticDataContainer>
+            </ResourceDescriptor>
+          </mxCell>
+        </object>
+        <object label="&lt;b&gt;Flux CFN Controller&lt;br&gt;&lt;/b&gt;" stencilType="container" id="_0WKEjGSolQWEmS241A_3-8">
+          <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#D05C17;strokeColor=none;dashed=0;verticalLabelPosition=top;verticalAlign=bottom;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.container_1;fontFamily=Helvetica;labelPosition=center;" parent="1" vertex="1" rdfUpgraded="1" assetTypeVersion="3">
+            <mxGeometry x="515" y="240" width="80" height="80" as="geometry" />
+            <ResourceDescriptor resource="_:_0WKEjGSolQWEmS241A_3-8" serialization-version="v0" as="resourceDescriptor">
+              <SemanticDataContainer serialization-version="v0">
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/4f51991f-f3c6-4a47-9b00-013560ab92f4" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <IRI resource="https://ontology.security.amazon.dev/foundation/graph-structure/0b4eeac8-04e5-4e85-869c-bd56fb947b7b" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/84a80b5f-5642-4a17-9585-ebfdb65f4bec" property="https://ontology.security.amazon.dev/foundation/system-modeling/04539597-4283-4f65-8090-ae67f9d3e949" />
+                <StringLiteral content="UnknownPage" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/05cc531c-d241-49c3-80dc-bd3777c5426f" />
+                <StringLiteral content="Flux CFN Controller" property="http://www.w3.org/2000/01/rdf-schema#label" />
+                <StringLiteral content="_0WKEjGSolQWEmS241A_3-8" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/a2255956-c3df-4c2c-b489-c307f68abc97" />
+              </SemanticDataContainer>
+            </ResourceDescriptor>
+          </mxCell>
+        </object>
+        <object label="&lt;b&gt;Git Repository&lt;br&gt;&lt;/b&gt;" stencilType="codecommit" id="_0WKEjGSolQWEmS241A_3-11">
+          <mxCell style="points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;gradientColor=#4D72F3;gradientDirection=north;fillColor=#3334B9;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws20.resourceIcon;resIcon=mxgraph.aws20.codecommit;" parent="1" vertex="1" rdfUpgraded="1" assetTypeVersion="3">
+            <mxGeometry x="265" y="480" width="80" height="80" as="geometry" />
+            <ResourceDescriptor resource="_:_0WKEjGSolQWEmS241A_3-11" serialization-version="v0" as="resourceDescriptor">
+              <SemanticDataContainer serialization-version="v0">
+                <StringLiteral content="_0WKEjGSolQWEmS241A_3-11" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/a2255956-c3df-4c2c-b489-c307f68abc97" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/84a80b5f-5642-4a17-9585-ebfdb65f4bec" property="https://ontology.security.amazon.dev/foundation/system-modeling/04539597-4283-4f65-8090-ae67f9d3e949" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/4f51991f-f3c6-4a47-9b00-013560ab92f4" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <IRI resource="https://ontology.security.amazon.dev/foundation/graph-structure/0b4eeac8-04e5-4e85-869c-bd56fb947b7b" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <StringLiteral content="Git Repository" property="http://www.w3.org/2000/01/rdf-schema#label" />
+                <StringLiteral content="UnknownPage" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/05cc531c-d241-49c3-80dc-bd3777c5426f" />
+              </SemanticDataContainer>
+            </ResourceDescriptor>
+          </mxCell>
+        </object>
+        <object label="" stencilType="generic-channel" id="_0WKEjGSolQWEmS241A_3-14">
+          <mxCell style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;jettySize=auto;orthogonalLoop=1;" parent="1" target="_0WKEjGSolQWEmS241A_3-4" edge="1" rdfUpgraded="1" assetTypeVersion="3">
+            <mxGeometry relative="1" as="geometry">
+              <mxPoint x="110" y="380" as="sourcePoint" />
+            </mxGeometry>
+            <ResourceDescriptor resource="_:_0WKEjGSolQWEmS241A_3-14" serialization-version="v0" as="resourceDescriptor">
+              <SemanticDataContainer serialization-version="v0">
+                <StringLiteral content="_0WKEjGSolQWEmS241A_3-14" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/a2255956-c3df-4c2c-b489-c307f68abc97" />
+                <StringLiteral content="UnknownPage" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/05cc531c-d241-49c3-80dc-bd3777c5426f" />
+                <IRI resource="https://ontology.security.amazon.dev/foundation/graph-structure/65157620-74b7-470e-bd9d-b9bf56b6cb4b" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/84a80b5f-5642-4a17-9585-ebfdb65f4bec" property="https://ontology.security.amazon.dev/foundation/system-modeling/04539597-4283-4f65-8090-ae67f9d3e949" />
+                <BlankNodeID resource="_:_0WKEjGSolQWEmS241A_3-4" property="https://ontology.security.amazon.dev/foundation/graph-structure/617be0ed-cf17-4a01-a75d-81ed3a472532" />
+              </SemanticDataContainer>
+            </ResourceDescriptor>
+          </mxCell>
+        </object>
+        <object label="" stencilType="generic-channel" id="_0WKEjGSolQWEmS241A_3-15">
+          <mxCell style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;jettySize=auto;orthogonalLoop=1;" parent="1" target="_0WKEjGSolQWEmS241A_3-11" edge="1" rdfUpgraded="1" assetTypeVersion="3">
+            <mxGeometry relative="1" as="geometry">
+              <mxPoint x="110" y="400" as="sourcePoint" />
+            </mxGeometry>
+            <ResourceDescriptor resource="_:_0WKEjGSolQWEmS241A_3-15" serialization-version="v0" as="resourceDescriptor">
+              <SemanticDataContainer serialization-version="v0">
+                <StringLiteral content="_0WKEjGSolQWEmS241A_3-15" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/a2255956-c3df-4c2c-b489-c307f68abc97" />
+                <StringLiteral content="UnknownPage" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/05cc531c-d241-49c3-80dc-bd3777c5426f" />
+                <IRI resource="https://ontology.security.amazon.dev/foundation/graph-structure/65157620-74b7-470e-bd9d-b9bf56b6cb4b" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/84a80b5f-5642-4a17-9585-ebfdb65f4bec" property="https://ontology.security.amazon.dev/foundation/system-modeling/04539597-4283-4f65-8090-ae67f9d3e949" />
+                <BlankNodeID resource="_:_0WKEjGSolQWEmS241A_3-11" property="https://ontology.security.amazon.dev/foundation/graph-structure/617be0ed-cf17-4a01-a75d-81ed3a472532" />
+              </SemanticDataContainer>
+            </ResourceDescriptor>
+          </mxCell>
+        </object>
+        <object label="&lt;div&gt;&lt;b&gt;User&lt;/b&gt;&lt;/div&gt;" stencilType="actor" id="_0WKEjGSolQWEmS241A_3-12">
+          <mxCell style="shape=umlActor;verticalLabelPosition=bottom;labelBackgroundColor=#ffffff;verticalAlign=top;html=1;outlineConnect=0;" parent="1" vertex="1" rdfUpgraded="1" assetTypeVersion="3">
+            <mxGeometry x="50" y="340" width="50" height="100" as="geometry" />
+            <ResourceDescriptor resource="_:_0WKEjGSolQWEmS241A_3-12" serialization-version="v0" as="resourceDescriptor">
+              <SemanticDataContainer serialization-version="v0">
+                <StringLiteral content="_0WKEjGSolQWEmS241A_3-12" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/a2255956-c3df-4c2c-b489-c307f68abc97" />
+                <IRI resource="https://ontology.security.amazon.dev/foundation/system-modeling/a8c50ddd-aa98-48ce-a1ac-5a95ff514e73" property="https://ontology.security.amazon.dev/foundation/system-modeling/04539597-4283-4f65-8090-ae67f9d3e949" />
+                <IRI resource="https://ontology.security.amazon.dev/foundation/graph-structure/0b4eeac8-04e5-4e85-869c-bd56fb947b7b" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <StringLiteral content="User" property="http://www.w3.org/2000/01/rdf-schema#label" />
+                <StringLiteral content="UnknownPage" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/05cc531c-d241-49c3-80dc-bd3777c5426f" />
+              </SemanticDataContainer>
+            </ResourceDescriptor>
+          </mxCell>
+        </object>
+        <object label="&lt;b&gt;4&lt;/b&gt;" stencilType="text" id="_0WKEjGSolQWEmS241A_3-16">
+          <mxCell style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1" rdfUpgraded="1" assetTypeVersion="3">
+            <mxGeometry x="140" y="450" width="40" height="20" as="geometry" />
+            <ResourceDescriptor resource="_:_0WKEjGSolQWEmS241A_3-16" serialization-version="v0" as="resourceDescriptor">
+              <SemanticDataContainer serialization-version="v0">
+                <StringLiteral content="_0WKEjGSolQWEmS241A_3-16" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/a2255956-c3df-4c2c-b489-c307f68abc97" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/4f51991f-f3c6-4a47-9b00-013560ab92f4" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <IRI resource="https://ontology.security.amazon.dev/foundation/graph-structure/0b4eeac8-04e5-4e85-869c-bd56fb947b7b" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/84a80b5f-5642-4a17-9585-ebfdb65f4bec" property="https://ontology.security.amazon.dev/foundation/system-modeling/04539597-4283-4f65-8090-ae67f9d3e949" />
+                <StringLiteral content="4" property="http://www.w3.org/2000/01/rdf-schema#label" />
+                <StringLiteral content="UnknownPage" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/05cc531c-d241-49c3-80dc-bd3777c5426f" />
+              </SemanticDataContainer>
+            </ResourceDescriptor>
+          </mxCell>
+        </object>
+        <object label="&lt;b&gt;2, 6&lt;br&gt;&lt;/b&gt;" stencilType="text" id="_0WKEjGSolQWEmS241A_3-24">
+          <mxCell style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1" rdfUpgraded="1" assetTypeVersion="3">
+            <mxGeometry x="440" y="400" width="40" height="20" as="geometry" />
+            <ResourceDescriptor resource="_:_0WKEjGSolQWEmS241A_3-24" serialization-version="v0" as="resourceDescriptor">
+              <SemanticDataContainer serialization-version="v0">
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/84a80b5f-5642-4a17-9585-ebfdb65f4bec" property="https://ontology.security.amazon.dev/foundation/system-modeling/04539597-4283-4f65-8090-ae67f9d3e949" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/4f51991f-f3c6-4a47-9b00-013560ab92f4" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <IRI resource="https://ontology.security.amazon.dev/foundation/graph-structure/0b4eeac8-04e5-4e85-869c-bd56fb947b7b" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <StringLiteral content="UnknownPage" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/05cc531c-d241-49c3-80dc-bd3777c5426f" />
+                <StringLiteral content="2, 6" property="http://www.w3.org/2000/01/rdf-schema#label" />
+                <StringLiteral content="_0WKEjGSolQWEmS241A_3-24" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/a2255956-c3df-4c2c-b489-c307f68abc97" />
+              </SemanticDataContainer>
+            </ResourceDescriptor>
+          </mxCell>
+        </object>
+        <object label="&lt;b&gt;3, 5&lt;br&gt;&lt;/b&gt;" stencilType="text" id="_0WKEjGSolQWEmS241A_3-25">
+          <mxCell style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1" rdfUpgraded="1" assetTypeVersion="3">
+            <mxGeometry x="405" y="523" width="40" height="20" as="geometry" />
+            <ResourceDescriptor resource="_:_0WKEjGSolQWEmS241A_3-25" serialization-version="v0" as="resourceDescriptor">
+              <SemanticDataContainer serialization-version="v0">
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/84a80b5f-5642-4a17-9585-ebfdb65f4bec" property="https://ontology.security.amazon.dev/foundation/system-modeling/04539597-4283-4f65-8090-ae67f9d3e949" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/4f51991f-f3c6-4a47-9b00-013560ab92f4" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <IRI resource="https://ontology.security.amazon.dev/foundation/graph-structure/0b4eeac8-04e5-4e85-869c-bd56fb947b7b" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <StringLiteral content="UnknownPage" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/05cc531c-d241-49c3-80dc-bd3777c5426f" />
+                <StringLiteral content="3, 5" property="http://www.w3.org/2000/01/rdf-schema#label" />
+                <StringLiteral content="_0WKEjGSolQWEmS241A_3-25" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/a2255956-c3df-4c2c-b489-c307f68abc97" />
+              </SemanticDataContainer>
+            </ResourceDescriptor>
+          </mxCell>
+        </object>
+        <object label="&lt;font style=&quot;font-size: 12px&quot;&gt;&lt;b&gt;&lt;font style=&quot;font-size: 12px&quot;&gt;&lt;font style=&quot;font-size: 12px&quot;&gt;&lt;font style=&quot;font-size: 12px&quot;&gt;1, 7&lt;br&gt;&lt;/font&gt;&lt;/font&gt;&lt;/font&gt;&lt;/b&gt;&lt;/font&gt;" stencilType="text" id="_0WKEjGSolQWEmS241A_3-29">
+          <mxCell style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1" rdfUpgraded="1" assetTypeVersion="3">
+            <mxGeometry x="140" y="320" width="40" height="20" as="geometry" />
+            <ResourceDescriptor resource="_:_0WKEjGSolQWEmS241A_3-29" serialization-version="v0" as="resourceDescriptor">
+              <SemanticDataContainer serialization-version="v0">
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/84a80b5f-5642-4a17-9585-ebfdb65f4bec" property="https://ontology.security.amazon.dev/foundation/system-modeling/04539597-4283-4f65-8090-ae67f9d3e949" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/4f51991f-f3c6-4a47-9b00-013560ab92f4" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <IRI resource="https://ontology.security.amazon.dev/foundation/graph-structure/0b4eeac8-04e5-4e85-869c-bd56fb947b7b" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <StringLiteral content="UnknownPage" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/05cc531c-d241-49c3-80dc-bd3777c5426f" />
+                <StringLiteral content="1, 7" property="http://www.w3.org/2000/01/rdf-schema#label" />
+                <StringLiteral content="_0WKEjGSolQWEmS241A_3-29" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/a2255956-c3df-4c2c-b489-c307f68abc97" />
+              </SemanticDataContainer>
+            </ResourceDescriptor>
+          </mxCell>
+        </object>
+        <object label="&lt;b&gt;8, 9, 13&lt;br&gt;&lt;/b&gt;" stencilType="text" id="_0WKEjGSolQWEmS241A_3-30">
+          <mxCell style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1" rdfUpgraded="1" assetTypeVersion="3">
+            <mxGeometry x="400" y="257" width="60" height="20" as="geometry" />
+            <ResourceDescriptor resource="_:_0WKEjGSolQWEmS241A_3-30" serialization-version="v0" as="resourceDescriptor">
+              <SemanticDataContainer serialization-version="v0">
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/84a80b5f-5642-4a17-9585-ebfdb65f4bec" property="https://ontology.security.amazon.dev/foundation/system-modeling/04539597-4283-4f65-8090-ae67f9d3e949" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/4f51991f-f3c6-4a47-9b00-013560ab92f4" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <IRI resource="https://ontology.security.amazon.dev/foundation/graph-structure/0b4eeac8-04e5-4e85-869c-bd56fb947b7b" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <StringLiteral content="UnknownPage" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/05cc531c-d241-49c3-80dc-bd3777c5426f" />
+                <StringLiteral content="8, 9, 13" property="http://www.w3.org/2000/01/rdf-schema#label" />
+                <StringLiteral content="_0WKEjGSolQWEmS241A_3-30" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/a2255956-c3df-4c2c-b489-c307f68abc97" />
+              </SemanticDataContainer>
+            </ResourceDescriptor>
+          </mxCell>
+        </object>
+        <object label="&lt;b&gt;10&lt;/b&gt;" stencilType="text" id="_0WKEjGSolQWEmS241A_3-31">
+          <mxCell style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1" rdfUpgraded="1" assetTypeVersion="3">
+            <mxGeometry x="563" y="380" width="40" height="20" as="geometry" />
+            <ResourceDescriptor resource="_:_0WKEjGSolQWEmS241A_3-31" serialization-version="v0" as="resourceDescriptor">
+              <SemanticDataContainer serialization-version="v0">
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/84a80b5f-5642-4a17-9585-ebfdb65f4bec" property="https://ontology.security.amazon.dev/foundation/system-modeling/04539597-4283-4f65-8090-ae67f9d3e949" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/4f51991f-f3c6-4a47-9b00-013560ab92f4" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <IRI resource="https://ontology.security.amazon.dev/foundation/graph-structure/0b4eeac8-04e5-4e85-869c-bd56fb947b7b" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <StringLiteral content="UnknownPage" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/05cc531c-d241-49c3-80dc-bd3777c5426f" />
+                <StringLiteral content="10" property="http://www.w3.org/2000/01/rdf-schema#label" />
+                <StringLiteral content="_0WKEjGSolQWEmS241A_3-31" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/a2255956-c3df-4c2c-b489-c307f68abc97" />
+              </SemanticDataContainer>
+            </ResourceDescriptor>
+          </mxCell>
+        </object>
+        <object label="&lt;b&gt;12&lt;/b&gt;" stencilType="text" id="_0WKEjGSolQWEmS241A_3-33">
+          <mxCell style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1" rdfUpgraded="1" assetTypeVersion="3">
+            <mxGeometry x="662" y="330" width="40" height="20" as="geometry" />
+            <ResourceDescriptor resource="_:_0WKEjGSolQWEmS241A_3-33" serialization-version="v0" as="resourceDescriptor">
+              <SemanticDataContainer serialization-version="v0">
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/84a80b5f-5642-4a17-9585-ebfdb65f4bec" property="https://ontology.security.amazon.dev/foundation/system-modeling/04539597-4283-4f65-8090-ae67f9d3e949" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/4f51991f-f3c6-4a47-9b00-013560ab92f4" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <IRI resource="https://ontology.security.amazon.dev/foundation/graph-structure/0b4eeac8-04e5-4e85-869c-bd56fb947b7b" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <StringLiteral content="UnknownPage" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/05cc531c-d241-49c3-80dc-bd3777c5426f" />
+                <StringLiteral content="12" property="http://www.w3.org/2000/01/rdf-schema#label" />
+                <StringLiteral content="_0WKEjGSolQWEmS241A_3-33" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/a2255956-c3df-4c2c-b489-c307f68abc97" />
+              </SemanticDataContainer>
+            </ResourceDescriptor>
+          </mxCell>
+        </object>
+        <object label="&lt;div&gt;&lt;b&gt;S3 bucket&lt;/b&gt;&lt;/div&gt;&lt;div&gt;&lt;b&gt;for template files&lt;br&gt;&lt;/b&gt;&lt;/div&gt;" stencilType="bucket" id="_nm1d2nPAYFvigHrUNV_H-35">
+          <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#277116;strokeColor=none;dashed=0;verticalLabelPosition=top;verticalAlign=bottom;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.bucket;fontFamily=Helvetica;labelPosition=center;" parent="1" vertex="1" rdfUpgraded="1" assetTypeVersion="3">
+            <mxGeometry x="710" y="250" width="60" height="60" as="geometry" />
+            <ResourceDescriptor resource="_:_nm1d2nPAYFvigHrUNV_H-35" serialization-version="v0" as="resourceDescriptor">
+              <SemanticDataContainer serialization-version="v0">
+                <StringLiteral content="_nm1d2nPAYFvigHrUNV_H-35" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/a2255956-c3df-4c2c-b489-c307f68abc97" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/ee44b39a-c4bb-4022-b961-2f48ec193e80" property="https://ontology.security.amazon.dev/foundation/system-modeling/04539597-4283-4f65-8090-ae67f9d3e949" />
+                <IRI resource="https://ontology.security.amazon.dev/foundation/graph-structure/0b4eeac8-04e5-4e85-869c-bd56fb947b7b" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <StringLiteral content="S3 bucketfor template files" property="http://www.w3.org/2000/01/rdf-schema#label" />
+                <StringLiteral content="UnknownPage" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/05cc531c-d241-49c3-80dc-bd3777c5426f" />
+              </SemanticDataContainer>
+            </ResourceDescriptor>
+          </mxCell>
+        </object>
+        <object label="&lt;b&gt;11&lt;/b&gt;" stencilType="text" id="_nm1d2nPAYFvigHrUNV_H-37">
+          <mxCell style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1" rdfUpgraded="1" assetTypeVersion="3">
+            <mxGeometry x="630" y="260" width="40" height="20" as="geometry" />
+            <ResourceDescriptor resource="_:_nm1d2nPAYFvigHrUNV_H-37" serialization-version="v0" as="resourceDescriptor">
+              <SemanticDataContainer serialization-version="v0">
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/84a80b5f-5642-4a17-9585-ebfdb65f4bec" property="https://ontology.security.amazon.dev/foundation/system-modeling/04539597-4283-4f65-8090-ae67f9d3e949" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/4f51991f-f3c6-4a47-9b00-013560ab92f4" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <IRI resource="https://ontology.security.amazon.dev/foundation/graph-structure/0b4eeac8-04e5-4e85-869c-bd56fb947b7b" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <StringLiteral content="UnknownPage" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/05cc531c-d241-49c3-80dc-bd3777c5426f" />
+                <StringLiteral content="11" property="http://www.w3.org/2000/01/rdf-schema#label" />
+                <StringLiteral content="_nm1d2nPAYFvigHrUNV_H-37" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/a2255956-c3df-4c2c-b489-c307f68abc97" />
+              </SemanticDataContainer>
+            </ResourceDescriptor>
+          </mxCell>
+        </object>
+        <mxCell id="QD4o6qMrIX3-3gyalX1c-4" value="" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;gradientColor=#F78E04;gradientDirection=north;fillColor=#D05C17;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.eks;" parent="1" vertex="1">
+          <mxGeometry x="267" y="242" width="78" height="78" as="geometry" />
+        </mxCell>
+        <mxCell id="QD4o6qMrIX3-3gyalX1c-5" value="" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;gradientColor=#4D72F3;gradientDirection=north;fillColor=#3334B9;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.codecommit;" parent="1" vertex="1">
+          <mxGeometry x="267" y="480" width="78" height="78" as="geometry" />
+        </mxCell>
+        <mxCell id="QD4o6qMrIX3-3gyalX1c-7" value="" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;gradientColor=#F34482;gradientDirection=north;fillColor=#BC1356;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.cloudformation;" parent="1" vertex="1">
+          <mxGeometry x="705" y="376" width="78" height="78" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="BTnab3MmHQmzCfqtOLRl" name="Update">
+    <mxGraphModel dx="2954" dy="1128" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1400" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <object label="&lt;b&gt;AWS CloudFormation&lt;/b&gt;" stencilType="cloudformation" id="_74IzwcaJhtsTYrPn7xk-1">
+          <mxCell style="points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;gradientColor=#F34482;gradientDirection=north;fillColor=#BC1356;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws20.resourceIcon;resIcon=mxgraph.aws20.cloudformation;" vertex="1" rdfUpgraded="1" assetTypeVersion="3" parent="1">
+            <mxGeometry x="705" y="380" width="70" height="70" as="geometry" />
+            <ResourceDescriptor resource="_:_0WKEjGSolQWEmS241A_3-1" serialization-version="v0" as="resourceDescriptor">
+              <SemanticDataContainer serialization-version="v0">
+                <StringLiteral content="_0WKEjGSolQWEmS241A_3-1" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/a2255956-c3df-4c2c-b489-c307f68abc97" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/84a80b5f-5642-4a17-9585-ebfdb65f4bec" property="https://ontology.security.amazon.dev/foundation/system-modeling/04539597-4283-4f65-8090-ae67f9d3e949" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/4f51991f-f3c6-4a47-9b00-013560ab92f4" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <IRI resource="https://ontology.security.amazon.dev/foundation/graph-structure/0b4eeac8-04e5-4e85-869c-bd56fb947b7b" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <StringLiteral content="AWS CloudFormation" property="http://www.w3.org/2000/01/rdf-schema#label" />
+                <StringLiteral content="SOUpMyilc1v6sO0bcS_Z4" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/05cc531c-d241-49c3-80dc-bd3777c5426f" />
+              </SemanticDataContainer>
+            </ResourceDescriptor>
+          </mxCell>
+        </object>
+        <object label="&lt;b&gt;Kubernetes API Server&lt;/b&gt;" stencilType="eks" id="_74IzwcaJhtsTYrPn7xk-2">
+          <mxCell style="points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;gradientColor=#F78E04;gradientDirection=north;fillColor=#D05C17;strokeColor=#ffffff;dashed=0;verticalLabelPosition=top;verticalAlign=bottom;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws20.resourceIcon;resIcon=mxgraph.aws20.eks;labelPosition=center;" vertex="1" rdfUpgraded="1" assetTypeVersion="3" parent="1">
+            <mxGeometry x="265" y="240" width="80" height="80" as="geometry" />
+            <ResourceDescriptor resource="_:_0WKEjGSolQWEmS241A_3-4" serialization-version="v0" as="resourceDescriptor">
+              <SemanticDataContainer serialization-version="v0">
+                <StringLiteral content="_0WKEjGSolQWEmS241A_3-4" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/a2255956-c3df-4c2c-b489-c307f68abc97" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/aaab50ab-4afb-40c3-9a78-a6373ff63d7c" property="https://ontology.security.amazon.dev/foundation/system-modeling/04539597-4283-4f65-8090-ae67f9d3e949" />
+                <IRI resource="https://ontology.security.amazon.dev/foundation/graph-structure/0b4eeac8-04e5-4e85-869c-bd56fb947b7b" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <StringLiteral content="Kubernetes API Server" property="http://www.w3.org/2000/01/rdf-schema#label" />
+                <StringLiteral content="SOUpMyilc1v6sO0bcS_Z4" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/05cc531c-d241-49c3-80dc-bd3777c5426f" />
+              </SemanticDataContainer>
+            </ResourceDescriptor>
+          </mxCell>
+        </object>
+        <object label="" stencilType="generic-channel" id="_74IzwcaJhtsTYrPn7xk-3">
+          <mxCell style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;entryX=1;entryY=0.75;entryDx=0;entryDy=0;entryPerimeter=0;jettySize=auto;orthogonalLoop=1;" edge="1" rdfUpgraded="1" assetTypeVersion="3" parent="1" target="_74IzwcaJhtsTYrPn7xk-2">
+            <mxGeometry relative="1" as="geometry">
+              <mxPoint x="510" y="500" as="sourcePoint" />
+            </mxGeometry>
+            <ResourceDescriptor resource="_:_0WKEjGSolQWEmS241A_3-18" serialization-version="v0" as="resourceDescriptor">
+              <SemanticDataContainer serialization-version="v0">
+                <StringLiteral content="_0WKEjGSolQWEmS241A_3-18" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/a2255956-c3df-4c2c-b489-c307f68abc97" />
+                <StringLiteral content="SOUpMyilc1v6sO0bcS_Z4" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/05cc531c-d241-49c3-80dc-bd3777c5426f" />
+                <IRI resource="https://ontology.security.amazon.dev/foundation/graph-structure/65157620-74b7-470e-bd9d-b9bf56b6cb4b" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/84a80b5f-5642-4a17-9585-ebfdb65f4bec" property="https://ontology.security.amazon.dev/foundation/system-modeling/04539597-4283-4f65-8090-ae67f9d3e949" />
+                <BlankNodeID resource="_:_0WKEjGSolQWEmS241A_3-4" property="https://ontology.security.amazon.dev/foundation/graph-structure/617be0ed-cf17-4a01-a75d-81ed3a472532" />
+              </SemanticDataContainer>
+            </ResourceDescriptor>
+          </mxCell>
+        </object>
+        <object label="" stencilType="generic-channel" id="_74IzwcaJhtsTYrPn7xk-4">
+          <mxCell style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;" edge="1" rdfUpgraded="1" assetTypeVersion="3" parent="1" target="_74IzwcaJhtsTYrPn7xk-11">
+            <mxGeometry relative="1" as="geometry">
+              <mxPoint x="510" y="520" as="sourcePoint" />
+            </mxGeometry>
+            <ResourceDescriptor resource="_:_0WKEjGSolQWEmS241A_3-23" serialization-version="v0" as="resourceDescriptor">
+              <SemanticDataContainer serialization-version="v0">
+                <StringLiteral content="_0WKEjGSolQWEmS241A_3-23" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/a2255956-c3df-4c2c-b489-c307f68abc97" />
+                <StringLiteral content="SOUpMyilc1v6sO0bcS_Z4" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/05cc531c-d241-49c3-80dc-bd3777c5426f" />
+                <IRI resource="https://ontology.security.amazon.dev/foundation/graph-structure/65157620-74b7-470e-bd9d-b9bf56b6cb4b" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/84a80b5f-5642-4a17-9585-ebfdb65f4bec" property="https://ontology.security.amazon.dev/foundation/system-modeling/04539597-4283-4f65-8090-ae67f9d3e949" />
+                <BlankNodeID resource="_:_0WKEjGSolQWEmS241A_3-11" property="https://ontology.security.amazon.dev/foundation/graph-structure/617be0ed-cf17-4a01-a75d-81ed3a472532" />
+              </SemanticDataContainer>
+            </ResourceDescriptor>
+          </mxCell>
+        </object>
+        <object label="&lt;b&gt;Flux Source Controller&lt;/b&gt;" stencilType="container" id="_74IzwcaJhtsTYrPn7xk-5">
+          <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#D05C17;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.container_1;fontFamily=Helvetica;" vertex="1" rdfUpgraded="1" assetTypeVersion="3" parent="1">
+            <mxGeometry x="515" y="470" width="80" height="80" as="geometry" />
+            <ResourceDescriptor resource="_:_0WKEjGSolQWEmS241A_3-5" serialization-version="v0" as="resourceDescriptor">
+              <SemanticDataContainer serialization-version="v0">
+                <StringLiteral content="_0WKEjGSolQWEmS241A_3-5" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/a2255956-c3df-4c2c-b489-c307f68abc97" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/84a80b5f-5642-4a17-9585-ebfdb65f4bec" property="https://ontology.security.amazon.dev/foundation/system-modeling/04539597-4283-4f65-8090-ae67f9d3e949" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/4f51991f-f3c6-4a47-9b00-013560ab92f4" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <IRI resource="https://ontology.security.amazon.dev/foundation/graph-structure/0b4eeac8-04e5-4e85-869c-bd56fb947b7b" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <StringLiteral content="Flux Source Controller" property="http://www.w3.org/2000/01/rdf-schema#label" />
+                <StringLiteral content="SOUpMyilc1v6sO0bcS_Z4" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/05cc531c-d241-49c3-80dc-bd3777c5426f" />
+              </SemanticDataContainer>
+            </ResourceDescriptor>
+          </mxCell>
+        </object>
+        <object label="" stencilType="generic-channel" id="_74IzwcaJhtsTYrPn7xk-6">
+          <mxCell style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;jettySize=auto;orthogonalLoop=1;" edge="1" rdfUpgraded="1" assetTypeVersion="3" parent="1" source="_74IzwcaJhtsTYrPn7xk-10" target="_74IzwcaJhtsTYrPn7xk-2">
+            <mxGeometry relative="1" as="geometry" />
+            <ResourceDescriptor resource="_:_0WKEjGSolQWEmS241A_3-19" serialization-version="v0" as="resourceDescriptor">
+              <SemanticDataContainer serialization-version="v0">
+                <StringLiteral content="_0WKEjGSolQWEmS241A_3-19" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/a2255956-c3df-4c2c-b489-c307f68abc97" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/84a80b5f-5642-4a17-9585-ebfdb65f4bec" property="https://ontology.security.amazon.dev/foundation/system-modeling/04539597-4283-4f65-8090-ae67f9d3e949" />
+                <StringLiteral content="SOUpMyilc1v6sO0bcS_Z4" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/05cc531c-d241-49c3-80dc-bd3777c5426f" />
+                <IRI resource="https://ontology.security.amazon.dev/foundation/graph-structure/65157620-74b7-470e-bd9d-b9bf56b6cb4b" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <BlankNodeID resource="_:_0WKEjGSolQWEmS241A_3-8" property="https://ontology.security.amazon.dev/foundation/graph-structure/d1fc066e-3862-4ae0-8304-6cef42f40a50" />
+                <BlankNodeID resource="_:_0WKEjGSolQWEmS241A_3-4" property="https://ontology.security.amazon.dev/foundation/graph-structure/617be0ed-cf17-4a01-a75d-81ed3a472532" />
+              </SemanticDataContainer>
+            </ResourceDescriptor>
+          </mxCell>
+        </object>
+        <object label="" stencilType="generic-channel" id="_74IzwcaJhtsTYrPn7xk-7">
+          <mxCell style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;jettySize=auto;orthogonalLoop=1;" edge="1" rdfUpgraded="1" assetTypeVersion="3" parent="1" target="_74IzwcaJhtsTYrPn7xk-1">
+            <mxGeometry relative="1" as="geometry">
+              <mxPoint x="600" y="290" as="sourcePoint" />
+            </mxGeometry>
+            <ResourceDescriptor resource="_:_0WKEjGSolQWEmS241A_3-21" serialization-version="v0" as="resourceDescriptor">
+              <SemanticDataContainer serialization-version="v0">
+                <StringLiteral content="_0WKEjGSolQWEmS241A_3-21" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/a2255956-c3df-4c2c-b489-c307f68abc97" />
+                <StringLiteral content="SOUpMyilc1v6sO0bcS_Z4" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/05cc531c-d241-49c3-80dc-bd3777c5426f" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/84a80b5f-5642-4a17-9585-ebfdb65f4bec" property="https://ontology.security.amazon.dev/foundation/system-modeling/04539597-4283-4f65-8090-ae67f9d3e949" />
+                <IRI resource="https://ontology.security.amazon.dev/foundation/graph-structure/65157620-74b7-470e-bd9d-b9bf56b6cb4b" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <BlankNodeID resource="_:_0WKEjGSolQWEmS241A_3-1" property="https://ontology.security.amazon.dev/foundation/graph-structure/617be0ed-cf17-4a01-a75d-81ed3a472532" />
+              </SemanticDataContainer>
+            </ResourceDescriptor>
+          </mxCell>
+        </object>
+        <object label="" stencilType="generic-channel" id="_74IzwcaJhtsTYrPn7xk-8">
+          <mxCell style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;" edge="1" rdfUpgraded="1" assetTypeVersion="3" parent="1" source="_74IzwcaJhtsTYrPn7xk-10" target="_74IzwcaJhtsTYrPn7xk-5">
+            <mxGeometry relative="1" as="geometry" />
+            <ResourceDescriptor resource="_:_0WKEjGSolQWEmS241A_3-22" serialization-version="v0" as="resourceDescriptor">
+              <SemanticDataContainer serialization-version="v0">
+                <StringLiteral content="_0WKEjGSolQWEmS241A_3-22" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/a2255956-c3df-4c2c-b489-c307f68abc97" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/84a80b5f-5642-4a17-9585-ebfdb65f4bec" property="https://ontology.security.amazon.dev/foundation/system-modeling/04539597-4283-4f65-8090-ae67f9d3e949" />
+                <StringLiteral content="SOUpMyilc1v6sO0bcS_Z4" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/05cc531c-d241-49c3-80dc-bd3777c5426f" />
+                <IRI resource="https://ontology.security.amazon.dev/foundation/graph-structure/65157620-74b7-470e-bd9d-b9bf56b6cb4b" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <BlankNodeID resource="_:_0WKEjGSolQWEmS241A_3-8" property="https://ontology.security.amazon.dev/foundation/graph-structure/d1fc066e-3862-4ae0-8304-6cef42f40a50" />
+                <BlankNodeID resource="_:_0WKEjGSolQWEmS241A_3-5" property="https://ontology.security.amazon.dev/foundation/graph-structure/617be0ed-cf17-4a01-a75d-81ed3a472532" />
+              </SemanticDataContainer>
+            </ResourceDescriptor>
+          </mxCell>
+        </object>
+        <object label="" stencilType="generic-channel" id="_74IzwcaJhtsTYrPn7xk-9">
+          <mxCell style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;" edge="1" rdfUpgraded="1" assetTypeVersion="3" parent="1" source="_74IzwcaJhtsTYrPn7xk-10" target="_74IzwcaJhtsTYrPn7xk-20">
+            <mxGeometry relative="1" as="geometry" />
+            <ResourceDescriptor resource="_:_nm1d2nPAYFvigHrUNV_H-36" serialization-version="v0" as="resourceDescriptor">
+              <SemanticDataContainer serialization-version="v0">
+                <StringLiteral content="_nm1d2nPAYFvigHrUNV_H-36" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/a2255956-c3df-4c2c-b489-c307f68abc97" />
+                <BlankNodeID resource="_:_0WKEjGSolQWEmS241A_3-8" property="https://ontology.security.amazon.dev/foundation/graph-structure/d1fc066e-3862-4ae0-8304-6cef42f40a50" />
+                <BlankNodeID resource="_:_nm1d2nPAYFvigHrUNV_H-35" property="https://ontology.security.amazon.dev/foundation/graph-structure/617be0ed-cf17-4a01-a75d-81ed3a472532" />
+                <IRI resource="https://ontology.security.amazon.dev/foundation/graph-structure/65157620-74b7-470e-bd9d-b9bf56b6cb4b" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/84a80b5f-5642-4a17-9585-ebfdb65f4bec" property="https://ontology.security.amazon.dev/foundation/system-modeling/04539597-4283-4f65-8090-ae67f9d3e949" />
+                <StringLiteral content="SOUpMyilc1v6sO0bcS_Z4" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/05cc531c-d241-49c3-80dc-bd3777c5426f" />
+              </SemanticDataContainer>
+            </ResourceDescriptor>
+          </mxCell>
+        </object>
+        <object label="&lt;b&gt;Flux CFN Controller&lt;br&gt;&lt;/b&gt;" stencilType="container" id="_74IzwcaJhtsTYrPn7xk-10">
+          <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#D05C17;strokeColor=none;dashed=0;verticalLabelPosition=top;verticalAlign=bottom;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.container_1;fontFamily=Helvetica;labelPosition=center;" vertex="1" rdfUpgraded="1" assetTypeVersion="3" parent="1">
+            <mxGeometry x="515" y="240" width="80" height="80" as="geometry" />
+            <ResourceDescriptor resource="_:_0WKEjGSolQWEmS241A_3-8" serialization-version="v0" as="resourceDescriptor">
+              <SemanticDataContainer serialization-version="v0">
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/4f51991f-f3c6-4a47-9b00-013560ab92f4" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <IRI resource="https://ontology.security.amazon.dev/foundation/graph-structure/0b4eeac8-04e5-4e85-869c-bd56fb947b7b" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/84a80b5f-5642-4a17-9585-ebfdb65f4bec" property="https://ontology.security.amazon.dev/foundation/system-modeling/04539597-4283-4f65-8090-ae67f9d3e949" />
+                <StringLiteral content="SOUpMyilc1v6sO0bcS_Z4" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/05cc531c-d241-49c3-80dc-bd3777c5426f" />
+                <StringLiteral content="Flux CFN Controller" property="http://www.w3.org/2000/01/rdf-schema#label" />
+                <StringLiteral content="_0WKEjGSolQWEmS241A_3-8" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/a2255956-c3df-4c2c-b489-c307f68abc97" />
+              </SemanticDataContainer>
+            </ResourceDescriptor>
+          </mxCell>
+        </object>
+        <object label="&lt;b&gt;Git Repository&lt;br&gt;&lt;/b&gt;" stencilType="codecommit" id="_74IzwcaJhtsTYrPn7xk-11">
+          <mxCell style="points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;gradientColor=#4D72F3;gradientDirection=north;fillColor=#3334B9;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws20.resourceIcon;resIcon=mxgraph.aws20.codecommit;" vertex="1" rdfUpgraded="1" assetTypeVersion="3" parent="1">
+            <mxGeometry x="265" y="480" width="80" height="80" as="geometry" />
+            <ResourceDescriptor resource="_:_0WKEjGSolQWEmS241A_3-11" serialization-version="v0" as="resourceDescriptor">
+              <SemanticDataContainer serialization-version="v0">
+                <StringLiteral content="_0WKEjGSolQWEmS241A_3-11" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/a2255956-c3df-4c2c-b489-c307f68abc97" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/84a80b5f-5642-4a17-9585-ebfdb65f4bec" property="https://ontology.security.amazon.dev/foundation/system-modeling/04539597-4283-4f65-8090-ae67f9d3e949" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/4f51991f-f3c6-4a47-9b00-013560ab92f4" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <IRI resource="https://ontology.security.amazon.dev/foundation/graph-structure/0b4eeac8-04e5-4e85-869c-bd56fb947b7b" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <StringLiteral content="Git Repository" property="http://www.w3.org/2000/01/rdf-schema#label" />
+                <StringLiteral content="SOUpMyilc1v6sO0bcS_Z4" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/05cc531c-d241-49c3-80dc-bd3777c5426f" />
+              </SemanticDataContainer>
+            </ResourceDescriptor>
+          </mxCell>
+        </object>
+        <object label="" stencilType="generic-channel" id="_74IzwcaJhtsTYrPn7xk-12">
+          <mxCell style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;jettySize=auto;orthogonalLoop=1;" edge="1" rdfUpgraded="1" assetTypeVersion="3" parent="1" target="_74IzwcaJhtsTYrPn7xk-11">
+            <mxGeometry relative="1" as="geometry">
+              <mxPoint x="110" y="400" as="sourcePoint" />
+            </mxGeometry>
+            <ResourceDescriptor resource="_:_0WKEjGSolQWEmS241A_3-15" serialization-version="v0" as="resourceDescriptor">
+              <SemanticDataContainer serialization-version="v0">
+                <StringLiteral content="_0WKEjGSolQWEmS241A_3-15" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/a2255956-c3df-4c2c-b489-c307f68abc97" />
+                <StringLiteral content="SOUpMyilc1v6sO0bcS_Z4" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/05cc531c-d241-49c3-80dc-bd3777c5426f" />
+                <IRI resource="https://ontology.security.amazon.dev/foundation/graph-structure/65157620-74b7-470e-bd9d-b9bf56b6cb4b" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/84a80b5f-5642-4a17-9585-ebfdb65f4bec" property="https://ontology.security.amazon.dev/foundation/system-modeling/04539597-4283-4f65-8090-ae67f9d3e949" />
+                <BlankNodeID resource="_:_0WKEjGSolQWEmS241A_3-11" property="https://ontology.security.amazon.dev/foundation/graph-structure/617be0ed-cf17-4a01-a75d-81ed3a472532" />
+              </SemanticDataContainer>
+            </ResourceDescriptor>
+          </mxCell>
+        </object>
+        <object label="&lt;div&gt;&lt;b&gt;User&lt;/b&gt;&lt;/div&gt;" stencilType="actor" id="_74IzwcaJhtsTYrPn7xk-13">
+          <mxCell style="shape=umlActor;verticalLabelPosition=bottom;labelBackgroundColor=#ffffff;verticalAlign=top;html=1;outlineConnect=0;" vertex="1" rdfUpgraded="1" assetTypeVersion="3" parent="1">
+            <mxGeometry x="50" y="340" width="50" height="100" as="geometry" />
+            <ResourceDescriptor resource="_:_0WKEjGSolQWEmS241A_3-12" serialization-version="v0" as="resourceDescriptor">
+              <SemanticDataContainer serialization-version="v0">
+                <StringLiteral content="_0WKEjGSolQWEmS241A_3-12" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/a2255956-c3df-4c2c-b489-c307f68abc97" />
+                <IRI resource="https://ontology.security.amazon.dev/foundation/system-modeling/a8c50ddd-aa98-48ce-a1ac-5a95ff514e73" property="https://ontology.security.amazon.dev/foundation/system-modeling/04539597-4283-4f65-8090-ae67f9d3e949" />
+                <IRI resource="https://ontology.security.amazon.dev/foundation/graph-structure/0b4eeac8-04e5-4e85-869c-bd56fb947b7b" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <StringLiteral content="User" property="http://www.w3.org/2000/01/rdf-schema#label" />
+                <StringLiteral content="SOUpMyilc1v6sO0bcS_Z4" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/05cc531c-d241-49c3-80dc-bd3777c5426f" />
+              </SemanticDataContainer>
+            </ResourceDescriptor>
+          </mxCell>
+        </object>
+        <object label="&lt;b&gt;1&lt;/b&gt;" stencilType="text" id="_74IzwcaJhtsTYrPn7xk-14">
+          <mxCell style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" rdfUpgraded="1" assetTypeVersion="3" parent="1">
+            <mxGeometry x="140" y="450" width="40" height="20" as="geometry" />
+            <ResourceDescriptor resource="_:_0WKEjGSolQWEmS241A_3-16" serialization-version="v0" as="resourceDescriptor">
+              <SemanticDataContainer serialization-version="v0">
+                <StringLiteral content="_0WKEjGSolQWEmS241A_3-16" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/a2255956-c3df-4c2c-b489-c307f68abc97" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/4f51991f-f3c6-4a47-9b00-013560ab92f4" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <IRI resource="https://ontology.security.amazon.dev/foundation/graph-structure/0b4eeac8-04e5-4e85-869c-bd56fb947b7b" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/84a80b5f-5642-4a17-9585-ebfdb65f4bec" property="https://ontology.security.amazon.dev/foundation/system-modeling/04539597-4283-4f65-8090-ae67f9d3e949" />
+                <StringLiteral content="1" property="http://www.w3.org/2000/01/rdf-schema#label" />
+                <StringLiteral content="SOUpMyilc1v6sO0bcS_Z4" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/05cc531c-d241-49c3-80dc-bd3777c5426f" />
+              </SemanticDataContainer>
+            </ResourceDescriptor>
+          </mxCell>
+        </object>
+        <object label="&lt;b&gt;3&lt;/b&gt;" stencilType="text" id="_74IzwcaJhtsTYrPn7xk-15">
+          <mxCell style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" rdfUpgraded="1" assetTypeVersion="3" parent="1">
+            <mxGeometry x="440" y="400" width="40" height="20" as="geometry" />
+            <ResourceDescriptor resource="_:_0WKEjGSolQWEmS241A_3-24" serialization-version="v0" as="resourceDescriptor">
+              <SemanticDataContainer serialization-version="v0">
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/84a80b5f-5642-4a17-9585-ebfdb65f4bec" property="https://ontology.security.amazon.dev/foundation/system-modeling/04539597-4283-4f65-8090-ae67f9d3e949" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/4f51991f-f3c6-4a47-9b00-013560ab92f4" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <IRI resource="https://ontology.security.amazon.dev/foundation/graph-structure/0b4eeac8-04e5-4e85-869c-bd56fb947b7b" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <StringLiteral content="SOUpMyilc1v6sO0bcS_Z4" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/05cc531c-d241-49c3-80dc-bd3777c5426f" />
+                <StringLiteral content="3" property="http://www.w3.org/2000/01/rdf-schema#label" />
+                <StringLiteral content="_0WKEjGSolQWEmS241A_3-24" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/a2255956-c3df-4c2c-b489-c307f68abc97" />
+              </SemanticDataContainer>
+            </ResourceDescriptor>
+          </mxCell>
+        </object>
+        <object label="&lt;b&gt;2&lt;/b&gt;" stencilType="text" id="_74IzwcaJhtsTYrPn7xk-16">
+          <mxCell style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" rdfUpgraded="1" assetTypeVersion="3" parent="1">
+            <mxGeometry x="405" y="523" width="40" height="20" as="geometry" />
+            <ResourceDescriptor resource="_:_0WKEjGSolQWEmS241A_3-25" serialization-version="v0" as="resourceDescriptor">
+              <SemanticDataContainer serialization-version="v0">
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/84a80b5f-5642-4a17-9585-ebfdb65f4bec" property="https://ontology.security.amazon.dev/foundation/system-modeling/04539597-4283-4f65-8090-ae67f9d3e949" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/4f51991f-f3c6-4a47-9b00-013560ab92f4" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <IRI resource="https://ontology.security.amazon.dev/foundation/graph-structure/0b4eeac8-04e5-4e85-869c-bd56fb947b7b" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <StringLiteral content="SOUpMyilc1v6sO0bcS_Z4" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/05cc531c-d241-49c3-80dc-bd3777c5426f" />
+                <StringLiteral content="2" property="http://www.w3.org/2000/01/rdf-schema#label" />
+                <StringLiteral content="_0WKEjGSolQWEmS241A_3-25" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/a2255956-c3df-4c2c-b489-c307f68abc97" />
+              </SemanticDataContainer>
+            </ResourceDescriptor>
+          </mxCell>
+        </object>
+        <object label="&lt;b&gt;4, 5, 9&lt;br&gt;&lt;/b&gt;" stencilType="text" id="_74IzwcaJhtsTYrPn7xk-17">
+          <mxCell style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" rdfUpgraded="1" assetTypeVersion="3" parent="1">
+            <mxGeometry x="400" y="257" width="60" height="20" as="geometry" />
+            <ResourceDescriptor resource="_:_0WKEjGSolQWEmS241A_3-30" serialization-version="v0" as="resourceDescriptor">
+              <SemanticDataContainer serialization-version="v0">
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/84a80b5f-5642-4a17-9585-ebfdb65f4bec" property="https://ontology.security.amazon.dev/foundation/system-modeling/04539597-4283-4f65-8090-ae67f9d3e949" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/4f51991f-f3c6-4a47-9b00-013560ab92f4" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <IRI resource="https://ontology.security.amazon.dev/foundation/graph-structure/0b4eeac8-04e5-4e85-869c-bd56fb947b7b" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <StringLiteral content="SOUpMyilc1v6sO0bcS_Z4" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/05cc531c-d241-49c3-80dc-bd3777c5426f" />
+                <StringLiteral content="4, 5, 9" property="http://www.w3.org/2000/01/rdf-schema#label" />
+                <StringLiteral content="_0WKEjGSolQWEmS241A_3-30" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/a2255956-c3df-4c2c-b489-c307f68abc97" />
+              </SemanticDataContainer>
+            </ResourceDescriptor>
+          </mxCell>
+        </object>
+        <object label="&lt;b&gt;6&lt;/b&gt;" stencilType="text" id="_74IzwcaJhtsTYrPn7xk-18">
+          <mxCell style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" rdfUpgraded="1" assetTypeVersion="3" parent="1">
+            <mxGeometry x="563" y="380" width="40" height="20" as="geometry" />
+            <ResourceDescriptor resource="_:_0WKEjGSolQWEmS241A_3-31" serialization-version="v0" as="resourceDescriptor">
+              <SemanticDataContainer serialization-version="v0">
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/84a80b5f-5642-4a17-9585-ebfdb65f4bec" property="https://ontology.security.amazon.dev/foundation/system-modeling/04539597-4283-4f65-8090-ae67f9d3e949" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/4f51991f-f3c6-4a47-9b00-013560ab92f4" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <IRI resource="https://ontology.security.amazon.dev/foundation/graph-structure/0b4eeac8-04e5-4e85-869c-bd56fb947b7b" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <StringLiteral content="SOUpMyilc1v6sO0bcS_Z4" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/05cc531c-d241-49c3-80dc-bd3777c5426f" />
+                <StringLiteral content="6" property="http://www.w3.org/2000/01/rdf-schema#label" />
+                <StringLiteral content="_0WKEjGSolQWEmS241A_3-31" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/a2255956-c3df-4c2c-b489-c307f68abc97" />
+              </SemanticDataContainer>
+            </ResourceDescriptor>
+          </mxCell>
+        </object>
+        <object label="&lt;b&gt;8&lt;/b&gt;" stencilType="text" id="_74IzwcaJhtsTYrPn7xk-19">
+          <mxCell style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" rdfUpgraded="1" assetTypeVersion="3" parent="1">
+            <mxGeometry x="662" y="330" width="40" height="20" as="geometry" />
+            <ResourceDescriptor resource="_:_0WKEjGSolQWEmS241A_3-33" serialization-version="v0" as="resourceDescriptor">
+              <SemanticDataContainer serialization-version="v0">
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/84a80b5f-5642-4a17-9585-ebfdb65f4bec" property="https://ontology.security.amazon.dev/foundation/system-modeling/04539597-4283-4f65-8090-ae67f9d3e949" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/4f51991f-f3c6-4a47-9b00-013560ab92f4" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <IRI resource="https://ontology.security.amazon.dev/foundation/graph-structure/0b4eeac8-04e5-4e85-869c-bd56fb947b7b" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <StringLiteral content="SOUpMyilc1v6sO0bcS_Z4" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/05cc531c-d241-49c3-80dc-bd3777c5426f" />
+                <StringLiteral content="8" property="http://www.w3.org/2000/01/rdf-schema#label" />
+                <StringLiteral content="_0WKEjGSolQWEmS241A_3-33" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/a2255956-c3df-4c2c-b489-c307f68abc97" />
+              </SemanticDataContainer>
+            </ResourceDescriptor>
+          </mxCell>
+        </object>
+        <object label="&lt;div&gt;&lt;b&gt;S3 bucket&lt;/b&gt;&lt;/div&gt;&lt;div&gt;&lt;b&gt;for template files&lt;br&gt;&lt;/b&gt;&lt;/div&gt;" stencilType="bucket" id="_74IzwcaJhtsTYrPn7xk-20">
+          <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#277116;strokeColor=none;dashed=0;verticalLabelPosition=top;verticalAlign=bottom;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.bucket;fontFamily=Helvetica;labelPosition=center;" vertex="1" rdfUpgraded="1" assetTypeVersion="3" parent="1">
+            <mxGeometry x="710" y="250" width="60" height="60" as="geometry" />
+            <ResourceDescriptor resource="_:_nm1d2nPAYFvigHrUNV_H-35" serialization-version="v0" as="resourceDescriptor">
+              <SemanticDataContainer serialization-version="v0">
+                <StringLiteral content="_nm1d2nPAYFvigHrUNV_H-35" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/a2255956-c3df-4c2c-b489-c307f68abc97" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/ee44b39a-c4bb-4022-b961-2f48ec193e80" property="https://ontology.security.amazon.dev/foundation/system-modeling/04539597-4283-4f65-8090-ae67f9d3e949" />
+                <IRI resource="https://ontology.security.amazon.dev/foundation/graph-structure/0b4eeac8-04e5-4e85-869c-bd56fb947b7b" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <StringLiteral content="S3 bucketfor template files" property="http://www.w3.org/2000/01/rdf-schema#label" />
+                <StringLiteral content="SOUpMyilc1v6sO0bcS_Z4" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/05cc531c-d241-49c3-80dc-bd3777c5426f" />
+              </SemanticDataContainer>
+            </ResourceDescriptor>
+          </mxCell>
+        </object>
+        <object label="&lt;b&gt;7&lt;/b&gt;" stencilType="text" id="_74IzwcaJhtsTYrPn7xk-21">
+          <mxCell style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" rdfUpgraded="1" assetTypeVersion="3" parent="1">
+            <mxGeometry x="630" y="260" width="40" height="20" as="geometry" />
+            <ResourceDescriptor resource="_:_nm1d2nPAYFvigHrUNV_H-37" serialization-version="v0" as="resourceDescriptor">
+              <SemanticDataContainer serialization-version="v0">
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/84a80b5f-5642-4a17-9585-ebfdb65f4bec" property="https://ontology.security.amazon.dev/foundation/system-modeling/04539597-4283-4f65-8090-ae67f9d3e949" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/4f51991f-f3c6-4a47-9b00-013560ab92f4" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <IRI resource="https://ontology.security.amazon.dev/foundation/graph-structure/0b4eeac8-04e5-4e85-869c-bd56fb947b7b" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <StringLiteral content="SOUpMyilc1v6sO0bcS_Z4" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/05cc531c-d241-49c3-80dc-bd3777c5426f" />
+                <StringLiteral content="7" property="http://www.w3.org/2000/01/rdf-schema#label" />
+                <StringLiteral content="_nm1d2nPAYFvigHrUNV_H-37" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/a2255956-c3df-4c2c-b489-c307f68abc97" />
+              </SemanticDataContainer>
+            </ResourceDescriptor>
+          </mxCell>
+        </object>
+        <mxCell id="_74IzwcaJhtsTYrPn7xk-22" value="" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;gradientColor=#F34482;gradientDirection=north;fillColor=#BC1356;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.cloudformation;" vertex="1" parent="1">
+          <mxGeometry x="705" y="376" width="78" height="78" as="geometry" />
+        </mxCell>
+        <mxCell id="_74IzwcaJhtsTYrPn7xk-23" value="" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;gradientColor=#F78E04;gradientDirection=north;fillColor=#D05C17;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.eks;" vertex="1" parent="1">
+          <mxGeometry x="267" y="242" width="78" height="78" as="geometry" />
+        </mxCell>
+        <mxCell id="_74IzwcaJhtsTYrPn7xk-24" value="" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;gradientColor=#4D72F3;gradientDirection=north;fillColor=#3334B9;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.codecommit;" vertex="1" parent="1">
+          <mxGeometry x="267" y="481" width="78" height="78" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="DwCrOFtsWHXVb4Im4mES" name="Delete">
+    <mxGraphModel dx="2954" dy="1128" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1400" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <object label="&lt;b&gt;AWS CloudFormation&lt;/b&gt;" stencilType="cloudformation" id="uPhHWCfdUJVkzo8bs6gq-2">
+          <mxCell style="points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;gradientColor=#F34482;gradientDirection=north;fillColor=#BC1356;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws20.resourceIcon;resIcon=mxgraph.aws20.cloudformation;" vertex="1" rdfUpgraded="1" assetTypeVersion="3" parent="1">
+            <mxGeometry x="705" y="380" width="70" height="70" as="geometry" />
+            <ResourceDescriptor resource="_:_0WKEjGSolQWEmS241A_3-1" serialization-version="v0" as="resourceDescriptor">
+              <SemanticDataContainer serialization-version="v0">
+                <StringLiteral content="_0WKEjGSolQWEmS241A_3-1" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/a2255956-c3df-4c2c-b489-c307f68abc97" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/84a80b5f-5642-4a17-9585-ebfdb65f4bec" property="https://ontology.security.amazon.dev/foundation/system-modeling/04539597-4283-4f65-8090-ae67f9d3e949" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/4f51991f-f3c6-4a47-9b00-013560ab92f4" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <IRI resource="https://ontology.security.amazon.dev/foundation/graph-structure/0b4eeac8-04e5-4e85-869c-bd56fb947b7b" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <StringLiteral content="AWS CloudFormation" property="http://www.w3.org/2000/01/rdf-schema#label" />
+                <StringLiteral content="UnknownPage" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/05cc531c-d241-49c3-80dc-bd3777c5426f" />
+              </SemanticDataContainer>
+            </ResourceDescriptor>
+          </mxCell>
+        </object>
+        <object label="&lt;b&gt;Kubernetes API Server&lt;/b&gt;" stencilType="eks" id="uPhHWCfdUJVkzo8bs6gq-3">
+          <mxCell style="points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;gradientColor=#F78E04;gradientDirection=north;fillColor=#D05C17;strokeColor=#ffffff;dashed=0;verticalLabelPosition=top;verticalAlign=bottom;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws20.resourceIcon;resIcon=mxgraph.aws20.eks;labelPosition=center;" vertex="1" rdfUpgraded="1" assetTypeVersion="3" parent="1">
+            <mxGeometry x="265" y="240" width="80" height="80" as="geometry" />
+            <ResourceDescriptor resource="_:_0WKEjGSolQWEmS241A_3-4" serialization-version="v0" as="resourceDescriptor">
+              <SemanticDataContainer serialization-version="v0">
+                <StringLiteral content="_0WKEjGSolQWEmS241A_3-4" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/a2255956-c3df-4c2c-b489-c307f68abc97" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/aaab50ab-4afb-40c3-9a78-a6373ff63d7c" property="https://ontology.security.amazon.dev/foundation/system-modeling/04539597-4283-4f65-8090-ae67f9d3e949" />
+                <IRI resource="https://ontology.security.amazon.dev/foundation/graph-structure/0b4eeac8-04e5-4e85-869c-bd56fb947b7b" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <StringLiteral content="Kubernetes API Server" property="http://www.w3.org/2000/01/rdf-schema#label" />
+                <StringLiteral content="UnknownPage" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/05cc531c-d241-49c3-80dc-bd3777c5426f" />
+              </SemanticDataContainer>
+            </ResourceDescriptor>
+          </mxCell>
+        </object>
+        <object label="&lt;b&gt;Flux Source Controller&lt;/b&gt;" stencilType="container" id="uPhHWCfdUJVkzo8bs6gq-4">
+          <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#D05C17;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.container_1;fontFamily=Helvetica;" vertex="1" rdfUpgraded="1" assetTypeVersion="3" parent="1">
+            <mxGeometry x="515" y="480" width="80" height="80" as="geometry" />
+            <ResourceDescriptor resource="_:_0WKEjGSolQWEmS241A_3-5" serialization-version="v0" as="resourceDescriptor">
+              <SemanticDataContainer serialization-version="v0">
+                <StringLiteral content="_0WKEjGSolQWEmS241A_3-5" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/a2255956-c3df-4c2c-b489-c307f68abc97" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/84a80b5f-5642-4a17-9585-ebfdb65f4bec" property="https://ontology.security.amazon.dev/foundation/system-modeling/04539597-4283-4f65-8090-ae67f9d3e949" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/4f51991f-f3c6-4a47-9b00-013560ab92f4" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <IRI resource="https://ontology.security.amazon.dev/foundation/graph-structure/0b4eeac8-04e5-4e85-869c-bd56fb947b7b" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <StringLiteral content="Flux Source Controller" property="http://www.w3.org/2000/01/rdf-schema#label" />
+                <StringLiteral content="UnknownPage" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/05cc531c-d241-49c3-80dc-bd3777c5426f" />
+              </SemanticDataContainer>
+            </ResourceDescriptor>
+          </mxCell>
+        </object>
+        <object label="" stencilType="generic-channel" id="uPhHWCfdUJVkzo8bs6gq-5">
+          <mxCell style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;jettySize=auto;orthogonalLoop=1;" edge="1" rdfUpgraded="1" assetTypeVersion="3" parent="1" source="uPhHWCfdUJVkzo8bs6gq-7" target="uPhHWCfdUJVkzo8bs6gq-3">
+            <mxGeometry relative="1" as="geometry" />
+            <ResourceDescriptor resource="_:_0WKEjGSolQWEmS241A_3-19" serialization-version="v0" as="resourceDescriptor">
+              <SemanticDataContainer serialization-version="v0">
+                <StringLiteral content="_0WKEjGSolQWEmS241A_3-19" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/a2255956-c3df-4c2c-b489-c307f68abc97" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/84a80b5f-5642-4a17-9585-ebfdb65f4bec" property="https://ontology.security.amazon.dev/foundation/system-modeling/04539597-4283-4f65-8090-ae67f9d3e949" />
+                <StringLiteral content="UnknownPage" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/05cc531c-d241-49c3-80dc-bd3777c5426f" />
+                <IRI resource="https://ontology.security.amazon.dev/foundation/graph-structure/65157620-74b7-470e-bd9d-b9bf56b6cb4b" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <BlankNodeID resource="_:_0WKEjGSolQWEmS241A_3-8" property="https://ontology.security.amazon.dev/foundation/graph-structure/d1fc066e-3862-4ae0-8304-6cef42f40a50" />
+                <BlankNodeID resource="_:_0WKEjGSolQWEmS241A_3-4" property="https://ontology.security.amazon.dev/foundation/graph-structure/617be0ed-cf17-4a01-a75d-81ed3a472532" />
+              </SemanticDataContainer>
+            </ResourceDescriptor>
+          </mxCell>
+        </object>
+        <object label="" stencilType="generic-channel" id="uPhHWCfdUJVkzo8bs6gq-6">
+          <mxCell style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;jettySize=auto;orthogonalLoop=1;" edge="1" rdfUpgraded="1" assetTypeVersion="3" parent="1" target="uPhHWCfdUJVkzo8bs6gq-2">
+            <mxGeometry relative="1" as="geometry">
+              <mxPoint x="600" y="290" as="sourcePoint" />
+            </mxGeometry>
+            <ResourceDescriptor resource="_:_0WKEjGSolQWEmS241A_3-21" serialization-version="v0" as="resourceDescriptor">
+              <SemanticDataContainer serialization-version="v0">
+                <StringLiteral content="_0WKEjGSolQWEmS241A_3-21" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/a2255956-c3df-4c2c-b489-c307f68abc97" />
+                <StringLiteral content="UnknownPage" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/05cc531c-d241-49c3-80dc-bd3777c5426f" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/84a80b5f-5642-4a17-9585-ebfdb65f4bec" property="https://ontology.security.amazon.dev/foundation/system-modeling/04539597-4283-4f65-8090-ae67f9d3e949" />
+                <IRI resource="https://ontology.security.amazon.dev/foundation/graph-structure/65157620-74b7-470e-bd9d-b9bf56b6cb4b" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <BlankNodeID resource="_:_0WKEjGSolQWEmS241A_3-1" property="https://ontology.security.amazon.dev/foundation/graph-structure/617be0ed-cf17-4a01-a75d-81ed3a472532" />
+              </SemanticDataContainer>
+            </ResourceDescriptor>
+          </mxCell>
+        </object>
+        <object label="&lt;b&gt;Flux CFN Controller&lt;br&gt;&lt;/b&gt;" stencilType="container" id="uPhHWCfdUJVkzo8bs6gq-7">
+          <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#D05C17;strokeColor=none;dashed=0;verticalLabelPosition=top;verticalAlign=bottom;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.container_1;fontFamily=Helvetica;labelPosition=center;" vertex="1" rdfUpgraded="1" assetTypeVersion="3" parent="1">
+            <mxGeometry x="515" y="240" width="80" height="80" as="geometry" />
+            <ResourceDescriptor resource="_:_0WKEjGSolQWEmS241A_3-8" serialization-version="v0" as="resourceDescriptor">
+              <SemanticDataContainer serialization-version="v0">
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/4f51991f-f3c6-4a47-9b00-013560ab92f4" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <IRI resource="https://ontology.security.amazon.dev/foundation/graph-structure/0b4eeac8-04e5-4e85-869c-bd56fb947b7b" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/84a80b5f-5642-4a17-9585-ebfdb65f4bec" property="https://ontology.security.amazon.dev/foundation/system-modeling/04539597-4283-4f65-8090-ae67f9d3e949" />
+                <StringLiteral content="UnknownPage" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/05cc531c-d241-49c3-80dc-bd3777c5426f" />
+                <StringLiteral content="Flux CFN Controller" property="http://www.w3.org/2000/01/rdf-schema#label" />
+                <StringLiteral content="_0WKEjGSolQWEmS241A_3-8" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/a2255956-c3df-4c2c-b489-c307f68abc97" />
+              </SemanticDataContainer>
+            </ResourceDescriptor>
+          </mxCell>
+        </object>
+        <object label="&lt;b&gt;Git Repository&lt;br&gt;&lt;/b&gt;" stencilType="codecommit" id="uPhHWCfdUJVkzo8bs6gq-8">
+          <mxCell style="points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;gradientColor=#4D72F3;gradientDirection=north;fillColor=#3334B9;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws20.resourceIcon;resIcon=mxgraph.aws20.codecommit;" vertex="1" rdfUpgraded="1" assetTypeVersion="3" parent="1">
+            <mxGeometry x="265" y="480" width="80" height="80" as="geometry" />
+            <ResourceDescriptor resource="_:_0WKEjGSolQWEmS241A_3-11" serialization-version="v0" as="resourceDescriptor">
+              <SemanticDataContainer serialization-version="v0">
+                <StringLiteral content="_0WKEjGSolQWEmS241A_3-11" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/a2255956-c3df-4c2c-b489-c307f68abc97" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/84a80b5f-5642-4a17-9585-ebfdb65f4bec" property="https://ontology.security.amazon.dev/foundation/system-modeling/04539597-4283-4f65-8090-ae67f9d3e949" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/4f51991f-f3c6-4a47-9b00-013560ab92f4" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <IRI resource="https://ontology.security.amazon.dev/foundation/graph-structure/0b4eeac8-04e5-4e85-869c-bd56fb947b7b" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <StringLiteral content="Git Repository" property="http://www.w3.org/2000/01/rdf-schema#label" />
+                <StringLiteral content="UnknownPage" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/05cc531c-d241-49c3-80dc-bd3777c5426f" />
+              </SemanticDataContainer>
+            </ResourceDescriptor>
+          </mxCell>
+        </object>
+        <object label="" stencilType="generic-channel" id="uPhHWCfdUJVkzo8bs6gq-9">
+          <mxCell style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;jettySize=auto;orthogonalLoop=1;" edge="1" rdfUpgraded="1" assetTypeVersion="3" parent="1" target="uPhHWCfdUJVkzo8bs6gq-3">
+            <mxGeometry relative="1" as="geometry">
+              <mxPoint x="110" y="380" as="sourcePoint" />
+            </mxGeometry>
+            <ResourceDescriptor resource="_:_0WKEjGSolQWEmS241A_3-14" serialization-version="v0" as="resourceDescriptor">
+              <SemanticDataContainer serialization-version="v0">
+                <StringLiteral content="_0WKEjGSolQWEmS241A_3-14" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/a2255956-c3df-4c2c-b489-c307f68abc97" />
+                <StringLiteral content="UnknownPage" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/05cc531c-d241-49c3-80dc-bd3777c5426f" />
+                <IRI resource="https://ontology.security.amazon.dev/foundation/graph-structure/65157620-74b7-470e-bd9d-b9bf56b6cb4b" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/84a80b5f-5642-4a17-9585-ebfdb65f4bec" property="https://ontology.security.amazon.dev/foundation/system-modeling/04539597-4283-4f65-8090-ae67f9d3e949" />
+                <BlankNodeID resource="_:_0WKEjGSolQWEmS241A_3-4" property="https://ontology.security.amazon.dev/foundation/graph-structure/617be0ed-cf17-4a01-a75d-81ed3a472532" />
+              </SemanticDataContainer>
+            </ResourceDescriptor>
+          </mxCell>
+        </object>
+        <object label="&lt;div&gt;&lt;b&gt;User&lt;/b&gt;&lt;/div&gt;" stencilType="actor" id="uPhHWCfdUJVkzo8bs6gq-10">
+          <mxCell style="shape=umlActor;verticalLabelPosition=bottom;labelBackgroundColor=#ffffff;verticalAlign=top;html=1;outlineConnect=0;" vertex="1" rdfUpgraded="1" assetTypeVersion="3" parent="1">
+            <mxGeometry x="50" y="340" width="50" height="100" as="geometry" />
+            <ResourceDescriptor resource="_:_0WKEjGSolQWEmS241A_3-12" serialization-version="v0" as="resourceDescriptor">
+              <SemanticDataContainer serialization-version="v0">
+                <StringLiteral content="_0WKEjGSolQWEmS241A_3-12" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/a2255956-c3df-4c2c-b489-c307f68abc97" />
+                <IRI resource="https://ontology.security.amazon.dev/foundation/system-modeling/a8c50ddd-aa98-48ce-a1ac-5a95ff514e73" property="https://ontology.security.amazon.dev/foundation/system-modeling/04539597-4283-4f65-8090-ae67f9d3e949" />
+                <IRI resource="https://ontology.security.amazon.dev/foundation/graph-structure/0b4eeac8-04e5-4e85-869c-bd56fb947b7b" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <StringLiteral content="User" property="http://www.w3.org/2000/01/rdf-schema#label" />
+                <StringLiteral content="UnknownPage" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/05cc531c-d241-49c3-80dc-bd3777c5426f" />
+              </SemanticDataContainer>
+            </ResourceDescriptor>
+          </mxCell>
+        </object>
+        <object label="&lt;b&gt;1&lt;/b&gt;" stencilType="text" id="uPhHWCfdUJVkzo8bs6gq-11">
+          <mxCell style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" rdfUpgraded="1" assetTypeVersion="3" parent="1">
+            <mxGeometry x="140" y="320" width="40" height="20" as="geometry" />
+            <ResourceDescriptor resource="_:_0WKEjGSolQWEmS241A_3-29" serialization-version="v0" as="resourceDescriptor">
+              <SemanticDataContainer serialization-version="v0">
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/84a80b5f-5642-4a17-9585-ebfdb65f4bec" property="https://ontology.security.amazon.dev/foundation/system-modeling/04539597-4283-4f65-8090-ae67f9d3e949" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/4f51991f-f3c6-4a47-9b00-013560ab92f4" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <IRI resource="https://ontology.security.amazon.dev/foundation/graph-structure/0b4eeac8-04e5-4e85-869c-bd56fb947b7b" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <StringLiteral content="UnknownPage" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/05cc531c-d241-49c3-80dc-bd3777c5426f" />
+                <StringLiteral content="1" property="http://www.w3.org/2000/01/rdf-schema#label" />
+                <StringLiteral content="_0WKEjGSolQWEmS241A_3-29" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/a2255956-c3df-4c2c-b489-c307f68abc97" />
+              </SemanticDataContainer>
+            </ResourceDescriptor>
+          </mxCell>
+        </object>
+        <object label="&lt;b&gt;2, 4&lt;br&gt;&lt;/b&gt;" stencilType="text" id="uPhHWCfdUJVkzo8bs6gq-12">
+          <mxCell style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" rdfUpgraded="1" assetTypeVersion="3" parent="1">
+            <mxGeometry x="400" y="257" width="60" height="20" as="geometry" />
+            <ResourceDescriptor resource="_:_0WKEjGSolQWEmS241A_3-30" serialization-version="v0" as="resourceDescriptor">
+              <SemanticDataContainer serialization-version="v0">
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/84a80b5f-5642-4a17-9585-ebfdb65f4bec" property="https://ontology.security.amazon.dev/foundation/system-modeling/04539597-4283-4f65-8090-ae67f9d3e949" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/4f51991f-f3c6-4a47-9b00-013560ab92f4" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <IRI resource="https://ontology.security.amazon.dev/foundation/graph-structure/0b4eeac8-04e5-4e85-869c-bd56fb947b7b" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <StringLiteral content="UnknownPage" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/05cc531c-d241-49c3-80dc-bd3777c5426f" />
+                <StringLiteral content="2, 4" property="http://www.w3.org/2000/01/rdf-schema#label" />
+                <StringLiteral content="_0WKEjGSolQWEmS241A_3-30" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/a2255956-c3df-4c2c-b489-c307f68abc97" />
+              </SemanticDataContainer>
+            </ResourceDescriptor>
+          </mxCell>
+        </object>
+        <object label="&lt;b&gt;3&lt;/b&gt;" stencilType="text" id="uPhHWCfdUJVkzo8bs6gq-13">
+          <mxCell style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" rdfUpgraded="1" assetTypeVersion="3" parent="1">
+            <mxGeometry x="662" y="330" width="40" height="20" as="geometry" />
+            <ResourceDescriptor resource="_:_0WKEjGSolQWEmS241A_3-33" serialization-version="v0" as="resourceDescriptor">
+              <SemanticDataContainer serialization-version="v0">
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/84a80b5f-5642-4a17-9585-ebfdb65f4bec" property="https://ontology.security.amazon.dev/foundation/system-modeling/04539597-4283-4f65-8090-ae67f9d3e949" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/4f51991f-f3c6-4a47-9b00-013560ab92f4" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <IRI resource="https://ontology.security.amazon.dev/foundation/graph-structure/0b4eeac8-04e5-4e85-869c-bd56fb947b7b" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <StringLiteral content="UnknownPage" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/05cc531c-d241-49c3-80dc-bd3777c5426f" />
+                <StringLiteral content="3" property="http://www.w3.org/2000/01/rdf-schema#label" />
+                <StringLiteral content="_0WKEjGSolQWEmS241A_3-33" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/a2255956-c3df-4c2c-b489-c307f68abc97" />
+              </SemanticDataContainer>
+            </ResourceDescriptor>
+          </mxCell>
+        </object>
+        <object label="&lt;div&gt;&lt;b&gt;S3 bucket&lt;/b&gt;&lt;/div&gt;&lt;div&gt;&lt;b&gt;for template files&lt;br&gt;&lt;/b&gt;&lt;/div&gt;" stencilType="bucket" id="uPhHWCfdUJVkzo8bs6gq-14">
+          <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#277116;strokeColor=none;dashed=0;verticalLabelPosition=top;verticalAlign=bottom;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.bucket;fontFamily=Helvetica;labelPosition=center;" vertex="1" rdfUpgraded="1" assetTypeVersion="3" parent="1">
+            <mxGeometry x="710" y="250" width="60" height="60" as="geometry" />
+            <ResourceDescriptor resource="_:_nm1d2nPAYFvigHrUNV_H-35" serialization-version="v0" as="resourceDescriptor">
+              <SemanticDataContainer serialization-version="v0">
+                <StringLiteral content="_nm1d2nPAYFvigHrUNV_H-35" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/a2255956-c3df-4c2c-b489-c307f68abc97" />
+                <IRI resource="https://ontology.security.amazon.dev/design-inspector/components/ee44b39a-c4bb-4022-b961-2f48ec193e80" property="https://ontology.security.amazon.dev/foundation/system-modeling/04539597-4283-4f65-8090-ae67f9d3e949" />
+                <IRI resource="https://ontology.security.amazon.dev/foundation/graph-structure/0b4eeac8-04e5-4e85-869c-bd56fb947b7b" property="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" />
+                <StringLiteral content="S3 bucketfor template files" property="http://www.w3.org/2000/01/rdf-schema#label" />
+                <StringLiteral content="UnknownPage" property="https://ontology.security.amazon.dev/foundation/diagram-visualization/05cc531c-d241-49c3-80dc-bd3777c5426f" />
+              </SemanticDataContainer>
+            </ResourceDescriptor>
+          </mxCell>
+        </object>
+        <mxCell id="uPhHWCfdUJVkzo8bs6gq-15" value="" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;gradientColor=#4D72F3;gradientDirection=north;fillColor=#3334B9;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.codecommit;" vertex="1" parent="1">
+          <mxGeometry x="267" y="482" width="78" height="78" as="geometry" />
+        </mxCell>
+        <mxCell id="uPhHWCfdUJVkzo8bs6gq-16" value="" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;gradientColor=#F78E04;gradientDirection=north;fillColor=#D05C17;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.eks;" vertex="1" parent="1">
+          <mxGeometry x="267" y="242" width="78" height="78" as="geometry" />
+        </mxCell>
+        <mxCell id="uPhHWCfdUJVkzo8bs6gq-17" value="" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;gradientColor=#F34482;gradientDirection=north;fillColor=#BC1356;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.cloudformation;" vertex="1" parent="1">
+          <mxGeometry x="705" y="372" width="78" height="78" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
