@@ -544,6 +544,11 @@ controller on Amazon EKS clusters, see the following EKS Best Practices Guides:
 * [Network security using Kubernetes network policies](https://aws.github.io/aws-eks-best-practices/security/docs/network/#network-policy)
 * [Network security using AWS VPC Security Groups](https://aws.github.io/aws-eks-best-practices/security/docs/network/#security-groups)
 
+We recommend enabling mTLS encryption and authentication for communication between Flux components, for example between
+the CloudFormation controller and the Flux source controller.
+A service mesh can be used to enable mTLS, such as [AWS App Mesh](https://docs.aws.amazon.com/app-mesh/latest/userguide/mutual-tls.html),
+and Flux may support mTLS natively in the future ([see discussion here](https://github.com/fluxcd/flux2/pull/3368)).
+
 ### Kubernetes user permissions
 
 We recommend that users with access to your Kubernetes cluster have the least privileged permissions needed for interacting
