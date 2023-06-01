@@ -51,24 +51,26 @@ See the License for the specific language governing permissions and
 limitations under the License.
 **/
 
-func (r *CloudFormationStackReconciler) requestsForRevisionChangeOf(indexKey string) func(obj client.Object) []reconcile.Request {
-	return func(obj client.Object) []reconcile.Request {
+func (r *CloudFormationStackReconciler) requestsForRevisionChangeOf(indexKey string) func(ctx context.Context, obj client.Object) []reconcile.Request {
+	return func(ctx context.Context, obj client.Object) []reconcile.Request {
 		repo, ok := obj.(interface {
 			GetArtifact() *sourcev1.Artifact
 		})
 		if !ok {
-			panic(fmt.Sprintf("Expected an object conformed with GetArtifact() method, but got a %T", obj))
+			err := fmt.Errorf("expected an object conformed with GetArtifact() method, but got a %T", obj)
+			ctrl.LoggerFrom(ctx).Error(err, "failed to get requests for CloudFormationStack change")
+			return nil
 		}
 		// If we do not have an artifact, we have no requests to make
 		if repo.GetArtifact() == nil {
 			return nil
 		}
 
-		ctx := context.Background()
 		var list cfnv1.CloudFormationStackList
 		if err := r.List(ctx, &list, client.MatchingFields{
 			indexKey: client.ObjectKeyFromObject(obj).String(),
 		}); err != nil {
+			ctrl.LoggerFrom(ctx).Error(err, "failed to list CloudFormation stacks")
 			return nil
 		}
 		var dd []dependency.Dependent

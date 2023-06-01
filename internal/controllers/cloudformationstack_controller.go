@@ -17,7 +17,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	kuberecorder "k8s.io/client-go/tools/record"
 	"k8s.io/client-go/tools/reference"
-	"k8s.io/utils/pointer"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -25,7 +24,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	eventv1 "github.com/fluxcd/pkg/apis/event/v1beta1"
 	"github.com/fluxcd/pkg/apis/meta"
@@ -70,22 +68,21 @@ type CloudFormationStackReconciler struct {
 }
 
 type CloudFormationStackReconcilerOptions struct {
-	MaxConcurrentReconciles   int
 	HTTPRetry                 int
 	DependencyRequeueInterval time.Duration
 }
 
-func (r *CloudFormationStackReconciler) SetupWithManager(mgr ctrl.Manager, opts CloudFormationStackReconcilerOptions) error {
+func (r *CloudFormationStackReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager, opts CloudFormationStackReconcilerOptions) error {
 	// Index the CloudFormationStacks by their source references
-	if err := mgr.GetCache().IndexField(context.TODO(), &cfnv1.CloudFormationStack{}, cfnv1.GitRepositoryIndexKey,
+	if err := mgr.GetCache().IndexField(ctx, &cfnv1.CloudFormationStack{}, cfnv1.GitRepositoryIndexKey,
 		r.IndexBy(sourcev1.GitRepositoryKind)); err != nil {
 		return fmt.Errorf("failed setting index fields: %w", err)
 	}
-	if err := mgr.GetCache().IndexField(context.TODO(), &cfnv1.CloudFormationStack{}, cfnv1.BucketIndexKey,
+	if err := mgr.GetCache().IndexField(ctx, &cfnv1.CloudFormationStack{}, cfnv1.BucketIndexKey,
 		r.IndexBy(sourcev1.BucketKind)); err != nil {
 		return fmt.Errorf("failed setting index fields: %w", err)
 	}
-	if err := mgr.GetCache().IndexField(context.TODO(), &cfnv1.CloudFormationStack{}, cfnv1.OCIRepositoryIndexKey,
+	if err := mgr.GetCache().IndexField(ctx, &cfnv1.CloudFormationStack{}, cfnv1.OCIRepositoryIndexKey,
 		r.IndexBy(sourcev1.OCIRepositoryKind)); err != nil {
 		return fmt.Errorf("failed setting index fields: %w", err)
 	}
@@ -106,24 +103,21 @@ func (r *CloudFormationStackReconciler) SetupWithManager(mgr ctrl.Manager, opts 
 			predicate.Or(predicate.GenerationChangedPredicate{}, predicates.ReconcileRequestedPredicate{}),
 		)).
 		Watches(
-			&source.Kind{Type: &sourcev1.GitRepository{}},
+			&sourcev1.GitRepository{},
 			handler.EnqueueRequestsFromMapFunc(r.requestsForRevisionChangeOf(cfnv1.GitRepositoryIndexKey)),
 			builder.WithPredicates(SourceRevisionChangePredicate{}),
 		).
 		Watches(
-			&source.Kind{Type: &sourcev1.Bucket{}},
+			&sourcev1.Bucket{},
 			handler.EnqueueRequestsFromMapFunc(r.requestsForRevisionChangeOf(cfnv1.BucketIndexKey)),
 			builder.WithPredicates(SourceRevisionChangePredicate{}),
 		).
 		Watches(
-			&source.Kind{Type: &sourcev1.OCIRepository{}},
+			&sourcev1.OCIRepository{},
 			handler.EnqueueRequestsFromMapFunc(r.requestsForRevisionChangeOf(cfnv1.OCIRepositoryIndexKey)),
 			builder.WithPredicates(SourceRevisionChangePredicate{}),
 		).
-		WithOptions(controller.Options{
-			MaxConcurrentReconciles: opts.MaxConcurrentReconciles,
-			RecoverPanic:            pointer.Bool(true),
-		}).
+		WithOptions(controller.Options{}).
 		Complete(r)
 }
 

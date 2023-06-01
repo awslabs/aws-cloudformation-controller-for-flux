@@ -12,8 +12,11 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/utils/pointer"
 	ctrl "sigs.k8s.io/controller-runtime"
 	ctrlcache "sigs.k8s.io/controller-runtime/pkg/cache"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
+	ctrlcfg "sigs.k8s.io/controller-runtime/pkg/config"
 	crtlmetrics "sigs.k8s.io/controller-runtime/pkg/metrics"
 
 	"github.com/fluxcd/pkg/runtime/acl"
@@ -27,6 +30,7 @@ import (
 	"github.com/fluxcd/pkg/runtime/probes"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 
+	"github.com/awslabs/aws-cloudformation-controller-for-flux/api/v1alpha1"
 	cfnv1 "github.com/awslabs/aws-cloudformation-controller-for-flux/api/v1alpha1"
 	"github.com/awslabs/aws-cloudformation-controller-for-flux/internal/clients/cloudformation"
 	"github.com/awslabs/aws-cloudformation-controller-for-flux/internal/clients/s3"
@@ -126,7 +130,6 @@ func main() {
 		Scheme:                        scheme,
 		MetricsBindAddress:            metricsAddr,
 		HealthProbeBindAddress:        healthAddr,
-		Port:                          9443,
 		LeaderElection:                leaderElectionOptions.Enable,
 		LeaderElectionReleaseOnCancel: leaderElectionOptions.ReleaseOnCancel,
 		LeaseDuration:                 &leaderElectionOptions.LeaseDuration,
@@ -134,13 +137,20 @@ func main() {
 		RetryPeriod:                   &leaderElectionOptions.RetryPeriod,
 		GracefulShutdownTimeout:       &gracefulShutdownTimeout,
 		LeaderElectionID:              leaderElectionId,
-		Namespace:                     watchNamespace,
 		Logger:                        ctrl.Log,
-		NewCache: ctrlcache.BuilderWithOptions(ctrlcache.Options{
-			SelectorsByObject: ctrlcache.SelectorsByObject{
-				&cfnv1.CloudFormationStack{}: {Label: watchSelector},
+		Client: ctrlclient.Options{
+			Cache: &ctrlclient.CacheOptions{},
+		},
+		Cache: ctrlcache.Options{
+			ByObject: map[ctrlclient.Object]ctrlcache.ByObject{
+				&v1alpha1.CloudFormationStack{}: {Label: watchSelector},
 			},
-		}),
+			Namespaces: []string{watchNamespace},
+		},
+		Controller: ctrlcfg.Controller{
+			RecoverPanic:            pointer.Bool(true),
+			MaxConcurrentReconciles: concurrent,
+		},
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
@@ -194,12 +204,11 @@ func main() {
 	}
 
 	reconcilerOpts := controllers.CloudFormationStackReconcilerOptions{
-		MaxConcurrentReconciles:   concurrent,
 		HTTPRetry:                 httpRetry,
 		DependencyRequeueInterval: requeueDependency,
 	}
 
-	if err = reconciler.SetupWithManager(mgr, reconcilerOpts); err != nil {
+	if err = reconciler.SetupWithManager(signalHandlerContext, mgr, reconcilerOpts); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", cfnv1.CloudFormationStackKind)
 		os.Exit(1)
 	}
