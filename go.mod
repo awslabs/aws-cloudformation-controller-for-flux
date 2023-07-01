@@ -10,14 +10,14 @@ require (
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.11.67
 	github.com/aws/aws-sdk-go-v2/service/cloudformation v1.30.0
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.33.1
-	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.19.8
+	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.19.10
 	github.com/aws/aws-sdk-go-v2/service/sts v1.19.0
 	github.com/aws/smithy-go v1.13.5
 	github.com/awslabs/aws-cloudformation-controller-for-flux/api v0.0.0-00010101000000-000000000000
 	github.com/cucumber/godog v0.12.6
 	github.com/cyphar/filepath-securejoin v0.2.3
 	github.com/fluxcd/pkg/apis/event v0.5.0
-	github.com/fluxcd/pkg/apis/meta v1.1.0
+	github.com/fluxcd/pkg/apis/meta v1.1.1
 	github.com/fluxcd/pkg/runtime v0.38.1
 	github.com/fluxcd/pkg/untar v0.3.0
 	github.com/fluxcd/source-controller/api v0.36.1
@@ -29,7 +29,7 @@ require (
 	github.com/opencontainers/go-digest/blake3 v0.0.0-20230329235805-65fac7b55eb7
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.8.4
-	k8s.io/apimachinery v0.27.2
+	k8s.io/apimachinery v0.27.3
 	k8s.io/client-go v0.27.2
 	k8s.io/utils v0.0.0-20230505201702-9f6742963106
 	sigs.k8s.io/controller-runtime v0.15.0
