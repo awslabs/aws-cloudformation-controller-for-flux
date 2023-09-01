@@ -3,8 +3,8 @@ module github.com/awslabs/aws-cloudformation-controller-for-flux/api
 go 1.19
 
 require (
-	github.com/fluxcd/pkg/apis/meta v1.1.1
-	k8s.io/apimachinery v0.27.3
+	github.com/fluxcd/pkg/apis/meta v1.1.2
+	k8s.io/apimachinery v0.27.4
 	sigs.k8s.io/controller-runtime v0.15.0
 )
 
