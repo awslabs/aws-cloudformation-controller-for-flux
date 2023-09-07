@@ -15,7 +15,7 @@ require (
 	github.com/aws/smithy-go v1.14.2
 	github.com/awslabs/aws-cloudformation-controller-for-flux/api v0.0.0-00010101000000-000000000000
 	github.com/cucumber/godog v0.13.0
-	github.com/cyphar/filepath-securejoin v0.2.3
+	github.com/cyphar/filepath-securejoin v0.2.4
 	github.com/fluxcd/pkg/apis/event v0.5.2
 	github.com/fluxcd/pkg/apis/meta v1.1.2
 	github.com/fluxcd/pkg/runtime v0.38.1
