@@ -2,7 +2,7 @@ name: Pull Request Integ Tests
 
 on:
   pull_request_target:
-    types: [opened, synchronize, reopened, labeled]
+    types: [opened, labeled]
     branches: [main]
   workflow_dispatch: {}
 
