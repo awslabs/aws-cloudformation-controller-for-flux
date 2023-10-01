@@ -20,7 +20,7 @@ require (
 	github.com/fluxcd/pkg/apis/meta v1.1.2
 	github.com/fluxcd/pkg/runtime v0.38.1
 	github.com/fluxcd/pkg/untar v0.3.0
-	github.com/fluxcd/source-controller/api v0.36.1
+	github.com/fluxcd/source-controller/api v1.1.1
 	github.com/go-git/go-git/v5 v5.9.0
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.3.1
@@ -32,7 +32,7 @@ require (
 	k8s.io/apimachinery v0.27.4
 	k8s.io/client-go v0.27.3
 	k8s.io/utils v0.0.0-20230505201702-9f6742963106
-	sigs.k8s.io/controller-runtime v0.15.0
+	sigs.k8s.io/controller-runtime v0.15.1
 )
 
 require (
