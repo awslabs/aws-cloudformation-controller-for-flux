@@ -1,8 +1,8 @@
 diff --git a/flux-system/gotk-components.yaml b/flux-system/gotk-components.yaml
-index 79576f0..5c4c037 100644
+index 1d5c44b..d3cf93b 100644
 --- a/flux-system/gotk-components.yaml
 +++ b/flux-system/gotk-components.yaml
-@@ -6326,9 +6326,10 @@ spec:
+@@ -3517,9 +3517,10 @@ spec:
      port: 80
      protocol: TCP
      targetPort: http
@@ -12,5 +12,5 @@ index 79576f0..5c4c037 100644
 -  type: ClusterIP
 +  type: NodePort
  ---
- apiVersion: v1
- kind: Service
+ apiVersion: apps/v1
+ kind: Deployment
