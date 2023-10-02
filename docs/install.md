@@ -206,7 +206,7 @@ In your Flux configuration repository, create a file named `cfn-controller-sourc
 to register this GitHub repository with your Flux installation.
 
 ```yaml
-apiVersion: source.toolkit.fluxcd.io/v1beta2
+apiVersion: source.toolkit.fluxcd.io/v1
 kind: GitRepository
 metadata:
   name: aws-cloudformation-controller-for-flux

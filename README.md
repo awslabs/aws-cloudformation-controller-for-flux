@@ -27,7 +27,7 @@ the template on a regular interval.
 Connect a git repository to Flux - this git repository will store your CloudFormation templates:
 
 ```yaml
-apiVersion: source.toolkit.fluxcd.io/v1beta2
+apiVersion: source.toolkit.fluxcd.io/v1
 kind: GitRepository
 metadata:
   name: my-cfn-templates-repo
