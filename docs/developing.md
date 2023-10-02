@@ -45,7 +45,7 @@ $ cd my-cloudformation-templates
 3. Copy the example CloudFormation templates found in examples/my-cloudformation-templates/ into your CFN template git repository. Then, push the sample template files to the repo:
 ```
 $ git add -A
-$ git commit -m "Sample template"
+$ git commit -m "Sample templates"
 $ git push --set-upstream origin main
 ```
 

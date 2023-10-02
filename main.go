@@ -28,6 +28,7 @@ import (
 	"github.com/fluxcd/pkg/runtime/pprof"
 	"github.com/fluxcd/pkg/runtime/probes"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1"
+	sourcev1b2 "github.com/fluxcd/source-controller/api/v1beta2"
 
 	"github.com/awslabs/aws-cloudformation-controller-for-flux/api/v1alpha1"
 	cfnv1 "github.com/awslabs/aws-cloudformation-controller-for-flux/api/v1alpha1"
@@ -55,6 +56,7 @@ var (
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 	utilruntime.Must(sourcev1.AddToScheme(scheme))
+	utilruntime.Must(sourcev1b2.AddToScheme(scheme))
 	utilruntime.Must(cfnv1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
 }
