@@ -17,7 +17,6 @@ import (
 	ctrlcache "sigs.k8s.io/controller-runtime/pkg/cache"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 	ctrlcfg "sigs.k8s.io/controller-runtime/pkg/config"
-	crtlmetrics "sigs.k8s.io/controller-runtime/pkg/metrics"
 
 	"github.com/fluxcd/pkg/runtime/acl"
 	"github.com/fluxcd/pkg/runtime/client"
@@ -28,7 +27,7 @@ import (
 	"github.com/fluxcd/pkg/runtime/metrics"
 	"github.com/fluxcd/pkg/runtime/pprof"
 	"github.com/fluxcd/pkg/runtime/probes"
-	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
+	sourcev1 "github.com/fluxcd/source-controller/api/v1"
 
 	"github.com/awslabs/aws-cloudformation-controller-for-flux/api/v1alpha1"
 	cfnv1 "github.com/awslabs/aws-cloudformation-controller-for-flux/api/v1alpha1"
@@ -106,9 +105,6 @@ func main() {
 	ctrl.SetLogger(logger.NewLogger(logOptions))
 	setupLog.Info("Configuring manager", "version", BuildVersion, "sha", BuildSHA)
 
-	metricsRecorder := metrics.NewRecorder()
-	crtlmetrics.Registry.MustRegister(metricsRecorder.Collectors()...)
-
 	watchNamespace := ""
 	if !watchOptions.AllNamespaces {
 		watchNamespace = os.Getenv("RUNTIME_NAMESPACE")
@@ -160,6 +156,7 @@ func main() {
 	probes.SetupChecks(mgr, setupLog)
 	pprof.SetupHandlers(mgr, setupLog)
 
+	metricsH := helper.NewMetrics(mgr, metrics.MustMakeRecorder(), v1alpha1.CloudFormationStackFinalizer)
 	var eventRecorder *events.Recorder
 	if eventRecorder, err = events.NewRecorder(mgr, ctrl.Log, eventsAddr, controllerName); err != nil {
 		setupLog.Error(err, "unable to create event recorder")
@@ -193,7 +190,7 @@ func main() {
 		Client:              mgr.GetClient(),
 		Scheme:              mgr.GetScheme(),
 		EventRecorder:       eventRecorder,
-		MetricsRecorder:     metricsRecorder,
+		Metrics:             metricsH,
 		NoCrossNamespaceRef: aclOptions.NoCrossNamespaceRefs,
 		CfnClient:           cfnClient,
 		S3Client:            s3Client,

@@ -28,8 +28,8 @@ import (
 	"github.com/awslabs/aws-cloudformation-controller-for-flux/internal/mocks"
 	"github.com/fluxcd/pkg/apis/meta"
 	"github.com/fluxcd/pkg/runtime/acl"
-	"github.com/fluxcd/pkg/runtime/metrics"
-	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
+	sourcev1 "github.com/fluxcd/source-controller/api/v1"
+	sourcev1b2 "github.com/fluxcd/source-controller/api/v1beta2"
 	"github.com/golang/mock/gomock"
 	"github.com/hashicorp/go-retryablehttp"
 	"github.com/stretchr/testify/require"
@@ -103,7 +103,7 @@ var (
 	}
 
 	mockOCIRef = cfnv1.SourceReference{
-		Kind:      sourcev1.OCIRepositoryKind,
+		Kind:      sourcev1b2.OCIRepositoryKind,
 		Name:      mockTemplateOCIRepoName,
 		Namespace: mockSourceNamespace,
 	}
@@ -113,7 +113,7 @@ var (
 	}
 
 	mockBucketSourceRef = cfnv1.SourceReference{
-		Kind:      sourcev1.BucketKind,
+		Kind:      sourcev1b2.BucketKind,
 		Name:      mockTemplateSourceBucketName,
 		Namespace: mockSourceNamespace,
 	}
@@ -188,7 +188,7 @@ func createTestArtifact() error {
 	if _, err = h.Write(mockTestArtifactBytes); err != nil {
 		return err
 	}
-	mockTemplateContentsChecksum = fmt.Sprintf("%x", h.Sum(nil))
+	mockTemplateContentsChecksum = fmt.Sprintf("sha256:%x", h.Sum(nil))
 
 	templateBytes, err := os.ReadFile(mockTemplateSourceFile)
 	if err != nil {
@@ -238,7 +238,7 @@ func generateMockGitRepoSource(gitRepo *sourcev1.GitRepository, mockSourceArtifa
 		Artifact: &sourcev1.Artifact{
 			URL:      mockSourceArtifactURL,
 			Revision: mockSourceRevision,
-			Checksum: mockTemplateContentsChecksum,
+			Digest:   mockTemplateContentsChecksum,
 		},
 	}
 }
@@ -250,31 +250,31 @@ func generateMockGitRepoSource2(gitRepo *sourcev1.GitRepository, mockSourceArtif
 		Artifact: &sourcev1.Artifact{
 			URL:      mockSourceArtifactURL,
 			Revision: mockSourceRevision2,
-			Checksum: mockTemplateContentsChecksum,
+			Digest:   mockTemplateContentsChecksum,
 		},
 	}
 }
 
-func generateMockBucketSource(bucket *sourcev1.Bucket, mockSourceArtifactURL string) {
+func generateMockBucketSource(bucket *sourcev1b2.Bucket, mockSourceArtifactURL string) {
 	bucket.Name = mockTemplateGitRepoName
 	bucket.Namespace = mockSourceNamespace
-	bucket.Status = sourcev1.BucketStatus{
+	bucket.Status = sourcev1b2.BucketStatus{
 		Artifact: &sourcev1.Artifact{
 			URL:      mockSourceArtifactURL,
 			Revision: mockSourceRevision,
-			Checksum: mockTemplateContentsChecksum,
+			Digest:   mockTemplateContentsChecksum,
 		},
 	}
 }
 
-func generateMockOCIRepoSource(ociRepo *sourcev1.OCIRepository, mockSourceArtifactURL string) {
+func generateMockOCIRepoSource(ociRepo *sourcev1b2.OCIRepository, mockSourceArtifactURL string) {
 	ociRepo.Name = mockTemplateGitRepoName
 	ociRepo.Namespace = mockSourceNamespace
-	ociRepo.Status = sourcev1.OCIRepositoryStatus{
+	ociRepo.Status = sourcev1b2.OCIRepositoryStatus{
 		Artifact: &sourcev1.Artifact{
 			URL:      mockSourceArtifactURL,
 			Revision: mockSourceRevision,
-			Checksum: mockTemplateContentsChecksum,
+			Digest:   mockTemplateContentsChecksum,
 		},
 	}
 }
@@ -353,8 +353,8 @@ type reconciliationLoopTestCase struct {
 	cfnStackObjectDoesNotExist bool
 	fillInInitialCfnStack      func(cfnStack *cfnv1.CloudFormationStack)
 	fillInSource               func(gitRepo *sourcev1.GitRepository, mockSourceArtifactURL string)
-	fillInBucket               func(bucket *sourcev1.Bucket, mockSourceArtifactURL string)
-	fillInOCIRepository        func(ociRepo *sourcev1.OCIRepository, mockSourceArtifactURL string)
+	fillInBucket               func(bucket *sourcev1b2.Bucket, mockSourceArtifactURL string)
+	fillInOCIRepository        func(ociRepo *sourcev1b2.OCIRepository, mockSourceArtifactURL string)
 	mockDependencyRetrieval    func(k8sClient *mocks.MockClient)
 	mockSourceRetrieval        func(k8sClient *mocks.MockClient)
 	mockArtifactServer         func(t *testing.T) *httptest.Server
@@ -378,7 +378,7 @@ func runReconciliationLoopTestCase(t *testing.T, tc *reconciliationLoopTestCase)
 	k8sClient := mocks.NewMockClient(mockCtrl)
 	k8sStatusWriter := mocks.NewMockStatusWriter(mockCtrl)
 	eventRecorder := mocks.NewMockEventRecorder(mockCtrl)
-	metricsRecorder := metrics.NewRecorder()
+	//metricsH := fluxCtrlRuntime.NewMetrics(mgr, metrics.NewRecorder(), cfnv1.CloudFormationStackFinalizer)
 	httpClient := retryablehttp.NewClient()
 
 	var server *httptest.Server
@@ -448,7 +448,7 @@ func runReconciliationLoopTestCase(t *testing.T, tc *reconciliationLoopTestCase)
 			mockBucketSourceReference,
 			gomock.Any(),
 		).DoAndReturn(func(ctx context.Context, key ctrlclient.ObjectKey, obj ctrlclient.Object, opts ...ctrlclient.GetOption) error {
-			bucket, ok := obj.(*sourcev1.Bucket)
+			bucket, ok := obj.(*sourcev1b2.Bucket)
 			if !ok {
 				return errors.New(fmt.Sprintf("Expected a Bucket object, but got a %T", obj))
 			}
@@ -462,7 +462,7 @@ func runReconciliationLoopTestCase(t *testing.T, tc *reconciliationLoopTestCase)
 			mockOCISourceReference,
 			gomock.Any(),
 		).DoAndReturn(func(ctx context.Context, key ctrlclient.ObjectKey, obj ctrlclient.Object, opts ...ctrlclient.GetOption) error {
-			ociRepo, ok := obj.(*sourcev1.OCIRepository)
+			ociRepo, ok := obj.(*sourcev1b2.OCIRepository)
 			if !ok {
 				return errors.New(fmt.Sprintf("Expected an OCIRepository object, but got a %T", obj))
 			}
@@ -580,13 +580,13 @@ func runReconciliationLoopTestCase(t *testing.T, tc *reconciliationLoopTestCase)
 	}
 
 	reconciler := &CloudFormationStackReconciler{
-		Scheme:            scheme,
-		Client:            k8sClient,
-		CfnClient:         cfnClient,
-		S3Client:          s3Client,
-		TemplateBucket:    mockTemplateUploadBucket,
-		EventRecorder:     eventRecorder,
-		MetricsRecorder:   metricsRecorder,
+		Scheme:         scheme,
+		Client:         k8sClient,
+		CfnClient:      cfnClient,
+		S3Client:       s3Client,
+		TemplateBucket: mockTemplateUploadBucket,
+		EventRecorder:  eventRecorder,
+		//Metrics:           metricsH,
 		ControllerName:    "cfn-controller-test",
 		ControllerVersion: "v0.0.0",
 		StackTags: map[string]string{
@@ -1721,7 +1721,7 @@ func TestCfnController_ReconcileSource(t *testing.T) {
 				cfnStack.Generation = mockGenerationId
 				cfnStack.Spec = generateMockCfnStackSpec()
 				cfnStack.Spec.SourceRef = cfnv1.SourceReference{
-					Kind:      sourcev1.HelmRepositoryKind,
+					Kind:      sourcev1b2.HelmRepositoryKind,
 					Name:      mockTemplateOCIRepoName,
 					Namespace: mockSourceNamespace,
 				}
@@ -1787,7 +1787,7 @@ func TestCfnController_ReconcileSource(t *testing.T) {
 			},
 		},
 		"downloaded artifact does not match its checksum": {
-			wantedErr:          fmt.Errorf("failed to verify artifact: computed checksum '%s' doesn't match advertised 'hello world'", mockTemplateContentsChecksum),
+			wantedErr:          fmt.Errorf("failed to verify artifact: computed digest doesn't match advertised 'sha256:95e386f421272710c4cedbbd8607dbbaa019d500e7a5a0b6720bc7bebefc7bf2'"),
 			wantedRequeueDelay: mockRetryIntervalDuration,
 			wantedStackStatus: &cfnv1.CloudFormationStackStatus{
 				ObservedGeneration:    mockGenerationId,
@@ -1811,7 +1811,7 @@ func TestCfnController_ReconcileSource(t *testing.T) {
 					Artifact: &sourcev1.Artifact{
 						URL:      mockSourceArtifactURL,
 						Revision: mockSourceRevision,
-						Checksum: "hello world",
+						Digest:   "sha256:95e386f421272710c4cedbbd8607dbbaa019d500e7a5a0b6720bc7bebefc7bf2",
 					},
 				}
 			},

@@ -3,7 +3,6 @@ package controllers
 import (
 	"bytes"
 	"context"
-	"crypto/sha256"
 	"fmt"
 	"io"
 	"net/http"
@@ -18,15 +17,14 @@ import (
 	"github.com/fluxcd/pkg/runtime/acl"
 	"github.com/fluxcd/pkg/runtime/dependency"
 	"github.com/fluxcd/pkg/untar"
-	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
+	sourcev1 "github.com/fluxcd/source-controller/api/v1"
+	sourcev1b2 "github.com/fluxcd/source-controller/api/v1beta2"
 	"github.com/hashicorp/go-retryablehttp"
 	"github.com/opencontainers/go-digest"
 	_ "github.com/opencontainers/go-digest/blake3"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/tools/reference"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -53,12 +51,13 @@ limitations under the License.
 
 func (r *CloudFormationStackReconciler) requestsForRevisionChangeOf(indexKey string) func(ctx context.Context, obj client.Object) []reconcile.Request {
 	return func(ctx context.Context, obj client.Object) []reconcile.Request {
+		log := ctrl.LoggerFrom(ctx)
 		repo, ok := obj.(interface {
 			GetArtifact() *sourcev1.Artifact
 		})
 		if !ok {
 			err := fmt.Errorf("expected an object conformed with GetArtifact() method, but got a %T", obj)
-			ctrl.LoggerFrom(ctx).Error(err, "failed to get requests for CloudFormationStack change")
+			log.Error(err, "failed to get requests for CloudFormationStack change")
 			return nil
 		}
 		// If we do not have an artifact, we have no requests to make
@@ -70,7 +69,7 @@ func (r *CloudFormationStackReconciler) requestsForRevisionChangeOf(indexKey str
 		if err := r.List(ctx, &list, client.MatchingFields{
 			indexKey: client.ObjectKeyFromObject(obj).String(),
 		}); err != nil {
-			ctrl.LoggerFrom(ctx).Error(err, "failed to list CloudFormation stacks")
+			log.Error(err, "failed to list CloudFormation stacks")
 			return nil
 		}
 		var dd []dependency.Dependent
@@ -106,45 +105,6 @@ func (r *CloudFormationStackReconciler) patchStatus(ctx context.Context, cfnStac
 	return r.Client.Status().Patch(ctx, latest, patch, client.FieldOwner(r.ControllerName))
 }
 
-func (r *CloudFormationStackReconciler) recordSuspension(ctx context.Context, cfnStack cfnv1.CloudFormationStack) {
-	if r.MetricsRecorder == nil {
-		return
-	}
-	log := ctrl.LoggerFrom(ctx)
-
-	objRef, err := reference.GetReference(r.Scheme, &cfnStack)
-	if err != nil {
-		log.Error(err, "Unable to record suspended metric")
-		return
-	}
-
-	if !cfnStack.DeletionTimestamp.IsZero() {
-		r.MetricsRecorder.RecordSuspend(*objRef, false)
-	} else {
-		r.MetricsRecorder.RecordSuspend(*objRef, cfnStack.Spec.Suspend)
-	}
-}
-
-func (r *CloudFormationStackReconciler) recordReadiness(ctx context.Context, cfnStack cfnv1.CloudFormationStack) {
-	if r.MetricsRecorder == nil {
-		return
-	}
-
-	objRef, err := reference.GetReference(r.Scheme, &cfnStack)
-	if err != nil {
-		ctrl.LoggerFrom(ctx).Error(err, "Unable to record readiness metric")
-		return
-	}
-	if rc := apimeta.FindStatusCondition(cfnStack.Status.Conditions, meta.ReadyCondition); rc != nil {
-		r.MetricsRecorder.RecordCondition(*objRef, *rc, !cfnStack.DeletionTimestamp.IsZero())
-	} else {
-		r.MetricsRecorder.RecordCondition(*objRef, metav1.Condition{
-			Type:   meta.ReadyCondition,
-			Status: metav1.ConditionUnknown,
-		}, !cfnStack.DeletionTimestamp.IsZero())
-	}
-}
-
 // getSource retrieves the Source object for the CloudFormation stack template
 func (r *CloudFormationStackReconciler) getSource(ctx context.Context, cfnStack cfnv1.CloudFormationStack) (sourcev1.Source, error) {
 	var sourceObj sourcev1.Source
@@ -174,8 +134,8 @@ func (r *CloudFormationStackReconciler) getSource(ctx context.Context, cfnStack 
 			return sourceObj, fmt.Errorf("unable to get source '%s': %w", namespacedName, err)
 		}
 		sourceObj = &repository
-	case sourcev1.BucketKind:
-		var bucket sourcev1.Bucket
+	case sourcev1b2.BucketKind:
+		var bucket sourcev1b2.Bucket
 		err := r.Client.Get(ctx, namespacedName, &bucket)
 		if err != nil {
 			if apierrors.IsNotFound(err) {
@@ -184,8 +144,8 @@ func (r *CloudFormationStackReconciler) getSource(ctx context.Context, cfnStack 
 			return sourceObj, fmt.Errorf("unable to get source '%s': %w", namespacedName, err)
 		}
 		sourceObj = &bucket
-	case sourcev1.OCIRepositoryKind:
-		var repository sourcev1.OCIRepository
+	case sourcev1b2.OCIRepositoryKind:
+		var repository sourcev1b2.OCIRepository
 		err := r.Client.Get(ctx, namespacedName, &repository)
 		if err != nil {
 			if apierrors.IsNotFound(err) {
@@ -322,37 +282,20 @@ func (r *CloudFormationStackReconciler) loadCloudFormationTemplate(ctx context.C
 }
 
 func (r *CloudFormationStackReconciler) copyAndVerifyArtifact(artifact *sourcev1.Artifact, buf *bytes.Buffer, reader io.Reader) error {
-	if artifact.Digest != "" {
-		dig, err := digest.Parse(artifact.Digest)
-		if err != nil {
-			return fmt.Errorf("failed to verify artifact: %w", err)
-		}
-
-		// Verify the downloaded artifact against the advertised digest.
-		verifier := dig.Verifier()
-		mw := io.MultiWriter(verifier, buf)
-		if _, err := io.Copy(mw, reader); err != nil {
-			return err
-		}
-
-		if !verifier.Verified() {
-			return fmt.Errorf("failed to verify artifact: computed digest doesn't match advertised '%s'", dig)
-		}
+	dig, err := digest.Parse(artifact.Digest)
+	if err != nil {
+		return fmt.Errorf("failed to verify artifact: %w", err)
 	}
 
-	if artifact.Checksum != "" {
-		hasher := sha256.New()
+	// Verify the downloaded artifact against the advertised digest.
+	verifier := dig.Verifier()
+	mw := io.MultiWriter(verifier, buf)
+	if _, err := io.Copy(mw, reader); err != nil {
+		return err
+	}
 
-		// compute checksum
-		mw := io.MultiWriter(hasher, buf)
-		if _, err := io.Copy(mw, reader); err != nil {
-			return err
-		}
-
-		if checksum := fmt.Sprintf("%x", hasher.Sum(nil)); checksum != artifact.Checksum {
-			return fmt.Errorf("failed to verify artifact: computed checksum '%s' doesn't match advertised '%s'",
-				checksum, artifact.Checksum)
-		}
+	if !verifier.Verified() {
+		return fmt.Errorf("failed to verify artifact: computed digest doesn't match advertised '%s'", dig)
 	}
 
 	return nil

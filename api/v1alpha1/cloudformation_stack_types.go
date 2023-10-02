@@ -289,6 +289,15 @@ func (in CloudFormationStack) GetRetryInterval() time.Duration {
 	return in.Spec.Interval.Duration
 }
 
+func (in CloudFormationStack) GetConditions() []metav1.Condition {
+	return in.Status.Conditions
+}
+
+func (in *CloudFormationStack) SetConditions(conditions []metav1.Condition) {
+	in.Status.Conditions = conditions
+}
+
+// Deprecated: use GetConditions instead.
 func (in *CloudFormationStack) GetStatusConditions() *[]metav1.Condition {
 	return &in.Status.Conditions
 }

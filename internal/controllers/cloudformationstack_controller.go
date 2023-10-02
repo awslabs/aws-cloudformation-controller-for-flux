@@ -16,7 +16,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	kuberecorder "k8s.io/client-go/tools/record"
-	"k8s.io/client-go/tools/reference"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -27,9 +26,10 @@ import (
 
 	eventv1 "github.com/fluxcd/pkg/apis/event/v1beta1"
 	"github.com/fluxcd/pkg/apis/meta"
-	"github.com/fluxcd/pkg/runtime/metrics"
+	runtimeCtrl "github.com/fluxcd/pkg/runtime/controller"
 	"github.com/fluxcd/pkg/runtime/predicates"
-	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
+	sourcev1 "github.com/fluxcd/source-controller/api/v1"
+	sourcev1b2 "github.com/fluxcd/source-controller/api/v1beta2"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	sdktypes "github.com/aws/aws-sdk-go-v2/service/cloudformation/types"
@@ -49,10 +49,10 @@ import (
 // CloudFormationStackReconciler reconciles a CloudFormationStack object
 type CloudFormationStackReconciler struct {
 	client.Client
+	runtimeCtrl.Metrics
 
 	Scheme              *runtime.Scheme
 	EventRecorder       kuberecorder.EventRecorder
-	MetricsRecorder     *metrics.Recorder
 	NoCrossNamespaceRef bool
 
 	ControllerName    string
@@ -79,11 +79,11 @@ func (r *CloudFormationStackReconciler) SetupWithManager(ctx context.Context, mg
 		return fmt.Errorf("failed setting index fields: %w", err)
 	}
 	if err := mgr.GetCache().IndexField(ctx, &cfnv1.CloudFormationStack{}, cfnv1.BucketIndexKey,
-		r.IndexBy(sourcev1.BucketKind)); err != nil {
+		r.IndexBy(sourcev1b2.BucketKind)); err != nil {
 		return fmt.Errorf("failed setting index fields: %w", err)
 	}
 	if err := mgr.GetCache().IndexField(ctx, &cfnv1.CloudFormationStack{}, cfnv1.OCIRepositoryIndexKey,
-		r.IndexBy(sourcev1.OCIRepositoryKind)); err != nil {
+		r.IndexBy(sourcev1b2.OCIRepositoryKind)); err != nil {
 		return fmt.Errorf("failed setting index fields: %w", err)
 	}
 
@@ -108,12 +108,12 @@ func (r *CloudFormationStackReconciler) SetupWithManager(ctx context.Context, mg
 			builder.WithPredicates(SourceRevisionChangePredicate{}),
 		).
 		Watches(
-			&sourcev1.Bucket{},
+			&sourcev1b2.Bucket{},
 			handler.EnqueueRequestsFromMapFunc(r.requestsForRevisionChangeOf(cfnv1.BucketIndexKey)),
 			builder.WithPredicates(SourceRevisionChangePredicate{}),
 		).
 		Watches(
-			&sourcev1.OCIRepository{},
+			&sourcev1b2.OCIRepository{},
 			handler.EnqueueRequestsFromMapFunc(r.requestsForRevisionChangeOf(cfnv1.OCIRepositoryIndexKey)),
 			builder.WithPredicates(SourceRevisionChangePredicate{}),
 		).
@@ -146,7 +146,12 @@ func (r *CloudFormationStackReconciler) Reconcile(ctx context.Context, req ctrl.
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	defer r.recordSuspension(ctx, cfnStack)
+	defer func() {
+		// Always record metrics.
+		r.Metrics.RecordSuspend(ctx, &cfnStack, cfnStack.Spec.Suspend)
+		r.Metrics.RecordReadiness(ctx, &cfnStack)
+		r.Metrics.RecordDuration(ctx, &cfnStack, start)
+	}()
 
 	// Add our finalizer if it does not exist
 	if !controllerutil.ContainsFinalizer(&cfnStack, cfnv1.CloudFormationStackFinalizer) {
@@ -196,11 +201,8 @@ func (r *CloudFormationStackReconciler) Reconcile(ctx context.Context, req ctrl.
 		return ctrl.Result{Requeue: true}, updateStatusErr
 	}
 
-	// Record ready status
-	r.recordReadiness(ctx, cfnStack)
-
 	// Log reconciliation duration
-	durationMsg := fmt.Sprintf("Reconcilation loop finished in %s", time.Now().Sub(start).String())
+	durationMsg := fmt.Sprintf("Reconciliation loop finished in %s", time.Now().Sub(start).String())
 	if result.RequeueAfter > 0 {
 		durationMsg = fmt.Sprintf("%s, next run in %s", durationMsg, result.RequeueAfter.String())
 	}
@@ -211,7 +213,6 @@ func (r *CloudFormationStackReconciler) Reconcile(ctx context.Context, req ctrl.
 
 // reconcile creates or updates the CloudFormation stack as needed.
 func (r *CloudFormationStackReconciler) reconcile(ctx context.Context, cfnStack cfnv1.CloudFormationStack) (cfnv1.CloudFormationStack, ctrl.Result, error) {
-	reconcileStart := time.Now()
 	log := ctrl.LoggerFrom(ctx)
 
 	// Record the value of the reconciliation request, if any
@@ -226,17 +227,6 @@ func (r *CloudFormationStackReconciler) reconcile(ctx context.Context, cfnStack 
 			log.Error(updateStatusErr, "Unable to update status after generation update")
 			return cfnStack, ctrl.Result{Requeue: true}, updateStatusErr
 		}
-		// Record progressing status
-		r.recordReadiness(ctx, cfnStack)
-	}
-
-	// Record reconciliation duration
-	if r.MetricsRecorder != nil {
-		objRef, err := reference.GetReference(r.Scheme, &cfnStack)
-		if err != nil {
-			return cfnStack, ctrl.Result{Requeue: true}, err
-		}
-		defer r.MetricsRecorder.RecordDuration(*objRef, reconcileStart)
 	}
 
 	// Resolve source reference
@@ -618,7 +608,6 @@ func (r *CloudFormationStackReconciler) uploadStackTemplate(clientStack *types.S
 // reconcileDelete deletes the CloudFormation stack.
 func (r *CloudFormationStackReconciler) reconcileDelete(ctx context.Context, cfnStack cfnv1.CloudFormationStack) (cfnv1.CloudFormationStack, ctrl.Result, error) {
 	log := ctrl.LoggerFrom(ctx)
-	r.recordReadiness(ctx, cfnStack)
 
 	if cfnStack.Spec.Suspend {
 		log.Info(fmt.Sprintf("Skipping CloudFormation stack deletion for suspended stack '%s/%s'", cfnStack.Namespace, cfnStack.Name))
