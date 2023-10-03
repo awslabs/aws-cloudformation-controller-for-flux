@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.10](https://github.com/awslabs/aws-cloudformation-controller-for-flux/compare/v0.2.9...v0.2.10) (2023-10-03)
+
+
+### Features
+
+* Upgrade to Flux source controller v1 ([4053f0b](https://github.com/awslabs/aws-cloudformation-controller-for-flux/commit/4053f0bc352269d9c9f5f6c8cfafbf16941b4f71))
+
+
+### Bug Fixes
+
+* Re-add v1beta2 source controller API to scheme ([2a758a2](https://github.com/awslabs/aws-cloudformation-controller-for-flux/commit/2a758a23597a481802b8bfc3aaabf0a0d4d26875))
+
 ### [0.2.9](https://github.com/awslabs/aws-cloudformation-controller-for-flux/compare/v0.2.8...v0.2.9) (2023-09-12)
 
 ### [0.2.8](https://github.com/awslabs/aws-cloudformation-controller-for-flux/compare/v0.2.7...v0.2.8) (2023-09-05)
