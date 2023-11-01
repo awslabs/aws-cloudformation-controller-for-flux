@@ -10,7 +10,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.11.87
 	github.com/aws/aws-sdk-go-v2/service/cloudformation v1.30.0
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.40.0
-	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.21.3
+	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.22.0
 	github.com/aws/aws-sdk-go-v2/service/sts v1.24.0
 	github.com/aws/smithy-go v1.16.0
 	github.com/awslabs/aws-cloudformation-controller-for-flux/api v0.0.0-00010101000000-000000000000
