@@ -5,14 +5,14 @@ go 1.19
 replace github.com/awslabs/aws-cloudformation-controller-for-flux/api => ./api
 
 require (
-	github.com/aws/aws-sdk-go-v2 v1.22.0
+	github.com/aws/aws-sdk-go-v2 v1.23.4
 	github.com/aws/aws-sdk-go-v2/config v1.20.0
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.12.0
 	github.com/aws/aws-sdk-go-v2/service/cloudformation v1.37.0
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.41.0
 	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.22.0
 	github.com/aws/aws-sdk-go-v2/service/sts v1.24.0
-	github.com/aws/smithy-go v1.16.0
+	github.com/aws/smithy-go v1.18.1
 	github.com/awslabs/aws-cloudformation-controller-for-flux/api v0.0.0-00010101000000-000000000000
 	github.com/cucumber/godog v0.13.0
 	github.com/cyphar/filepath-securejoin v0.2.4

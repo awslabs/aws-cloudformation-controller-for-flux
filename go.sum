@@ -19,8 +19,8 @@ github.com/acomagu/bufpipe v1.0.4/go.mod h1:mxdxdup/WdsKVreO5GpW4+M/1CE2sMG4jeGJ
 github.com/anmitsu/go-shlex v0.0.0-20200514113438-38f4b401e2be h1:9AeTilPcZAjCFIImctFaOjnTIavg87rW78vTPkQqLI8=
 github.com/antihax/optional v1.0.0/go.mod h1:uupD/76wgC+ih3iEmQUL+0Ugr19nfwCT1kdvxnR2qWY=
 github.com/armon/go-socks5 v0.0.0-20160902184237-e75332964ef5 h1:0CwZNZbxp69SHPdPJAN/hZIm0C4OItdklCFmMRWYpio=
-github.com/aws/aws-sdk-go-v2 v1.22.0 h1:CpTS3XO3MWNel8ohoazkLZC6scvkYL2k+m0yzFJ17Hg=
-github.com/aws/aws-sdk-go-v2 v1.22.0/go.mod h1:Kd0OJtkW3Q0M0lUWGszapWjEvrXDzRW+D21JNsroB+c=
+github.com/aws/aws-sdk-go-v2 v1.23.4 h1:2P20ZjH0ouSAu/6yZep8oCmTReathLuEu6dwoqEgjts=
+github.com/aws/aws-sdk-go-v2 v1.23.4/go.mod h1:t3szzKfP0NeRU27uBFczDivYJjsmSnqI8kIvKyWb9ds=
 github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.5.0 h1:hHgLiIrTRtddC0AKcJr5s7i/hLgcpTt+q/FKxf1Zayk=
 github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.5.0/go.mod h1:w4I/v3NOWgD+qvs1NPEwhd++1h3XPHFaVxasfY6HlYQ=
 github.com/aws/aws-sdk-go-v2/config v1.20.0 h1:q2+/mqFhY0J9m3Tb5RGFE3R4sdaUkIe4k2EuDfE3c08=
@@ -59,8 +59,8 @@ github.com/aws/aws-sdk-go-v2/service/ssooidc v1.18.0 h1:3BZyJei4k1SHdSAFhg9Qg15N
 github.com/aws/aws-sdk-go-v2/service/ssooidc v1.18.0/go.mod h1:Td8EvzggonY02wLaqSpwybI3GbmA0PWoprKGil2uwJg=
 github.com/aws/aws-sdk-go-v2/service/sts v1.24.0 h1:f/V5Y9OaHuNRrA9MntNQNAtMFXqhKj8HTEPnH81eXMI=
 github.com/aws/aws-sdk-go-v2/service/sts v1.24.0/go.mod h1:HnCUMNz2XqwnEEk5X6oeDYB2HgOLFpJ/LyfilN8WErs=
-github.com/aws/smithy-go v1.16.0 h1:gJZEH/Fqh+RsvlJ1Zt4tVAtV6bKkp3cC+R6FCZMNzik=
-github.com/aws/smithy-go v1.16.0/go.mod h1:NukqUGpCZIILqqiV0NIjeFh24kd/FAa4beRb6nbIUPE=
+github.com/aws/smithy-go v1.18.1 h1:pOdBTUfXNazOlxLrgeYalVnuTpKreACHtc62xLwIB3c=
+github.com/aws/smithy-go v1.18.1/go.mod h1:NukqUGpCZIILqqiV0NIjeFh24kd/FAa4beRb6nbIUPE=
 github.com/benbjohnson/clock v1.1.0/go.mod h1:J11/hYXuz8f4ySSvYwY0FKfm+ezbsZBKZxNJlLklBHA=
 github.com/benbjohnson/clock v1.3.0 h1:ip6w0uFQkncKQ979AypyG0ER7mqUSBdKLOgAle/AT8A=
 github.com/beorn7/perks v1.0.1 h1:VlbKKnNfV8bJzeqoa4cOKqO6bYr3WgKZxO8Z16+hsOM=
