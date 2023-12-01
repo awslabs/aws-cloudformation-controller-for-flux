@@ -11,7 +11,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/cloudformation v1.41.1
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.41.0
 	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.22.0
-	github.com/aws/aws-sdk-go-v2/service/sts v1.24.0
+	github.com/aws/aws-sdk-go-v2/service/sts v1.26.1
 	github.com/aws/smithy-go v1.18.1
 	github.com/awslabs/aws-cloudformation-controller-for-flux/api v0.0.0-00010101000000-000000000000
 	github.com/cucumber/godog v0.13.0
@@ -49,9 +49,9 @@ require (
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.5.7 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/ini v1.4.0 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/v4a v1.2.0 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.10.0 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.10.3 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.2.0 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.10.0 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.10.7 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.16.0 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sso v1.16.0 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.18.0 // indirect
