@@ -5,14 +5,14 @@ go 1.19
 replace github.com/awslabs/aws-cloudformation-controller-for-flux/api => ./api
 
 require (
-	github.com/aws/aws-sdk-go-v2 v1.22.0
+	github.com/aws/aws-sdk-go-v2 v1.23.4
 	github.com/aws/aws-sdk-go-v2/config v1.20.0
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.12.0
-	github.com/aws/aws-sdk-go-v2/service/cloudformation v1.37.0
+	github.com/aws/aws-sdk-go-v2/service/cloudformation v1.41.1
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.41.0
 	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.22.0
 	github.com/aws/aws-sdk-go-v2/service/sts v1.24.0
-	github.com/aws/smithy-go v1.16.0
+	github.com/aws/smithy-go v1.18.1
 	github.com/awslabs/aws-cloudformation-controller-for-flux/api v0.0.0-00010101000000-000000000000
 	github.com/cucumber/godog v0.13.0
 	github.com/cyphar/filepath-securejoin v0.2.4
@@ -29,8 +29,8 @@ require (
 	github.com/opencontainers/go-digest/blake3 v0.0.0-20230329235805-65fac7b55eb7
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.8.4
-	k8s.io/apimachinery v0.27.7
-	k8s.io/client-go v0.27.7
+	k8s.io/apimachinery v0.27.8
+	k8s.io/client-go v0.27.8
 	k8s.io/utils v0.0.0-20230505201702-9f6742963106
 	sigs.k8s.io/controller-runtime v0.15.3
 )
@@ -45,8 +45,8 @@ require (
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.5.0 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.14.0 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.14.0 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/configsources v1.2.0 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.5.0 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.2.7 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.5.7 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/ini v1.4.0 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/v4a v1.2.0 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.10.0 // indirect
@@ -131,7 +131,7 @@ require (
 	golang.org/x/crypto v0.14.0 // indirect
 	golang.org/x/mod v0.12.0 // indirect
 	golang.org/x/net v0.17.0 // indirect
-	golang.org/x/oauth2 v0.5.0 // indirect
+	golang.org/x/oauth2 v0.7.0 // indirect
 	golang.org/x/sys v0.13.0 // indirect
 	golang.org/x/term v0.13.0 // indirect
 	golang.org/x/text v0.13.0 // indirect
@@ -139,12 +139,12 @@ require (
 	golang.org/x/tools v0.13.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.3.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/protobuf v1.30.0 // indirect
+	google.golang.org/protobuf v1.31.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/api v0.27.7 // indirect
+	k8s.io/api v0.27.8 // indirect
 	k8s.io/apiextensions-apiserver v0.27.7 // indirect
 	k8s.io/cli-runtime v0.27.2 // indirect
 	k8s.io/component-base v0.27.7 // indirect
