@@ -21,7 +21,7 @@ require (
 	github.com/fluxcd/pkg/runtime v0.42.0
 	github.com/fluxcd/pkg/untar v0.3.0
 	github.com/fluxcd/source-controller/api v1.1.2
-	github.com/go-git/go-git/v5 v5.10.1
+	github.com/go-git/go-git/v5 v5.11.0
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.4.0
 	github.com/hashicorp/go-retryablehttp v0.7.5
@@ -129,7 +129,7 @@ require (
 	go.uber.org/zap v1.25.0 // indirect
 	golang.org/x/crypto v0.17.0 // indirect
 	golang.org/x/mod v0.12.0 // indirect
-	golang.org/x/net v0.18.0 // indirect
+	golang.org/x/net v0.19.0 // indirect
 	golang.org/x/oauth2 v0.7.0 // indirect
 	golang.org/x/sys v0.15.0 // indirect
 	golang.org/x/term v0.15.0 // indirect
