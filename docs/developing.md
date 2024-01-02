@@ -4,7 +4,7 @@ Follow these instructions for setting a local development environment for the AW
 
 ## Install required tools
 
-1. Install go 1.19+
+1. Install go 1.20+
 
 2. Run `make install-tools`
 
