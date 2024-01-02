@@ -34,8 +34,8 @@ api-docs: gen-crd-api-reference-docs
 ##### Clean up code #####
 
 tidy:
-	cd api; rm -f go.sum; go mod tidy -compat=1.19
-	rm -f go.sum; go mod tidy -compat=1.19
+	cd api; rm -f go.sum; go mod tidy -compat=1.20
+	rm -f go.sum; go mod tidy -compat=1.20
 
 fmt:
 	go fmt ./...

@@ -12,11 +12,12 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	ctrlcache "sigs.k8s.io/controller-runtime/pkg/cache"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 	ctrlcfg "sigs.k8s.io/controller-runtime/pkg/config"
+	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
 	"github.com/fluxcd/pkg/runtime/acl"
 	"github.com/fluxcd/pkg/runtime/client"
@@ -55,6 +56,7 @@ var (
 
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
+
 	utilruntime.Must(sourcev1.AddToScheme(scheme))
 	utilruntime.Must(sourcev1b2.AddToScheme(scheme))
 	utilruntime.Must(cfnv1.AddToScheme(scheme))
@@ -124,9 +126,8 @@ func main() {
 	}
 
 	restConfig := client.GetConfigOrDie(clientOptions)
-	mgr, err := ctrl.NewManager(restConfig, ctrl.Options{
+	mgrConfig := ctrl.Options{
 		Scheme:                        scheme,
-		MetricsBindAddress:            metricsAddr,
 		HealthProbeBindAddress:        healthAddr,
 		LeaderElection:                leaderElectionOptions.Enable,
 		LeaderElectionReleaseOnCancel: leaderElectionOptions.ReleaseOnCancel,
@@ -143,20 +144,30 @@ func main() {
 			ByObject: map[ctrlclient.Object]ctrlcache.ByObject{
 				&v1alpha1.CloudFormationStack{}: {Label: watchSelector},
 			},
-			Namespaces: []string{watchNamespace},
 		},
 		Controller: ctrlcfg.Controller{
-			RecoverPanic:            pointer.Bool(true),
+			RecoverPanic:            ptr.To(true),
 			MaxConcurrentReconciles: concurrent,
 		},
-	})
+		Metrics: metricsserver.Options{
+			BindAddress:   metricsAddr,
+			ExtraHandlers: pprof.GetHandlers(),
+		},
+	}
+
+	if watchNamespace != "" {
+		mgrConfig.Cache.DefaultNamespaces = map[string]ctrlcache.Config{
+			watchNamespace: ctrlcache.Config{},
+		}
+	}
+
+	mgr, err := ctrl.NewManager(restConfig, mgrConfig)
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
 		os.Exit(1)
 	}
 
 	probes.SetupChecks(mgr, setupLog)
-	pprof.SetupHandlers(mgr, setupLog)
 
 	metricsH := helper.NewMetrics(mgr, metrics.MustMakeRecorder(), v1alpha1.CloudFormationStackFinalizer)
 	var eventRecorder *events.Recorder

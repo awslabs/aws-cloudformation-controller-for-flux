@@ -1,5 +1,5 @@
 # Build the controller binary
-FROM public.ecr.aws/docker/library/golang:1.19 as builder
+FROM public.ecr.aws/docker/library/golang:1.20 as builder
 
 ARG TARGETARCH
 
