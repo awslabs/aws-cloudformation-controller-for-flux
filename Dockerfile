@@ -5,7 +5,7 @@ ARG TARGETARCH
 
 WORKDIR /workspace
 
-ENV GOPROXY=https://proxy.golang.org|direct
+ENV GOPROXY=direct
 ENV GO111MODULE=on
 ENV GOARCH=$TARGETARCH
 ENV GOOS=linux
