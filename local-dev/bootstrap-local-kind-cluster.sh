@@ -55,7 +55,7 @@ echo Creating the kind cluster
 
 kind delete cluster
 
-kind create cluster --config=local-dev/kind-cluster-config.yaml
+kind create cluster --config=local-dev/kind-cluster-config.yaml --image=kindest/node:v1.28.0
 
 # Install Flux
 
