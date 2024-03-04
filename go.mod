@@ -16,7 +16,7 @@ require (
 	github.com/awslabs/aws-cloudformation-controller-for-flux/api v0.0.0-00010101000000-000000000000
 	github.com/cucumber/godog v0.13.0
 	github.com/cyphar/filepath-securejoin v0.2.4
-	github.com/fluxcd/pkg/apis/event v0.6.0
+	github.com/fluxcd/pkg/apis/event v0.7.0
 	github.com/fluxcd/pkg/apis/meta v1.3.0
 	github.com/fluxcd/pkg/runtime v0.43.3
 	github.com/fluxcd/pkg/untar v0.3.0
@@ -148,7 +148,7 @@ require (
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/api v0.28.4 // indirect
+	k8s.io/api v0.28.6 // indirect
 	k8s.io/apiextensions-apiserver v0.28.4 // indirect
 	k8s.io/cli-runtime v0.28.4 // indirect
 	k8s.io/component-base v0.28.4 // indirect
