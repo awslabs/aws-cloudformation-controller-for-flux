@@ -28,7 +28,7 @@ require (
 	github.com/opencontainers/go-digest v1.0.1-0.20231025023718-d50d2fec9c98
 	github.com/opencontainers/go-digest/blake3 v0.0.0-20231025023718-d50d2fec9c98
 	github.com/spf13/pflag v1.0.5
-	github.com/stretchr/testify v1.8.4
+	github.com/stretchr/testify v1.9.0
 	k8s.io/apimachinery v0.28.6
 	k8s.io/client-go v0.28.6
 	k8s.io/utils v0.0.0-20231127182322-b307cd553661
