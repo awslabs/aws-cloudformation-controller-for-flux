@@ -23,7 +23,7 @@ require (
 	github.com/fluxcd/source-controller/api v1.2.5
 	github.com/go-git/go-git/v5 v5.12.0
 	github.com/golang/mock v1.6.0
-	github.com/google/uuid v1.5.0
+	github.com/google/uuid v1.6.0
 	github.com/hashicorp/go-retryablehttp v0.7.5
 	github.com/opencontainers/go-digest v1.0.1-0.20231025023718-d50d2fec9c98
 	github.com/opencontainers/go-digest/blake3 v0.0.0-20231025023718-d50d2fec9c98
