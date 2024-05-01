@@ -14,7 +14,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sts v1.28.6
 	github.com/aws/smithy-go v1.20.2
 	github.com/awslabs/aws-cloudformation-controller-for-flux/api v0.0.0-00010101000000-000000000000
-	github.com/cucumber/godog v0.13.0
+	github.com/cucumber/godog v0.14.1
 	github.com/cyphar/filepath-securejoin v0.2.4
 	github.com/fluxcd/pkg/apis/event v0.7.0
 	github.com/fluxcd/pkg/apis/meta v1.3.0
