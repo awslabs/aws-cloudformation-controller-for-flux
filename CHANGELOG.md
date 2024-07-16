@@ -2,6 +2,8 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.23](https://github.com/awslabs/aws-cloudformation-controller-for-flux/compare/v0.2.22...v0.2.23) (2024-07-16)
+
 ### [0.2.22](https://github.com/awslabs/aws-cloudformation-controller-for-flux/compare/v0.2.21...v0.2.22) (2024-06-18)
 
 ### [0.2.21](https://github.com/awslabs/aws-cloudformation-controller-for-flux/compare/v0.2.20...v0.2.21) (2024-05-07)
