@@ -1,3 +1,6 @@
+**Note: this project is now archived!** AWS CloudFormation now natively supports syncing stacks with source code stored in a Git repository.
+https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/git-sync.html
+
 # AWS CloudFormation Template Sync Controller for Flux
 
 [![Unit tests](https://github.com/awslabs/aws-cloudformation-controller-for-flux/actions/workflows/unit-tests.yml/badge.svg?branch=main)](https://github.com/awslabs/aws-cloudformation-controller-for-flux/actions/workflows/unit-tests.yml)
